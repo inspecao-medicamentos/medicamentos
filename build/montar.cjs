@@ -141,8 +141,9 @@ troca("'drogaria':{nome:'Drogaria',nucleo:'Medicamentos',", "'drogaria':{nome:'D
 troca("'farmacia-manipulacao':{nome:'Farmácia com Manipulação',nucleo:'Medicamentos',", "'farmacia-manipulacao':{nome:'Farmácia com Manipulação',nucleo:'Manipulação',", 'salvas manipulação');
 troca("'distribuidoras-transportadoras':{nome:'Distribuidora / transportadora',nucleo:'Medicamentos',", "'distribuidoras-transportadoras':{nome:'Atacadista de medicamentos',nucleo:'Atacadista de medicamentos',", 'salvas atacadista');
 
-/* 7. Arquivo auxiliar carregado pela Central: servido por este site. */
-troca('https://uvisvp.github.io/roteiros/central-nomes-medicamentos.js', 'https://uvisvp.github.io/medicamentos/central-nomes-medicamentos.js', 'central nomes');
+/* 7. Arquivo auxiliar carregado pela Central: servido por este site, qualquer
+   que seja o endereço (o site não depende de uvisvp.github.io). */
+troca('https://uvisvp.github.io/roteiros/central-nomes-medicamentos.js', "'+new URL('./central-nomes-medicamentos.js',location.href).href+'", 'central nomes');
 
 /* 7b. Parâmetro do roteiro (?instalacao=...): a casca injetava no primeiro
    '</head>' do texto, que na drogaria está dentro de uma string JS do

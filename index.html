@@ -1447,7 +1447,7 @@ if(app==='distribuidoras-transportadoras'){
       })();`+'</scr'+'ipt>';
       /* O módulo é renderizado em iframe Blob/srcdoc; caminho relativo apontaria
          para blob:/about:srcdoc e impediria o botão Nome de carregar. */
-      s=s.replace(/<\/body>/i,ponte+ponteIfa+'<scr'+'ipt src="https://uvisvp.github.io/medicamentos/central-nomes-medicamentos.js"></scr'+'ipt></body>');
+      s=s.replace(/<\/body>/i,ponte+ponteIfa+'<scr'+'ipt src="'+new URL('./central-nomes-medicamentos.js',location.href).href+'"></scr'+'ipt></body>');
     }
     /* Ajustes textuais específicos da Drogaria. Mantêm a lógica e alteram apenas a redação exibida/relatada. */
     if(app==='drogaria'){

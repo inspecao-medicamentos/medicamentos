@@ -2,8 +2,8 @@
 'use strict';
 
 const VERSAO = '20260929-1';
-/* Prefixo próprio: /roteiros e /medicamentos dividem a origem uvisvp.github.io
-   e o Cache Storage. O roteiros apaga só 'app-*'; este apaga só 'med-app-*'. */
+/* Prefixo próprio de cache: mesmo se um dia dividir a origem com o roteiros,
+   um não apaga o cache do outro (o roteiros apaga só 'app-*'). */
 const CACHE_APP = 'med-app-' + VERSAO;
 const CACHE_DADOS = 'dados-v1';
 
@@ -56,7 +56,7 @@ function semCache(path) {
   return /\/versao\.json$/.test(path) || /\/dados\/manifest\.json$/.test(path);
 }
 function ehHTMLPrincipal(url, req) {
-  return req.mode === 'navigate' || /\/index\.html$/.test(url.pathname) || /\/medicamentos\/$/.test(url.pathname);
+  return req.mode === 'navigate' || /\/index\.html$/.test(url.pathname) || url.pathname === new URL('./', self.location.href).pathname;
 }
 
 self.addEventListener('fetch', event => {
