@@ -1,6 +1,6 @@
 {
-  "name": "Inspeção Sanitária — Medicamentos",
-  "short_name": "Inspeção",
+  "name": "Inspeção Medicamentos",
+  "short_name": "Inspeção Medicamentos",
   "description": "Roteiros de inspeção de drogaria, farmácia com manipulação, atacadista e transportadora de medicamentos, com consultas às bases da Anvisa.",
   "id": "./",
   "start_url": "./index.html",

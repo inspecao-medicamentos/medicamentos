@@ -92,7 +92,8 @@ const novos = Object.entries(CAT.novos).map(([id, def]) =>
 troca('<script type="text/plain" id="app--central-consultas">', novos + '<script type="text/plain" id="app--central-consultas">', 'inserir provisórios');
 
 /* 2. Cabeçalho do documento. */
-troca('<title>Inspeção Sanitária — Roteiros e apoio técnico</title>', '<title>Inspeção Sanitária — Medicamentos</title>', 'title');
+troca('<title>Inspeção Sanitária — Roteiros e apoio técnico</title>', '<title>Inspeção Medicamentos</title>', 'title');
+troca('<meta name="apple-mobile-web-app-capable" content="yes">', '<meta name="apple-mobile-web-app-capable" content="yes">\n  <meta name="apple-mobile-web-app-title" content="Inspeção Medicamentos">', 'nome no iOS');
 troca('<meta name="theme-color" content="#062D3E">', `<meta name="theme-color" content="${PALETA.brand}">`, 'theme-color');
 trocaRx(/<link rel="icon" href="data:image\/svg\+xml,[^"]*">/,
   `<link rel="icon" href="data:image/svg+xml,${encodeURIComponent(fs.readFileSync(path.join(__dirname, 'icone.svg'), 'utf8').trim())}">`, 'favicon');
