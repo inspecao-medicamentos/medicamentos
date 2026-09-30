@@ -1,13 +1,13 @@
 {
   "name": "Inspeção Medicamentos",
   "short_name": "Inspeção Medicamentos",
-  "description": "Roteiros de inspeção de drogaria, farmácia com manipulação, atacadista e transportadora de medicamentos, com consultas às bases da Anvisa.",
+  "description": "Roteiros de inspeção de drogaria, farmácia com manipulação e atacadista de medicamentos (distribuidora e transportadora), com consultas às bases da Anvisa.",
   "id": "./",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
   "background_color": "#F3F5F7",
-  "theme_color": "#0D4F5C",
+  "theme_color": "#16325C",
   "lang": "pt-BR",
   "dir": "ltr",
   "categories": [

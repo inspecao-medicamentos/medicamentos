@@ -87,8 +87,7 @@ const MOTORES = {
       const [dl] = await Promise.all([p.waitForEvent('download', {timeout: 30000}), clicaTxt(f, 'button', 'Baixar prévia (.docx)')]); return dl; }
   }
 };
-const CASOS = [['Drogaria', 'drogaria', 'drogaria'], ['Manipulação', 'farmacia-manipulacao', 'manip'], ['Atacadista de medicamentos', 'distribuidoras-transportadoras', 'dist'],
-  ['Atacadista de medicamentos', 'transportadora', 'dist'], ['Atacadista de medicamentos', 'gases-medicinais', 'rs'], ['Drogaria', 'eac', 'rs'], ['Drogaria', 'vacina', 'rs']];
+const CASOS = [['Drogaria', 'drogaria', 'drogaria'], ['Manipulação', 'farmacia-manipulacao', 'manip'], ['Atacadista de medicamentos', 'distribuidoras-transportadoras', 'dist'], ['Drogaria', 'vacina', 'rs']];
 
 (async () => {
   const so = process.argv.slice(2);

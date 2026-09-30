@@ -5,11 +5,11 @@
    Os módulos de drogaria, manipulação, distribuidora, a Central de Consultas,
    o estoque e o banco normativo vêm do roteiros sem alteração. Assim uma
    correção feita lá chega aqui ao rodar de novo este script. Aqui mudam só:
-   - a tela inicial: quatro cards horizontais (Drogaria, Manipulação,
-     Atacadista, Transportadora) e uma paleta própria;
+   - a tela inicial: três cards horizontais (Drogaria, Manipulação e
+     Atacadista, este com distribuidora e transportadora) e três tons de azul;
    - a lista de roteiros de cada card;
    - os módulos provisórios dos roteiros novos (EAC, vacinação, estéreis,
-     gases medicinais e transportadora), até cada um ser escrito;
+     gases medicinais), até cada um ser escrito;
    - título, ícones, manifest e service worker (prefixo de cache próprio).
 
    Uso: node build/montar.cjs [caminho/do/roteiros]   (padrão ../roteiros) */
@@ -26,11 +26,11 @@ const VERSAO = JSON.parse(fs.readFileSync(path.join(RAIZ, 'versao.json'), 'utf8'
 /* Paleta: um petróleo institucional e quatro tons sóbrios, todos com texto
    branco acima de 4,5:1. Os hex existem só aqui e no :root gerado. */
 const PALETA = {
-  brand: '#0D4F5C', brandStrong: '#093C47', brandWash: '#E7F0F2',
-  '--t-dro': ['#1E5A8A', '#174668', '#E8F0F7'],
-  '--t-man': ['#0F6962', '#0B504B', '#E5F2F0'],
-  '--t-ata': ['#3C4B78', '#2E3A5E', '#ECEEF5'],
-  '--t-tra': ['#55606E', '#424B56', '#EEF0F2']
+  brand: '#16325C', brandStrong: '#0F2545', brandWash: '#E8EDF5',
+  /* três tons de azul: drogaria cobalto, manipulação celeste, atacadista marinho */
+  '--t-dro': ['#1F4E99', '#173B75', '#E7EDF8'],
+  '--t-man': ['#0B6FA4', '#085582', '#E3F1F9'],
+  '--t-ata': ['#34426E', '#27325A', '#ECEEF5']
 };
 
 const APPS_FORA = ['estetica', 'odontologia', 'servicos-assistenciais', 'alimentos-integrado',
@@ -240,7 +240,7 @@ troca("'drogaria':{nome:'Drogaria',nucleo:'Medicamentos',", "'drogaria':{nome:'D
 troca("'farmacia-manipulacao':{nome:'Farmácia com Manipulação',nucleo:'Medicamentos',", "'farmacia-manipulacao':{nome:'Farmácia com Manipulação',nucleo:'Manipulação',", 'salvas manipulação');
 troca("'distribuidoras-transportadoras':{nome:'Distribuidora / transportadora',nucleo:'Medicamentos',", "'distribuidoras-transportadoras':{nome:'Atacadista de medicamentos',nucleo:'Atacadista de medicamentos',", 'salvas atacadista');
 /* Salvas dos roteiros simples: respostas e fotos ficam no mesmo registro. */
-troca("  'odontologia':{nome:'Odontologia',nucleo:'Odontologia',", "  'transportadora':{nome:'Transportadora de medicamentos',nucleo:'Transportadora de medicamentos',ls:['transp:uvis-dist-bpdiat-v2','transp:dist-anexo2-campos-v1','transp:distribuidoras-transportadoras-v2','transp:uvis-previa-distribuidoras-transportadoras'],fotos:['transp-dist-'],barra:'header.top .topin'},\n" + PRONTOS.map(d => {
+troca("  'odontologia':{nome:'Odontologia',nucleo:'Odontologia',", PRONTOS.map(d => {
   const nuc = CAT.nucleos.find(n => n.roteiros.some(r => r[2] === d.app)).id;
   return `  ${JSON.stringify(d.app).replace(/"/g, "'")}:{nome:${JSON.stringify(d.titulo).replace(/"/g, "'")},nucleo:${JSON.stringify(nuc).replace(/"/g, "'")},ls:['${d.store}'],fotos:[],barra:'.pu-header .pu-acoes'},\n`;
 }).join('') + "  'odontologia':{nome:'Odontologia',nucleo:'Odontologia',", 'salvas roteiros simples');
@@ -288,6 +288,24 @@ blocoAltera('app--distribuidoras-transportadoras', s => {
   s = trocaEm(s, "it(6,'Não conformidades anteriores');ddParas(R.previous).forEach(t=>p(t));if(!ddTem(R.previous))p(primeira?'Não se aplica: primeira inspeção.':'Não informado.');",
     "it(6,'Não conformidades anteriores');{const q=ddTem(R.previous)?R.previous:ddRascunhoAnterior();ddParas(q).forEach(t=>p(t));if(!ddTem(q))p(primeira?'Não se aplica: primeira inspeção.':'Não informado.')}", 'anexo I: item 6');
   s = trocaEm(s, "if(!ddTem(R.general))out.push('Item 5: informações gerais não preenchidas.');", "if(!ddTem(R.general)&&!ddTem(ddRascunhoGeral()))out.push('Item 5: informações gerais não preenchidas.');", 'anexo I: pendência 5');
+  /* Tipo de operação e trilha de transportadora na Etapa 1 › Estabelecimento */
+  s = trocaEm(s, "business:[['meta.company','Razão social'],",
+    "business:[['meta.opTipo','Tipo de operação','select',['Distribuidora (distribuição e armazenagem)','Transportadora (somente transporte)','Distribuidora e transportadora']],['meta.company','Razão social'],", 'atacadista: tipo de operação');
+  s = trocaEm(s, "['meta.otherUnits','Outros estabelecimentos / unidades vinculadas','textarea']],",
+    "['meta.otherUnits','Outros estabelecimentos / unidades vinculadas','textarea'],"
+    + "['meta.transpClientes','Transportadora — clientes atendidos','checks',['Indústrias','Importadoras','Distribuidoras','Farmácias e drogarias','Hospitais e clínicas','Entrega ao consumidor (dispensação a distância de farmácia)','Outros']],"
+    + "['meta.transpProdutos','Transportadora — produtos transportados','checks',['Medicamentos em temperatura ambiente','Termolábeis (2 °C a 8 °C)','Sujeitos a controle especial','Produtos para saúde','Cosméticos e saneantes','Produtos perigosos (ANTT)']],"
+    + "['meta.transpCross','Transportadora — faz armazenagem temporária (cross-docking)?','select',['Sim','Não']],"
+    + "['meta.transpFrota','Transportadora — frota','select',['Própria','Terceirizada','Própria e terceirizada']],"
+    + "['meta.transpVeiculos','Transportadora — veículos (quantidade, tipo, controle de temperatura)','textarea'],"
+    + "['meta.transpRntrc','Transportadora — RNTRC (ANTT) nº']],", 'atacadista: trilha de transportadora');
+  /* a trilha entra no rascunho das informações gerais (item 5 do Anexo I) */
+  s = trocaEm(s, "function ddRascunhoGeral(){",
+    "function ddTrilhaTransp(){const m=state.meta||{},t=[];if(ddTem(m.opTipo))t.push('Tipo de operação: '+ddLc(m.opTipo)+'.');if(!/transportadora/i.test(m.opTipo||''))return t.join(' ');"
+    + "const c=ddLista(m.transpClientes),p=ddLista(m.transpProdutos);if(c.length)t.push('Como transportadora, atende: '+ddJoin(c.map(ddLc))+'.');if(p.length)t.push('Produtos transportados: '+ddJoin(p.map(ddLc))+'.');"
+    + "if(m.transpCross==='Sim')t.push('Realiza armazenagem temporária (cross-docking).');else if(m.transpCross==='Não')t.push('Não realiza armazenagem temporária.');"
+    + "if(ddTem(m.transpFrota))t.push('Frota '+ddLc(m.transpFrota)+'.');if(ddTem(m.transpVeiculos))t.push('Veículos: '+ddFim(m.transpVeiculos));if(ddTem(m.transpRntrc))t.push('RNTRC nº '+m.transpRntrc+'.');return t.join(' ')}"
+    + "function ddRascunhoGeral(){return [ddTrilhaTransp(),ddRascunhoGeral0()].filter(ddTem).join('\\n\\n')}function ddRascunhoGeral0(){", 'atacadista: trilha no item 5');
   return trocaEm(s, "if(!ddTem(R.previous)&&m.first!=='Sim')", "if(!ddTem(R.previous)&&!ddTem(ddRascunhoAnterior())&&m.first!=='Sim')", 'anexo I: pendência 6');
 });
 
@@ -310,23 +328,13 @@ troca("if(geral)itens.push({id:'area-geral',title:'Informações gerais',html:ge
   "if(geral)itens.push({id:'area-geral',title:'Informações gerais',html:geral.innerHTML.replace(/^\\s*<h3>[^<]*<\\/h3>/,'')});",
   'drogaria: informações gerais aberta');
 
-/* 7e. Variantes: cards que reaproveitam o módulo de outro, com rascunho e
-   fotos próprios (modulos/variante-inicio.js) e ajustes no fim do módulo.
-   - Transportadora: módulo da distribuidora; atividade Transportar e partes de
-     distribuidora em “Não se aplica” (transportadora-fim.js). */
+/* 7e. Atacadista de medicamentos (módulo da distribuidora): a identificação
+   diz se o estabelecimento é distribuidora, só transportadora ou as duas; a
+   trilha de transportadora (clientes, cross-docking, frota, RNTRC…) aparece
+   quando há transporte, e o cabeçalho leva o nome conforme o tipo
+   (modulos/atacadista-ajustes.js). Nada é marcado “Não se aplica” sozinho. */
 const le = f => fs.readFileSync(path.join(RAIZ, 'modulos', f), 'utf8');
 const jsStr = t => JSON.stringify(t).replace(/<\//g, '<\\/');
-const VARIANTES = {
-  transportadora: {base: 'distribuidoras-transportadoras', app: 'transportadora', prefixo: 'transp:', escopo: 'dist-',
-    chaves: ['uvis-dist-bpdiat-v2', 'dist-anexo2-campos-v1', 'distribuidoras-transportadoras-v2', 'uvis-previa-distribuidoras-transportadoras'],
-    fim: le('transportadora-fim.js')}
-};
-const VAR_INI = le('variante-inicio.js');
-/* no site Medicamentos o módulo da distribuidora, aberto pelo card Atacadista, leva o nome do card */
-const ATACADISTA_TIT = "(function(){function t(){var w=document.createTreeWalker(document.querySelector('header')||document.body,NodeFilter.SHOW_TEXT),n;while((n=w.nextNode()))if(/distribuidora\\s*\\/\\s*transportadora/i.test(n.nodeValue))n.nodeValue=n.nodeValue.replace(/distribuidora\\s*\\/\\s*transportadora/i,'Atacadista de medicamentos')}function i(){t();setTimeout(t,400)}document.readyState==='loading'?document.addEventListener('DOMContentLoaded',i):i()})();";
-const VARIANTES_JS = '{' + Object.entries(VARIANTES).map(([k, v]) => JSON.stringify(k) + ':{base:' + JSON.stringify(v.base)
-  + ',ini:' + jsStr('window.__uvisVariante=' + JSON.stringify({app: v.app, prefixo: v.prefixo, chaves: v.chaves, escopo: v.escopo}) + ';' + VAR_INI)
-  + ',fim:' + jsStr(v.fim) + (v.dados ? ',dados:[' + jsStr(v.dados[0]) + ',' + jsStr(v.dados[1]) + ']' : '') + '}').join(',') + '}';
 /* Central de Consultas: modo Automático (modulos/central-auto.js).
    Ferramentas de campo (modulos/campo.js) em todos os roteiros: entra no fim
    do módulo; a chave med-campo-<roteiro> e o prefixo das fotos dos achados
@@ -339,29 +347,21 @@ troca("k.indexOf('uvis-previa-')===0", "(k.indexOf('uvis-previa-')===0||k.indexO
   h = h.slice(0, k) + '<script>' + SALVAS_CAMPO + '</script>\n' + h.slice(k);
 }
 troca('  function montar(app){',
-  `  var VARIANTES = ${VARIANTES_JS};
+  `  var ATACADISTA_JS = ${jsStr(le('atacadista-ajustes.js'))};
   var CAMPO_APPS = ${JSON.stringify(CAMPO_APPS)};
   var CAMPO_JS = ${jsStr(le('campo.js'))};
   var CENTRAL_AUTO_JS = ${jsStr(le('central-auto.js'))};
   var MANIP_JS = ${jsStr(le('manipulacao-ajustes.js'))};
   var ORIENT_TRANSP = ${jsStr(JSON.stringify(ORIENT.transporte))};
   var TRANSP_ORIENT_JS = ${jsStr(le('transporte-orient.js'))};
-  function montar(app){ var v = VARIANTES[app]; var s = v ? montarVariante(v) : montarBase(app);
-    if(app === 'distribuidoras-transportadoras'){ var k = s.lastIndexOf('</body>'); s = s.slice(0, k) + '<scr' + 'ipt>' + ${jsStr(ATACADISTA_TIT)} + '</scr' + 'ipt>' + s.slice(k); }
+  function montar(app){ var s = montarBase(app);
+    if(app === 'distribuidoras-transportadoras'){ var k = s.lastIndexOf('</body>'); s = s.slice(0, k) + '<scr' + 'ipt>' + ATACADISTA_JS + '</scr' + 'ipt>' + s.slice(k); }
     if(app === 'farmacia-manipulacao'){ var mj = s.lastIndexOf('</body>'); s = s.slice(0, mj) + '<scr' + 'ipt>' + MANIP_JS + '</scr' + 'ipt>' + s.slice(mj); }
     if(app === 'central-consultas'){ var c = s.lastIndexOf('</body>'); s = s.slice(0, c) + '<scr' + 'ipt>' + CENTRAL_AUTO_JS + '</scr' + 'ipt>' + s.slice(c); }
-    if(app === 'distribuidoras-transportadoras' || app === 'transportadora'){ var o = s.lastIndexOf('</body>'); s = s.slice(0, o) + '<scr' + 'ipt>window.__ORIENT_TRANSP=' + ORIENT_TRANSP + ';' + TRANSP_ORIENT_JS + '</scr' + 'ipt>' + s.slice(o); }
+    if(app === 'distribuidoras-transportadoras'){ var o = s.lastIndexOf('</body>'); s = s.slice(0, o) + '<scr' + 'ipt>window.__ORIENT_TRANSP=' + ORIENT_TRANSP + ';' + TRANSP_ORIENT_JS + '</scr' + 'ipt>' + s.slice(o); }
     if(CAMPO_APPS.indexOf(app) >= 0){ var j = s.lastIndexOf('</body>'); s = s.slice(0, j) + '<scr' + 'ipt>' + CAMPO_JS + '</scr' + 'ipt>' + s.slice(j); }
     return s; }
-  function montarVariante(v){
-    var s = montarBase(v.base);
-    if(v.dados){ if(s.indexOf(v.dados[0]) < 0) throw new Error('dados da variante não encontrados'); s = s.replace(v.dados[0], function(){ return v.dados[1]; }); }
-    s = s.replace(/<head(\\s[^>]*)?>/i, function(m){ return m + '<scr' + 'ipt>' + v.ini + '</scr' + 'ipt>'; });
-    var k = s.lastIndexOf('</body>');
-    return s.slice(0, k) + '<scr' + 'ipt>' + v.fim + '</scr' + 'ipt>' + s.slice(k);
-  }
   function montarBase(app){`, 'variantes: montar');
-troca('window.parent.UvisSalvas.novaInspecao(modulo)', 'window.parent.UvisSalvas.novaInspecao(window.__uvisAppSalvas||modulo)', 'variantes: apagar inspeção');
 troca("if(window.RoteiroEvidence)for(var k=1;k<=12;k++)await RoteiroEvidence.clear('manipulacao-card-'+k);", "if(window.RoteiroEvidence)for(var k=1;k<=13;k++)await RoteiroEvidence.clear('manipulacao-card-'+k);", 'manipulação: fotos do bloco 13');
 
 /* 7c. Tom do módulo: drogaria, manipulação e atacadista trazem o ardósia do
@@ -374,8 +374,8 @@ trocaRx(/const APP_VERSAO = '[^']+';/, `const APP_VERSAO = '${VERSAO}';`, 'APP_V
 trocaRx(/<span id="casca-versao">v[^ <]+/, `<span id="casca-versao">v${VERSAO}`, 'versão rodapé');
 
 /* 9. Visual da tela inicial e da lista. Vem por último para prevalecer. */
-const [dro, man, ata, tra] = ['--t-dro', '--t-man', '--t-ata', '--t-tra'].map(k => PALETA[k]);
-const tokens = ['--t-dro', '--t-man', '--t-ata', '--t-tra'].map(k => `${k}:${PALETA[k][0]};${k}-d:${PALETA[k][1]};${k}-w:${PALETA[k][2]};`).join('\n  ');
+const [dro, man, ata] = ['--t-dro', '--t-man', '--t-ata'].map(k => PALETA[k]);
+const tokens = ['--t-dro', '--t-man', '--t-ata'].map(k => `${k}:${PALETA[k][0]};${k}-d:${PALETA[k][1]};${k}-w:${PALETA[k][2]};`).join('\n  ');
 const estilo = `<style id="medicamentos-visual">
 :root{
   --brand:${PALETA.brand};--brand-strong:${PALETA.brandStrong};--brand-soft:${PALETA.brandWash};
@@ -403,7 +403,6 @@ body{background:#F3F5F7!important}
 .med-card[data-nucleo="Drogaria"]{--tone:${dro[0]};--tone-dark:${dro[1]};--wash:${dro[2]}}
 .med-card[data-nucleo="Manipulação"]{--tone:${man[0]};--tone-dark:${man[1]};--wash:${man[2]}}
 .med-card[data-nucleo="Atacadista de medicamentos"]{--tone:${ata[0]};--tone-dark:${ata[1]};--wash:${ata[2]}}
-.med-card[data-nucleo="Transportadora de medicamentos"]{--tone:${tra[0]};--tone-dark:${tra[1]};--wash:${tra[2]}}
 @media(max-width:700px){
  .nuclei-grid.med-grid{grid-template-columns:1fr!important;gap:10px!important}
  .med-card{grid-template-columns:48px minmax(0,1fr) 30px!important;gap:13px!important;min-height:92px!important;padding:14px 12px 14px 15px!important}

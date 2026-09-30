@@ -21,7 +21,6 @@ const CASOS = [
   ['Drogaria', 'drogaria', async (f, c) => { await c('button[data-card]', 'SEÇÃO 3'); await c('[data-drg-item="bloco-0-SNGPC"]'); }],
   ['Manipulação', 'farmacia-manipulacao', async (f, c) => { await c('[data-open-card="3"]'); await c('[data-man-item="i3.1"]'); }],
   ['Atacadista de medicamentos', 'distribuidoras-transportadoras', async (f, c) => { await c('[data-dist-card="3"]'); await c('[data-dist-section="recebimento"]'); }],
-  ['Atacadista de medicamentos', 'transportadora', async (f, c) => { await c('[data-dist-card="3"]'); await c('[data-dist-section="recebimento"]'); }],
   ['Drogaria', 'eac', async f => { await f.evaluate(() => UvisPadrao.vai({aba: 'roteiro', secao: ROTEIRO.secoes[1].id, item: ROTEIRO.secoes[1].itens[0].id})); }]
 ];
 

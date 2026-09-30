@@ -39,31 +39,18 @@
     {
       "id": "Atacadista de medicamentos",
       "var": "--t-ata",
-      "sub": "Atacadista de medicamentos e de gases medicinais",
+      "sub": "Distribuidora, transportadora e gases medicinais",
       "icone": "<path d=\"M3 21V9l9-5 9 5v12M7 21v-7h10v7M7 17h10\"/>",
       "roteiros": [
         [
           "Atacadista de medicamentos",
-          "Distribuição e armazenagem de medicamentos (RDC 430/2020).",
+          "Distribuidora e/ou transportadora (RDC 430/2020): escolha o tipo de operação na identificação.",
           "distribuidoras-transportadoras"
         ],
         [
           "Atacadista de gases medicinais",
           "Distribuição, armazenagem, transporte e dispensação de gases medicinais (RDC 887/2024 e RDC 870/2024).",
           "gases-medicinais"
-        ]
-      ]
-    },
-    {
-      "id": "Transportadora de medicamentos",
-      "var": "--t-tra",
-      "sub": "Transporte de medicamentos",
-      "icone": "<path d=\"M2 7h11v10H2zM13 10h4l3 3v4h-7zM6.5 17a1.6 1.6 0 1 0 0 3.2A1.6 1.6 0 0 0 6.5 17M16.5 17a1.6 1.6 0 1 0 0 3.2 1.6 1.6 0 0 0 0-3.2\"/>",
-      "roteiros": [
-        [
-          "Transportadora de medicamentos",
-          "Transporte de medicamentos: as partes próprias de distribuidora não se aplicam (RDC 430/2020).",
-          "transportadora"
         ]
       ]
     }

@@ -14,6 +14,7 @@ const NR32 = 'NR-32 (Segurança e saúde no trabalho em serviços de saúde)';
 const REDE_FRIO = 'Manual de Rede de Frio do Programa Nacional de Imunizações (Ministério da Saúde, 6ª ed., 2025)';
 const RBC = 'ABNT NBR ISO/IEC 17025; laboratórios acreditados pela Cgcre/Inmetro (Rede Brasileira de Calibração — RBC)';
 const FB = 'Farmacopeia Brasileira, 6ª edição';
+const NORMAS_VAC = 'Manual de Normas e Procedimentos para Vacinação (Ministério da Saúde, 2ª ed. revisada, 2024)';
 
 module.exports = {
  rs: {
@@ -79,7 +80,14 @@ module.exports = {
     {t: 'Vacinador capacitado em técnica de aplicação, rede de frio e atendimento a eventos adversos; RT com habilitação legal; trabalhadores vacinados (hepatite B, tétano, difteria).', f: 'RDC Anvisa nº 197/2017; ' + NR32}
    ],
    sala: [
-    {t: 'Sala exclusiva para vacinação, com pia e lavatório, bancada, cadeira ou maca, recipiente para perfurocortantes e acesso a material para atendimento de reações (ex.: adrenalina 1 mg/mL, conforme protocolo do serviço).', f: 'RDC Anvisa nº 197/2017; Manual de Normas e Procedimentos para Vacinação (Ministério da Saúde, 2014)'}
+    {t: 'A sala de vacinação é área semicrítica e exclusiva para administrar imunobiológicos. Área mínima de 6 m² (RDC 50/2002); recomendada de 9 m². Acessível a pessoas com deficiência.', f: NORMAS_VAC},
+    {t: 'Piso e paredes lisos, contínuos e laváveis; teto com forro resistente à lavagem; bancada de material não poroso; ralos com tampa; iluminação, temperatura e ventilação adequadas (ar-condicionado).', f: NORMAS_VAC},
+    {t: 'Duas pias: uma para lavar materiais e caixas térmicas (cuba funda) e outra exclusiva para as mãos, com torneira sem contato manual, sabonete líquido e papel-toalha. Tomada exclusiva e aterrada para cada equipamento, a no mínimo 1,30 m do piso.', f: NORMAS_VAC},
+    {t: 'Equipamentos e insumos básicos: câmara refrigerada cadastrada na Anvisa, exclusiva para imunobiológicos; freezer para bobinas; termômetro de momento, máxima e mínima com cabo extensor para cada caixa térmica e câmara (mais um reserva); caixa coletora de perfurocortantes com suporte; álcool 70%; lixeira com pedal; maca ou acesso a maca para emergência.', f: NORMAS_VAC}
+   ],
+   ambientes: [
+    {t: 'Limpeza concorrente da sala de vacinação pelo menos duas vezes ao dia (área semicrítica) e sempre que necessário; limpeza terminal no mínimo a cada 15 dias (piso, teto, paredes, portas, janelas, mobiliário, luminárias e filtros do ar-condicionado); panos exclusivos para piso e demais superfícies.', f: NORMAS_VAC},
+    {t: 'Limpeza das câmaras refrigeradas mensalmente ou conforme o uso, de preferência no início da semana e com estoque reduzido, seguindo o fabricante e remanejando as vacinas antes.', f: NORMAS_VAC + '; ' + REDE_FRIO}
    ],
    refrigeracao: [
     {t: 'É proibido guardar vacinas em refrigerador de uso doméstico ou frigobar. O equipamento deve ser câmara científica refrigerada regularizada na Anvisa (ou pré-qualificada pela OMS), de uso exclusivo para imunobiológicos; o freezer científico, quando houver, guarda só as bobinas reutilizáveis. Encontrado equipamento doméstico, a substituição deve ser imediata.', f: 'RDC Anvisa nº 197/2017, art. 10, § 2º; ' + REDE_FRIO},
