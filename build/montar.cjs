@@ -306,6 +306,11 @@ blocoAltera('app--distribuidoras-transportadoras', s => {
     + "if(m.transpCross==='Sim')t.push('Realiza armazenagem temporária (cross-docking).');else if(m.transpCross==='Não')t.push('Não realiza armazenagem temporária.');"
     + "if(ddTem(m.transpFrota))t.push('Frota '+ddLc(m.transpFrota)+'.');if(ddTem(m.transpVeiculos))t.push('Veículos: '+ddFim(m.transpVeiculos));if(ddTem(m.transpRntrc))t.push('RNTRC nº '+m.transpRntrc+'.');return t.join(' ')}"
     + "function ddRascunhoGeral(){return [ddTrilhaTransp(),ddRascunhoGeral0()].filter(ddTem).join('\\n\\n')}function ddRascunhoGeral0(){", 'atacadista: trilha no item 5');
+  /* Etapa 1 › Dados da inspeção › Atividades (meta.activities) não saía em lugar
+     nenhum do Anexo I: os quadros de atividades dos itens 1 e 2 são os da licença,
+     da AFE e da AE. O modelo não tem linha própria no item 3; entra junto do objetivo. */
+  s = trocaEm(s, "kv('Objetivo da inspeção',[m.objective,m.inspectionType&&('Tipo: '+m.inspectionType)].filter(Boolean).join('. '));",
+    "kv('Objetivo da inspeção',[m.objective,m.inspectionType&&('Tipo: '+m.inspectionType),(Array.isArray(m.activities)?m.activities:ddLista(m.activities)).length&&('Atividades verificadas: '+ddJoin((Array.isArray(m.activities)?m.activities:ddLista(m.activities)).map(ddLc)))].filter(Boolean).join('. '));", 'anexo I: atividades verificadas');
   return trocaEm(s, "if(!ddTem(R.previous)&&m.first!=='Sim')", "if(!ddTem(R.previous)&&!ddTem(ddRascunhoAnterior())&&m.first!=='Sim')", 'anexo I: pendência 6');
 });
 
@@ -419,6 +424,32 @@ async function irregular(kind,value){`, 'central: função achataIrregular');
      qualquer caminho (registro, processo); CNPJ tirado do “detentor” quando falta. */
   s = trocaEm(s, 'function valor(k,v){', "function valor(k,v){if(k==='situacao'&&(v==='S'||v==='N'))v=v==='S'?'Ativo':'Inativo';if(k==='vencimento'){const u=/^(\\d{2})\\/(\\d{2})\\/(\\d{4})\\s+\\d/.exec(String(v));if(u)return esc(u[2]+'/'+u[1]+'/'+u[3])}", 'central: situação e vencimento');
   s = trocaEm(s, "delete y.registrado;delete y.atualizado_em;return y}", "if(!y.cnpj){const c=/^(\\d{14})\\s*-/.exec(String(y.detentor||''));if(c)y.cnpj=c[1]}delete y.registrado;delete y.atualizado_em;return y}", 'central: cnpj do detentor');
+  /* Alertas sanitários: identificadores (lote, série, modelo), anexos e outras
+     publicações são listas de objetos e saíam “[object Object]” (ex.: ABL90Flex,
+     alerta 2781). Viram texto; o link oficial vira link; datas com hora em dd/mm/aaaa.
+     Rede de segurança no valor(): qualquer outra lista de objetos vira texto. */
+  s = trocaEm(s, "if(numeros.includes(digits(item.numero_alerta)))out.push({...item,_base:'alertas_sanitarios'})",
+    "if(numeros.includes(digits(item.numero_alerta)))out.push(achataAlerta({...item,_base:'alertas_sanitarios'}))", 'central: alerta achatado');
+  s = trocaEm(s, 'async function alerts(kind,value){',
+    `function achataAlerta(it){
+  const x={...it},TIPO={lote:'Lote',serie:'Série',modelo:'Modelo',referencia:'Referência',codigo:'Código'};
+  const ids=Array.isArray(it.identificadores)?it.identificadores.filter(i=>i&&typeof i==='object'):[];
+  if(ids.length){const g=new Map();ids.forEach(i=>{const t=TIPO[i.tipo]||String(i.tipo||'Identificador');if(!g.has(t))g.set(t,[]);const vv=/^ver$/i.test(String(i.valor||'').trim())?'ver lista no anexo':String(i.valor||'');if(vv&&!g.get(t).includes(vv))g.get(t).push(vv)});x.identificadores=[...g].map(([t,v])=>t+': '+v.join(', ')).join(' · ')}else delete x.identificadores;
+  const an=Array.isArray(it.anexos)?it.anexos.filter(a=>a&&typeof a==='object'):[];
+  if(an.length)x.anexos=an.map(a=>a.nome||('Anexo '+(a.id||''))).join(' · ')+' (disponíveis na página oficial do alerta)';else delete x.anexos;
+  const op=Array.isArray(it.outras_publicacoes)?it.outras_publicacoes.filter(a=>a&&typeof a==='object'):[];
+  if(op.length)x.outras_publicacoes=op.map(a=>a.nome||a.url||'').filter(Boolean).join(' · ');else delete x.outras_publicacoes;
+  if(Array.isArray(x.cnpjs))x.cnpjs=x.cnpjs.map(c=>/^\\d{14}$/.test(String(c))?fmtCnpj(String(c)):String(c));
+  delete x.id_alerta;
+  return x;
+}
+async function alerts(kind,value){`, 'central: função achataAlerta');
+  s = trocaEm(s, "function valor(k,v){if(k==='situacao'",
+    "function valor(k,v){if(/^data_/.test(k)){const d=/^(\\d{4})-(\\d{2})-(\\d{2})T/.exec(String(v||''));if(d)return esc(d[3]+'/'+d[2]+'/'+d[1])}"
+    + "if(k==='url_oficial'&&/^https?:\\/\\//.test(String(v)))return '<a href=\"'+esc(v)+'\" target=\"_blank\" rel=\"noopener\">Abrir na Anvisa ↗</a>';"
+    + "if(Array.isArray(v)&&v.some(e=>e&&typeof e==='object'))v=v.map(e=>e&&typeof e==='object'?(e.nome||e.valor||e.descricao||e.titulo||Object.values(e).filter(z=>z!=null&&typeof z!=='object').join(' ')):e);"
+    + "if(k==='situacao'", 'central: datas, link e listas de objetos');
+  s = trocaEm(s, "Object.assign(field,{infracao:'Infração',", "Object.assign(field,{identificadores:'Identificadores (lote, série, modelo)',anexos:'Anexos do alerta',outras_publicacoes:'Outras publicações',url_oficial:'Página oficial',informacoes_complementares:'Informações complementares',data_atualizacao:'Atualização',tipo_alerta:'Tipo',registros:'Registros',cnpjs:'CNPJ',motivacao:'Motivação',infracao:'Infração',", 'central: rótulos dos alertas');
   return s;
 });
 

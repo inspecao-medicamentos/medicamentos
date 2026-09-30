@@ -44,8 +44,7 @@ module.exports = {
             ['varicela', 'Varicela / tríplice viral'], ['outra', 'Outras']]},
           {id: 'vacinas_outras', rotulo: 'Outras vacinas', largo: true},
           {id: 'extramuros', rotulo: 'Realiza vacinação extramuros?', tipo: 'select', opcoes: [['sim', 'Sim'], ['nao', 'Não']]},
-          {id: 'civp', rotulo: 'Emite Certificado Internacional de Vacinação (CIVP)?', tipo: 'select', opcoes: [['sim', 'Sim'], ['nao', 'Não']]},
-          {id: 'refrigeracao', rotulo: 'Equipamento de refrigeração das vacinas (tipo, marca/modelo)', tipo: 'textarea', largo: true}
+          {id: 'civp', rotulo: 'Emite Certificado Internacional de Vacinação (CIVP)?', tipo: 'select', opcoes: [['sim', 'Sim'], ['nao', 'Não']]}
         ]}
       ]
     },
@@ -95,7 +94,12 @@ module.exports = {
             c: 'Há caixa térmica de fácil higienização e termômetro de momento, máxima e mínima, com cabo extensor.',
             nc: 'Não há caixa térmica de fácil higienização ou termômetro de momento, máxima e mínima, com cabo extensor.', inf: ['vac_infra']}
         ]},
-        {id: 'refrigeracao', titulo: 'Equipamento de refrigeração', curto: 'Refrigeração', perguntas: [
+        {id: 'refrigeracao', titulo: 'Equipamento de refrigeração', curto: 'Refrigeração',
+          descricao: 'Cadastre cada equipamento que guarda vacinas: busque pelo registro na Anvisa ou pelo processo, ou digite os dados. Os equipamentos saem em tabela no relatório.',
+          /* legado: o texto livre que ficava em 1.2 (meta.refrigeracao) vira o primeiro equipamento */
+          campos: [{id: 'equip_refrig', rotulo: 'Equipamentos de refrigeração das vacinas', tipo: 'equipamentos', largo: true, legado: 'refrigeracao',
+            tipos: ['Câmara refrigerada para imunobiológicos', 'Refrigerador doméstico', 'Freezer / congelador', 'Caixa térmica', 'Outro']}],
+          perguntas: [
           {id: 'exclusivo', t: 'As vacinas ficam em equipamento de refrigeração exclusivo, com termômetro de momento, máxima e mínima?', r: [AL('f')],
             c: 'As vacinas ficam em equipamento de refrigeração exclusivo, com termômetro de momento, máxima e mínima.',
             nc: 'As vacinas não ficam em equipamento de refrigeração exclusivo com termômetro de momento, máxima e mínima.', inf: ['vac_refrig']},

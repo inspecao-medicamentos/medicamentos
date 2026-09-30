@@ -1,6 +1,6 @@
 {
-  "versao": "20260930-15",
+  "versao": "20260930-16",
   "banco": "13.1",
   "correcoes": 1,
-  "notas": "Central de Consultas: CNPJ/EAN com dígito errado não mostra mais a consulta anterior; processo de saneantes e medicamentos lido direto das bases por processo; medidas fiscais sem “[object Object]”."
+  "notas": "Vacinação: equipamentos de refrigeração em 3.3, com busca pelo registro ou processo na Anvisa e tabela no relatório. Central: alertas sem “[object Object]”. Atacadista: tela Estabelecimento não pisca mais ao escolher o tipo de operação; atividades de Dados da inspeção saem no Anexo I."
 }

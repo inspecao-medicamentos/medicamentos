@@ -17,6 +17,9 @@
  function novo(){ return {v: 1, meta: {}, r: {}, sit: {}, fotos: {}, inf: {}, concl: ''}; }
  function carrega(){ try { var x = JSON.parse(localStorage.getItem(STORE) || 'null'); if(x && x.v === 1) return Object.assign(novo(), x); } catch(e){} return novo(); }
  var st = carrega();
+ /* campo de equipamentos que substituiu um texto livre (c.legado): o texto antigo vira o primeiro equipamento */
+ D.secoes.forEach(function(s){ s.itens.forEach(function(it){ (it.campos || []).forEach(function(c){ if(c.tipo !== 'equipamentos' || !c.legado) return;
+  var ant = String(st.meta[c.legado] || '').trim(); if(!ant) return; if(!(Array.isArray(st.meta[c.id]) && st.meta[c.id].length)) st.meta[c.id] = [{obs: ant}]; delete st.meta[c.legado]; }); }); });
  function salva(){ st.em = new Date().toISOString(); try { localStorage.setItem(STORE, JSON.stringify(st)); } catch(e){ aviso('Não foi possível salvar no aparelho (memória cheia?). Remova fotos ou exporte pelas Salvas.'); } }
  function aviso(t){ var a = document.getElementById('rs-aviso'); if(!a){ a = document.createElement('div'); a.id = 'rs-aviso'; a.setAttribute('role', 'status'); document.body.appendChild(a); } a.textContent = t; a.classList.add('on'); clearTimeout(aviso.t); aviso.t = setTimeout(function(){ a.classList.remove('on'); }, 3500); }
 
@@ -26,7 +29,7 @@
  var INF = {}; D.infracoes.forEach(function(i){ INF[i.id] = i; });
  function visivel(q){ var c = q.se; if(!c) return true; var v = st.meta[c.campo]; if(c.inclui) return Array.isArray(v) && v.indexOf(c.inclui) >= 0; if(c.igual !== undefined) return v === c.igual; return true; }
  function perguntasDe(it){ return (it.perguntas || []).filter(visivel); }
- function campoPreenchido(c){ var v = st.meta[c.id]; return Array.isArray(v) ? v.length > 0 : !!String(v || '').trim(); }
+ function campoPreenchido(c){ var v = st.meta[c.id]; return Array.isArray(v) ? v.some(function(x){ return x && typeof x === 'object' ? eqTem(x) : true; }) : !!String(v || '').trim(); }
  function progressoItem(it){ var ps = perguntasDe(it), cs = it.campos || []; return {feitos: ps.filter(function(q){ return st.r[q.id]; }).length + cs.filter(campoPreenchido).length, total: ps.length + cs.length}; }
  function nNC(){ return ORDEM.filter(function(id){ return st.r[id] === 'nc' && visivel(PERG[id]); }).length; }
  function sugeridas(){ var s = {}; ORDEM.forEach(function(id){ var q = PERG[id]; if(st.r[id] === 'nc' && visivel(q)) (q.inf || []).forEach(function(i){ (s[i] = s[i] || []).push(ONDE[id].n); }); }); return s; }
@@ -54,10 +57,74 @@
 
  /* ---------- tela do item ---------- */
  function campoHtml(c){ var v = st.meta[c.id], cls = 'pu-campo rs-campo' + (c.largo ? ' rs-largo' : '');
+  if(c.tipo === 'equipamentos') return equipHtml(c);
   if(c.tipo === 'checks'){ var a = Array.isArray(v) ? v : []; return '<fieldset class="' + cls + ' rs-largo"><legend>' + esc(c.rotulo) + '</legend><div class="rs-checks">' + c.opcoes.map(function(o){ return '<label><input type="checkbox" data-rs-check="' + esc(c.id) + '" value="' + esc(o[0]) + '"' + (a.indexOf(o[0]) >= 0 ? ' checked' : '') + '><span>' + esc(o[1]) + '</span></label>'; }).join('') + '</div></fieldset>'; }
   if(c.tipo === 'select') return '<label class="' + cls + '"><span>' + esc(c.rotulo) + '</span><select data-rs-meta="' + esc(c.id) + '">' + [['', 'Selecione']].concat(c.opcoes).map(function(o){ return '<option value="' + esc(o[0]) + '"' + (v === o[0] ? ' selected' : '') + '>' + esc(o[1]) + '</option>'; }).join('') + '</select></label>';
   if(c.tipo === 'textarea') return '<label class="' + cls + '"><span>' + esc(c.rotulo) + '</span><textarea data-rs-meta="' + esc(c.id) + '" rows="3">' + esc(v || '') + '</textarea></label>';
   return '<label class="' + cls + '"><span>' + esc(c.rotulo) + '</span><input type="' + (c.tipo === 'date' ? 'date' : 'text') + '"' + (c.tipo === 'cnpj' ? ' inputmode="numeric" maxlength="18" data-rs-cnpj' : '') + ' data-rs-meta="' + esc(c.id) + '" value="' + esc(v || '') + '"></label>'; }
+ /* ---------- equipamentos: lista com busca na base de produtos para saúde da Anvisa ----------
+    Cada equipamento: busca pelo registro (11 dígitos) ou processo (15 a 17) na base
+    pública (dispositivos/<5 primeiros dígitos do registro>.json; processo pelo índice
+    indices/processos). A busca preenche registro, processo, produto, fabricante (país),
+    detentor e classe; tudo continua editável e pode ser digitado sem busca. */
+ var EQ_CAMPOS = [['tipo', 'Tipo', 'select'], ['nome', 'Nome comercial / produto'], ['modelo', 'Marca e modelo'], ['registro', 'Registro na Anvisa'], ['processo', 'Processo na Anvisa'],
+  ['fabricante', 'Fabricante (país)'], ['detentor', 'Detentor do registro'], ['classe', 'Classe de risco'], ['serie', 'Nº de série / patrimônio'], ['local', 'Local e uso'], ['obs', 'Observações', 'textarea']];
+ var eqMsg = {};
+ function eqLista(id){ return Array.isArray(st.meta[id]) ? st.meta[id] : []; }
+ function eqTem(e){ return EQ_CAMPOS.some(function(f){ return String(e[f[0]] || '').trim(); }); }
+ function equipHtml(c){ var L = eqLista(c.id), n = Math.max(L.length, 1), h = '';
+  for(var i = 0; i < n; i++){ var e = L[i] || {}, k = c.id + '|' + i, m = eqMsg[k];
+   h += '<div class="rs-eq"><div class="rs-eq-top"><b>Equipamento ' + (i + 1) + '</b>' + (i < L.length ? '<button type="button" class="pu-btn" data-rs-eq-del="' + esc(k) + '">Remover</button>' : '') + '</div>'
+    + '<div class="rs-eq-busca"><label class="pu-campo rs-campo"><span>Buscar na Anvisa pelo registro ou processo</span><input type="text" inputmode="numeric" data-rs-eq="' + esc(k) + '|busca" placeholder="Registro ou processo para pesquisar" value="' + esc(e.busca || '') + '"></label><button type="button" class="pu-btn pu-btn-pri" data-rs-eq-buscar="' + esc(k) + '">Buscar</button></div>'
+    + (m ? '<p class="rs-eq-msg' + (m.tipo ? ' rs-eq-' + m.tipo : '') + '" role="status">' + esc(m.t) + '</p>' : '')
+    + '<div class="rs-campos">' + EQ_CAMPOS.map(function(f){ var v = e[f[0]] || '', a = ' data-rs-eq="' + esc(k) + '|' + f[0] + '"';
+      if(f[2] === 'select') return '<label class="pu-campo rs-campo"><span>' + f[1] + '</span><select' + a + '>' + [''].concat(c.tipos || []).map(function(o){ return '<option value="' + esc(o) + '"' + (v === o ? ' selected' : '') + '>' + esc(o || 'Selecione') + '</option>'; }).join('') + '</select></label>';
+      if(f[2] === 'textarea') return '<label class="pu-campo rs-campo rs-largo"><span>' + f[1] + '</span><textarea rows="2"' + a + '>' + esc(v) + '</textarea></label>';
+      return '<label class="pu-campo rs-campo"><span>' + f[1] + '</span><input type="text"' + a + ' value="' + esc(v) + '"></label>'; }).join('') + '</div>'
+    + (e.consulta ? '<p class="pu-q-ajuda">Dados do registro conferidos na base de produtos para saúde da Anvisa em ' + esc(fmtData(e.consulta)) + '.</p>' : '') + '</div>'; }
+  return '<fieldset class="' + 'pu-campo rs-campo rs-largo rs-eqs"><legend>' + esc(c.rotulo) + '</legend>' + h + '<div><button type="button" class="pu-btn" data-rs-eq-add="' + esc(c.id) + '">+ Adicionar equipamento</button></div></fieldset>'; }
+ function eqSet(k, dados){ var p = k.split('|'), id = p[0], i = +p[1], L = eqLista(id).slice(); while(L.length <= i) L.push({}); var e = Object.assign({}, L[i], dados);
+  /* registro trocado à mão depois da busca: a nota de conferência deixa de valer */
+  if(e.consulta && dig(e.registro) !== e.consultaReg){ delete e.consulta; delete e.consultaReg; }
+  L[i] = e; st.meta[id] = L; salva(); }
+ var BASES = ['https://uvisvp.github.io/base-vigilancia/dados/', 'https://raw.githubusercontent.com/uvisvp/base-vigilancia/main/dados/'];
+ function jget(path){ var i = 0; function tenta(){ var u = BASES[i++] + path; return fetch(u, {cache: 'no-store'}).then(function(r){ if(r.status === 404) return null; if(!r.ok) throw Error('HTTP ' + r.status); return r.json(); }).catch(function(e){ if(i < BASES.length) return tenta(); throw e; }); } return tenta(); }
+ function dig(v){ return String(v || '').replace(/\D/g, ''); }
+ function porRegistro(reg){ return jget('dispositivos/' + reg.slice(0, 5) + '.json').then(function(d){ return (d || []).filter(function(x){ return dig(x.registro) === reg; }); }); }
+ function buscaEquip(txt){ var d = dig(txt);
+  if(d.length >= 15 || (/^25/.test(d) && d.length >= 13)) return jget('indices/processos/' + d.slice(5, 8) + '.json').then(function(idx){
+   var regs = ((idx && idx[d]) || []).filter(function(r){ return r && r.b === 'dispositivos'; }).map(function(r){ return dig(r.r); });
+   return Promise.all(regs.map(porRegistro)).then(function(a){ return {por: 'processo', achados: [].concat.apply([], a).filter(function(x){ return dig(x.processo) === d; })}; }); });
+  if(d.length < 7) return Promise.reject(Error('curto'));
+  return porRegistro(d).then(function(a){ return !a.length && d.length > 11 ? porRegistro(d.slice(0, 11)) : a; }).then(function(a){ return {por: 'registro', achados: a}; }); }
+ function eqBuscar(k){ var p = k.split('|'), e = eqLista(p[0])[+p[1]] || {}, q = e.busca || e.registro || e.processo || '';
+  if(!dig(q)){ eqMsg[k] = {t: 'Digite o registro (11 dígitos) ou o processo (17 dígitos) do equipamento.', tipo: 'aviso'}; redesenha(); return; }
+  eqMsg[k] = {t: 'Consultando a base da Anvisa…'}; redesenha();
+  buscaEquip(q).then(function(r){ var x = r.achados[0];
+   if(!x){ eqMsg[k] = {t: (r.por === 'processo' ? 'Processo' : 'Registro') + ' não localizado na base de produtos para saúde da Anvisa. Confira o número na consulta oficial; se o equipamento não tiver registro, registre isso na pergunta sobre regularização. Os dados podem ser digitados.', tipo: 'aviso'}; redesenha(); return; }
+   var refrig = /C[ÂA]MARA|REFRIGER|CONSERVA[ÇC][ÃA]O|FREEZER|CONGELA|GELADEIRA|T[ÉE]RMIC/i.test(x.produto || ''), atual = eqLista(p[0])[+p[1]] || {};
+   var dados = {registro: x.registro || '', processo: x.processo || '', nome: x.produto || '', fabricante: [x.fabricante, x.pais].filter(Boolean).join(' — '), detentor: x.detentor || '', classe: x.classe ? 'Classe ' + x.classe : ''};
+   if(!atual.tipo && /C[ÂA]MARA/i.test(x.produto || '')) dados.tipo = 'Câmara refrigerada para imunobiológicos';
+   eqSet(k, dados); eqSet(k, {consulta: new Date().toISOString().slice(0, 10), consultaReg: dig(x.registro)});
+   eqMsg[k] = {t: 'Encontrado: ' + String(x.produto || '').replace(/\.+$/, '') + (r.achados.length > 1 ? ' (' + r.achados.length + ' registros; usado o primeiro).' : '.') + (refrig ? '' : ' Atenção: o produto deste registro não parece ser equipamento de refrigeração; confira.'), tipo: refrig ? 'ok' : 'aviso'};
+   redesenha(); },
+  function(err){ eqMsg[k] = {t: err && err.message === 'curto' ? 'Número curto demais: digite o registro (11 dígitos) ou o processo (17 dígitos).' : 'Não foi possível consultar a base agora (sem internet?). Preencha os dados à mão.', tipo: 'aviso'}; redesenha(); }); }
+ function sv(x){ return !!String(x || '').trim(); }
+ /* campo de item fora da identificação → blocos do relatório, sob o título do item */
+ function campoRel(c){ var v = st.meta[c.id];
+  if(c.tipo === 'equipamentos'){ var L = (Array.isArray(v) ? v : []).filter(eqTem); if(!L.length) return [];
+   var out = [{t: 'table', head: ['Equipamento', 'Registro e processo na Anvisa', 'Fabricante e detentor', 'Série, local e observações'], widths: [2500, 2200, 2500, 2100], rows: L.map(function(e){ return [
+    [e.tipo, e.nome, e.modelo].filter(sv).join('\n') || '—',
+    [sv(e.registro) ? 'Registro ' + e.registro : 'Registro não informado', sv(e.processo) ? 'Processo ' + e.processo : '', e.classe].filter(sv).join('\n'),
+    [sv(e.fabricante) ? 'Fabricante: ' + e.fabricante : '', sv(e.detentor) ? 'Detentor: ' + e.detentor : ''].filter(sv).join('\n') || '—',
+    [sv(e.serie) ? 'Série / patrimônio: ' + e.serie : '', sv(e.local) ? 'Local: ' + e.local : '', e.obs].filter(sv).join('\n') || '—']; })}];
+   var cons = []; L.forEach(function(e){ if(e.consulta && cons.indexOf(fmtData(e.consulta)) < 0) cons.push(fmtData(e.consulta)); });
+   if(cons.length) out.push({t: 'small', x: 'Dados de registro conferidos na base de produtos para saúde da Anvisa em ' + lista(cons) + '.'});
+   return out; }
+  if(Array.isArray(v)) v = v.map(function(x){ var o = (c.opcoes || []).filter(function(p){ return p[0] === x; })[0]; return o ? o[1] : x; }).join(', ');
+  if(c.tipo === 'select'){ var op = (c.opcoes || []).filter(function(o){ return o[0] === v; })[0]; if(op) v = op[1]; }
+  if(c.tipo === 'date') v = fmtData(v);
+  return sv(v) ? [{t: 'kv', k: c.rotulo.replace(/\?$/, ''), v: String(v).trim()}] : []; }
  var fotoAberta = '', previaAberta = {};
  function perguntaHtml(q){ var r = st.r[q.id] || '', f = st.fotos[q.id], o = ONDE[q.id];
   var bt = [['c', 'Cumpre', 'ok'], ['nc', 'Não cumpre', 'nao']].concat(q.na ? [['na', 'Não se aplica', 'na']] : []);
@@ -96,9 +163,10 @@
   B.push({t: 'h1', x: (++sec) + ' VERIFICAÇÕES REALIZADAS'});
   var ns = 0;
   D.secoes.slice(1).forEach(function(s){ var partes = [];
-   s.itens.forEach(function(it){ var ps = perguntasDe(it).filter(function(q){ return st.r[q.id]; }); if(!ps.length) return;
+   s.itens.forEach(function(it){ var ps = perguntasDe(it).filter(function(q){ return st.r[q.id]; }), cps = [].concat.apply([], (it.campos || []).map(campoRel)); if(!ps.length && !cps.length) return;
     var fr = ps.filter(function(q){ return st.r[q.id] !== 'na'; }).map(frase), na = ps.filter(function(q){ return st.r[q.id] === 'na'; });
     partes.push({t: 'h2', x: sec + '.' + (ns + 1) + '.' + (partes.filter(function(p){ return p.t === 'h2'; }).length + 1) + ' ' + it.titulo});
+    cps.forEach(function(b){ partes.push(b); });
     if(fr.length) partes.push({t: 'p', x: fr.join(' ')});
     if(na.length) partes.push({t: 'small', x: 'Não se aplicam ao estabelecimento: ' + lista(na.map(function(q){ return q.t.replace(/\?$/, '').replace(/^./, function(c){ return c.toLowerCase(); }); })) + '.'});
     ps.forEach(function(q){ if(st.r[q.id] === 'nc') irr.push(q); }); });
@@ -118,12 +186,12 @@
   if(b.t === 'h1') return '<h3 class="rs-r-h1">' + esc(b.x) + '</h3>'; if(b.t === 'h2') return '<h4 class="rs-r-h2">' + esc(b.x) + '</h4>';
   if(b.t === 'kv') return '<p><b>' + esc(b.k) + ':</b> ' + esc(b.v) + '</p>'; if(b.t === 'num') return '<p class="rs-r-num"><b>' + esc(b.n) + (b.n === '•' ? '' : '.') + '</b> ' + esc(b.x) + '</p>';
   if(b.t === 'small') return '<p class="rs-r-small">' + esc(b.x) + '</p>';
-  if(b.t === 'table') return '<div class="rs-r-tab"><table><thead><tr>' + b.head.map(function(h){ return '<th>' + esc(h) + '</th>'; }).join('') + '</tr></thead><tbody>' + b.rows.map(function(r){ return '<tr>' + r.map(function(c){ return '<td>' + esc(c) + '</td>'; }).join('') + '</tr>'; }).join('') + '</tbody></table></div>';
+  if(b.t === 'table') return '<div class="rs-r-tab"><table><thead><tr>' + b.head.map(function(h){ return '<th>' + esc(h) + '</th>'; }).join('') + '</tr></thead><tbody>' + b.rows.map(function(r){ return '<tr>' + r.map(function(c){ return '<td>' + esc(c).replace(/\n/g, '<br>') + '</td>'; }).join('') + '</tr>'; }).join('') + '</tbody></table></div>';
   if(b.t === 'sign') return '<p class="rs-r-small">Local, data e assinaturas da autoridade sanitária e do responsável pelo estabelecimento.</p>';
   return '<p>' + esc(b.x) + '</p>'; }).join(''); }
  function blocosTexto(B){ var L = []; B.forEach(function(b){
   if(b.t === 'title') L.push(b.x, ''); else if(b.t === 'sub') L.push(b.x, ''); else if(b.t === 'h1') L.push('', b.x, ''); else if(b.t === 'h2') L.push('', b.x, '');
-  else if(b.t === 'kv') L.push(b.k + ': ' + b.v); else if(b.t === 'num') L.push(b.n + (b.n === '•' ? ' ' : '. ') + b.x); else if(b.t === 'table'){ L.push(b.head.join(' | ')); b.rows.forEach(function(r){ L.push(r.join(' | ')); }); L.push(''); }
+  else if(b.t === 'kv') L.push(b.k + ': ' + b.v); else if(b.t === 'num') L.push(b.n + (b.n === '•' ? ' ' : '. ') + b.x); else if(b.t === 'table'){ L.push(b.head.join(' | ')); b.rows.forEach(function(r){ L.push(r.map(function(c){ return String(c).replace(/\n/g, '; '); }).join(' | ')); }); L.push(''); }
   else if(b.t === 'sign') L.push('', 'Local e data: ______________________________', '', '________________________________', 'Autoridade sanitária', '', '________________________________', 'Responsável pelo estabelecimento');
   else L.push(b.x, ''); }); return L.join('\n').replace(/\n{3,}/g, '\n\n').trim(); }
 
@@ -201,6 +269,9 @@
   if((b = e.target.closest('[data-rs-r]'))){ var p = b.dataset.rsR.split('|'); st.r[p[0]] = st.r[p[0]] === p[1] ? '' : p[1]; if(!st.r[p[0]]) delete st.r[p[0]]; salva(); redesenha(); return; }
   if((b = e.target.closest('[data-rs-lote]'))){ var n = UvisPadrao.estado(), s = D.secoes.filter(function(x){ return x.id === n.secao; })[0], it = s && s.itens.filter(function(x){ return x.id === n.item; })[0];
    if(it) perguntasDe(it).forEach(function(q){ if(!st.r[q.id] && (b.dataset.rsLote === 'c' || q.na)) st.r[q.id] = b.dataset.rsLote; }); salva(); redesenha(); return; }
+  if((b = e.target.closest('[data-rs-eq-buscar]'))){ eqBuscar(b.dataset.rsEqBuscar); return; }
+  if((b = e.target.closest('[data-rs-eq-add]'))){ var La = eqLista(b.dataset.rsEqAdd).slice(); if(!La.length) La.push({}); La.push({}); st.meta[b.dataset.rsEqAdd] = La; salva(); redesenha(); return; }
+  if((b = e.target.closest('[data-rs-eq-del]'))){ var pd = b.dataset.rsEqDel.split('|'), Ld = eqLista(pd[0]).slice(); Ld.splice(+pd[1], 1); st.meta[pd[0]] = Ld; eqMsg = {}; salva(); redesenha(); return; }
   if((b = e.target.closest('[data-rs-foto]'))){ foto(b.dataset.rsFoto); return; }
   if((b = e.target.closest('[data-rs-sem-foto]'))){ delete st.fotos[b.dataset.rsSemFoto]; fotoAberta = b.dataset.rsSemFoto; salva(); redesenha(); return; }
   if((b = e.target.closest('[data-rs-sugeridas]'))){ Object.keys(sugeridas()).forEach(function(k){ st.inf[k] = true; }); salva(); abaInfracoes(document.getElementById('pu-aba')); UvisPadrao.atualiza(); return; }
@@ -208,13 +279,16 @@
   if((b = e.target.closest('[data-rs-copia]'))){ var t = blocosTexto(blocos()); (navigator.clipboard ? navigator.clipboard.writeText(t) : Promise.reject()).then(function(){ aviso('Texto do relatório copiado.'); }, function(){ var ta = document.createElement('textarea'); ta.value = t; document.body.appendChild(ta); ta.select(); try { document.execCommand('copy'); aviso('Texto do relatório copiado.'); } catch(x){} ta.remove(); }); return; }
   if((b = e.target.closest('[data-rs-pendente]'))){ var id = ORDEM.filter(function(k){ return visivel(PERG[k]) && !st.r[k]; })[0]; if(id) UvisPadrao.vai({aba: 'roteiro', secao: ONDE[id].s.id, item: ONDE[id].it.id}); return; }
  });
+ document.addEventListener('keydown', function(e){ var t = e.target; if(e.key === 'Enter' && t && t.matches && t.matches('[data-rs-eq$="|busca"]')){ e.preventDefault(); var q = t.dataset.rsEq.split('|'); eqBuscar(q[0] + '|' + q[1]); } });
  document.addEventListener('toggle', function(e){ var d = e.target; if(d && d.matches && d.matches('[data-rs-previa]')) previaAberta[d.dataset.rsPrevia] = d.open; }, true);
  document.addEventListener('input', function(e){ var t = e.target;
   if(t.matches('[data-rs-meta]')){ if(t.hasAttribute('data-rs-cnpj')){ var pos = t.value.length; t.value = mascaraCnpj(t.value); } st.meta[t.dataset.rsMeta] = t.value; salva(); UvisPadrao.atualiza(); return; }
+  if(t.matches('[data-rs-eq]')){ var qe = t.dataset.rsEq.split('|'), de = {}; de[qe[2]] = t.value; eqSet(qe[0] + '|' + qe[1], de); UvisPadrao.atualiza(); return; }
   if(t.matches('[data-rs-sit]')){ st.sit[t.dataset.rsSit] = t.value; salva(); var pv = t.closest('.rs-q').querySelector('.rs-previa p'); if(pv) pv.textContent = frase(PERG[t.dataset.rsSit]); return; }
   if(t.matches('[data-rs-concl]')){ st.concl = t.value; salva(); return; } });
  document.addEventListener('change', function(e){ var t = e.target;
   if(t.matches('[data-rs-check]')){ var a = Array.isArray(st.meta[t.dataset.rsCheck]) ? st.meta[t.dataset.rsCheck].slice() : [], v = t.value; if(t.checked){ if(a.indexOf(v) < 0) a.push(v); } else a = a.filter(function(x){ return x !== v; }); st.meta[t.dataset.rsCheck] = a; salva(); UvisPadrao.atualiza(); return; }
+  if(t.matches('select[data-rs-eq]')){ var qs = t.dataset.rsEq.split('|'), ds = {}; ds[qs[2]] = t.value; eqSet(qs[0] + '|' + qs[1], ds); UvisPadrao.atualiza(); return; }
   if(t.matches('select[data-rs-meta]')){ st.meta[t.dataset.rsMeta] = t.value; salva(); redesenha(); return; }
   if(t.matches('[data-rs-inf]')){ st.inf[t.dataset.rsInf] = t.checked; if(!t.checked) delete st.inf[t.dataset.rsInf]; salva(); UvisPadrao.atualiza(); return; }
   if(t.matches('[data-rs-concl]')){ var r = document.querySelector('.rs-relatorio'); if(r) abaRelatorio(document.getElementById('pu-aba')); } });

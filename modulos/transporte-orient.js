@@ -11,7 +11,9 @@
     var chip = document.querySelector('[data-dist-section][aria-current="step"]'), tela = document.querySelector('.dist-section-screen');
     if(!chip || !tela) return;
     var id = chip.dataset.distSection, l = O[id], corpo = tela.querySelector('.sectionbody') || tela;
-    var velho = corpo.querySelector(':scope > .med-orient');
+    /* só a caixa desta seção: a orientação da transportadora (atacadista-ajustes.js)
+       também é .med-orient e, removida aqui, voltava lá — a tela piscava sem parar */
+    var velho = corpo.querySelector(':scope > .med-orient:not(.med-orient-transp)');
     if(velho && velho.dataset.sec === id) return;
     if(velho) velho.remove();
     if(!l) return;

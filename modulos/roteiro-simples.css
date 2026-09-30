@@ -45,7 +45,15 @@
 .rs-modal-corpo p{margin:0 0 8px}
 #rs-aviso{position:fixed;left:50%;bottom:86px;z-index:1001;max-width:min(92vw,520px);padding:10px 16px;border-radius:10px;background:#1f2f38;color:#fff;font-size:.88rem;transform:translateX(-50%);opacity:0;pointer-events:none;transition:opacity .2s}
 #rs-aviso.on{opacity:1}
-@media(max-width:640px){.rs-campos{grid-template-columns:1fr}.rs-checks{grid-template-columns:1fr}}
+.rs-eqs{display:flex;flex-direction:column;gap:12px}
+.rs-eq{display:flex;flex-direction:column;gap:10px;padding:12px;border:1px solid #dbe3e8;border-radius:10px;background:#fff}
+.rs-eq-top{display:flex;justify-content:space-between;align-items:center;gap:8px;color:#1b262d}
+.rs-eq-busca{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;align-items:end}
+.rs-eq-busca .pu-btn{min-height:44px}
+.rs-eq-msg{margin:0;padding:8px 10px;border-radius:8px;background:#eef4f8;color:#26343d;font-size:.86rem;line-height:1.4}
+.rs-eq-ok{background:#e8f5ec;color:#1d5b33}
+.rs-eq-aviso{background:#fdf3e3;color:#7a4b0c}
+@media(max-width:640px){.rs-campos{grid-template-columns:1fr}.rs-eq-busca{grid-template-columns:1fr}.rs-checks{grid-template-columns:1fr}}
 
 /* orientação técnica e itens de consulta */
 .rs-orient ul{margin:6px 0 4px;padding-left:18px}.rs-orient li{margin:6px 0;line-height:1.45}
