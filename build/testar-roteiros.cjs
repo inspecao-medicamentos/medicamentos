@@ -29,7 +29,7 @@ const srv = http.createServer((q, r) => { const u = decodeURIComponent(new URL(q
     await p.goto(`http://localhost:${srv.address().port}/medicamentos/`); await p.waitForTimeout(700);
     await p.evaluate(a => { localStorage.removeItem(a[3]); window.__cascaAbrirRoteiro(a[0], a[1], a[2]); }, [nuc.id, d.app, d.titulo, d.store]); await p.waitForTimeout(2500);
     const f = p.frames().find(x => x !== p.mainFrame());
-    /* identificação: todos os campos de texto, 1ª opção dos checks e “sim” nos selects */
+    /* identificação: todos os campos de texto, todas as opções dos checks (abre as perguntas condicionais) e “sim” nos selects */
     await f.evaluate(() => UvisPadrao.vai({aba: 'roteiro', secao: 'ident', item: null}));
     const itensIdent = d.secoes[0].itens.map(i => i.id);
     for (const it of itensIdent) {
@@ -37,7 +37,7 @@ const srv = http.createServer((q, r) => { const u = decodeURIComponent(new URL(q
       await f.evaluate(() => {
         document.querySelectorAll('input[data-rs-meta]').forEach(i => { i.value = i.type === 'date' ? '2026-09-30' : (i.dataset.rsMeta === 'cnpj' ? '12345678000190' : 'Teste ' + i.dataset.rsMeta); i.dispatchEvent(new Event('input', {bubbles: true})); });
         document.querySelectorAll('textarea[data-rs-meta]').forEach(i => { i.value = 'Texto de teste'; i.dispatchEvent(new Event('input', {bubbles: true})); });
-        const vistos = new Set(); document.querySelectorAll('[data-rs-check]').forEach(c => { if (!vistos.has(c.dataset.rsCheck)) { vistos.add(c.dataset.rsCheck); c.click(); } });
+        document.querySelectorAll('[data-rs-check]').forEach(c => { if (!c.checked) c.click(); });
       });
       for (const nome of await f.$$eval('select[data-rs-meta]', xs => xs.map(x => x.dataset.rsMeta))) { await f.selectOption(`select[data-rs-meta="${nome}"]`, 'sim').catch(() => {}); await p.waitForTimeout(100); }
     }
