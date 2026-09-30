@@ -1,6 +1,6 @@
 {
-  "versao": "20260930-11",
+  "versao": "20260930-12",
   "banco": "13.1",
   "correcoes": 1,
-  "notas": "Central de Consultas: no modo Automático, a pesquisa espera a troca de modo terminar (antes podia pesquisar no modo anterior)."
+  "notas": "Central de Consultas: o botão Automático deixa de se marcar como modo ativo (a busca por processo pelo Automático não trazia os cadastros de medicamentos e saneantes)."
 }

@@ -42,18 +42,20 @@
   var n=0;setTimeout(function tenta(){var cx=$('#q');if(modoAtual()===modo&&cx.value.trim()){trocando=true;$('#search').click();trocando=false;return}
    if(modoAtual()===modo&&!cx.value.trim()){trocando=true;cx.value=texto;cx.dispatchEvent(new Event('input',{bubbles:true}));trocando=false}
    if(++n<40)setTimeout(tenta,50)},150)}
- function pinta(modo){if(!btn)return;btn.classList.toggle('on',auto);document.documentElement.classList.toggle('central-auto-on',auto);btn.setAttribute('aria-pressed',auto?'true':'false');
+ function pinta(modo){if(!btn)return;btn.classList.toggle('auto-ativo',auto);document.documentElement.classList.toggle('central-auto-on',auto);
+  /* aparência de botão ativo copiada do modo ativo da Central (não usa a classe “on”: a Central e a ponte de processos leem “.mode.on” como o modo da consulta) */
+  var ref=$('[data-mode].on');if(auto&&ref){var cs=getComputedStyle(ref);btn.style.background=cs.backgroundColor;btn.style.color=cs.color;btn.style.borderColor=cs.borderColor}else{btn.style.background='';btn.style.color='';btn.style.borderColor=''}btn.setAttribute('aria-pressed',auto?'true':'false');
   var q=$('#q');if(auto&&q)q.setAttribute('inputmode','text');
   if(!dica)return;if(!auto){dica.innerHTML='';return}
   var r=reconhece(q&&q.value);
   if(!r){dica.innerHTML=q&&q.value.trim()?'Formato não reconhecido: escolha o tipo de consulta acima.':'Automático: digite CNPJ, registro, processo, EAN, AFE ou o nome do medicamento/IFA.';return}
-  dica.innerHTML='Reconhecido: <b>'+NOMES[modo||r[0]]+'</b>'+(r[1].length?' · pesquisar como: '+r[1].map(function(m){return '<button type="button" class="mode" data-auto-alt="'+m+'">'+NOMES[m]+'</button>'}).join(' '):'')}
+  dica.innerHTML='Reconhecido: <b>'+NOMES[modo||r[0]]+'</b>'+(r[1].length?' · pesquisar como: '+r[1].map(function(m){return '<button type="button" class="central-auto-alt" data-auto-alt="'+m+'">'+NOMES[m]+'</button>'}).join(' '):'')}
  function antesDePesquisar(e){if(!auto||trocando)return;var q=$('#q'),r=reconhece(q.value);if(!r||r[0].indexOf('uvis-nome')===0)return;
   if(modoAtual()===r[0])return pinta(r[0]);e.preventDefault();e.stopImmediatePropagation();vaiPara(r[0],q.value,true)}
  function inicia(){var primeiro=$('[data-mode]'),q=$('#q');if(!primeiro||!q){if((inicia.n=(inicia.n||0)+1)<40)setTimeout(inicia,250);return}
   btn=document.createElement('button');btn.type='button';btn.className='mode';btn.dataset.autoModo='1';btn.textContent='Automático';primeiro.parentNode.insertBefore(btn,primeiro);
   dica=document.createElement('p');dica.className='central-auto-dica';dica.setAttribute('aria-live','polite');var bloco=q.closest('.query')||q.parentNode;bloco.parentNode.insertBefore(dica,bloco.nextSibling);
-  var st=document.createElement('style');st.textContent='.central-auto-on #detect{display:none!important}.central-auto-dica{margin:6px 0 0;font-size:.86rem;color:#4a5a66}.central-auto-dica .mode{padding:4px 10px;min-height:0;font-size:.8rem;margin:2px}';document.head.appendChild(st);
+  var st=document.createElement('style');st.textContent='.central-auto-on #detect{display:none!important}.central-auto-dica{margin:6px 0 0;font-size:.86rem;color:#4a5a66}.central-auto-alt{padding:4px 10px;margin:2px;font-size:.8rem;border:1px solid #9fb3c2;border-radius:14px;background:#fff;color:#26394a;cursor:pointer}';document.head.appendChild(st);
   btn.addEventListener('click',function(){auto=true;var t=q.value;var r=reconhece(t);if(r&&r[0].indexOf('uvis-nome')===0)vaiPara(r[0],t,false);pinta();q.focus()});
   window.addEventListener('click',function(e){if(!e.target.closest)return;var alt=e.target.closest('[data-auto-alt]');if(alt){e.preventDefault();e.stopImmediatePropagation();vaiPara(alt.dataset.autoAlt,$('#q').value,true);return}
    var m=e.target.closest('[data-mode]');if(m&&!trocando){auto=false;pinta()}},true);
