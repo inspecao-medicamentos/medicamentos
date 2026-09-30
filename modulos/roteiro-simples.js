@@ -1,0 +1,233 @@
+/* Roteiro simples — motor genérico dos roteiros novos do site Medicamentos
+   (EAC, vacinação e os que vierem). Dirigido por dados: window.ROTEIRO traz as
+   seções, os itens, as perguntas com as frases do relatório, as infrações e o
+   texto oficial dos dispositivos citados (montado em build/montar.cjs).
+
+   Tela: componente padrão (UvisPadrao, injetado pela casca): seções › itens ›
+   perguntas, com Cumpre / Não cumpre / Não se aplica, situação encontrada,
+   foto, prévia “Como sai no relatório” e a citação clicável (data-voltar-nucleo
+   fica no cabeçalho do componente).
+   Relatório: Word (.docx) montado no aparelho; fotos em PDF à parte (botão
+   Fotos do cabeçalho). Estado em localStorage (ROTEIRO.store), levado pelas
+   Salvas da casca. */
+(function(){
+ 'use strict';
+ var D = window.ROTEIRO, STORE = D.store;
+ var esc = function(s){ return String(s == null ? '' : s).replace(/[&<>"']/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); };
+ function novo(){ return {v: 1, meta: {}, r: {}, sit: {}, fotos: {}, inf: {}, concl: ''}; }
+ function carrega(){ try { var x = JSON.parse(localStorage.getItem(STORE) || 'null'); if(x && x.v === 1) return Object.assign(novo(), x); } catch(e){} return novo(); }
+ var st = carrega();
+ function salva(){ st.em = new Date().toISOString(); try { localStorage.setItem(STORE, JSON.stringify(st)); } catch(e){ aviso('Não foi possível salvar no aparelho (memória cheia?). Remova fotos ou exporte pelas Salvas.'); } }
+ function aviso(t){ var a = document.getElementById('rs-aviso'); if(!a){ a = document.createElement('div'); a.id = 'rs-aviso'; a.setAttribute('role', 'status'); document.body.appendChild(a); } a.textContent = t; a.classList.add('on'); clearTimeout(aviso.t); aviso.t = setTimeout(function(){ a.classList.remove('on'); }, 3500); }
+
+ /* ---------- dados derivados ---------- */
+ var PERG = {}, ONDE = {}, ORDEM = [];
+ D.secoes.forEach(function(s, si){ s.itens.forEach(function(it, ii){ (it.perguntas || []).forEach(function(q, qi){ PERG[q.id] = q; ONDE[q.id] = {s: s, it: it, n: (si + 1) + '.' + (ii + 1) + '.' + (qi + 1)}; ORDEM.push(q.id); }); }); });
+ var INF = {}; D.infracoes.forEach(function(i){ INF[i.id] = i; });
+ function visivel(q){ var c = q.se; if(!c) return true; var v = st.meta[c.campo]; if(c.inclui) return Array.isArray(v) && v.indexOf(c.inclui) >= 0; if(c.igual !== undefined) return v === c.igual; return true; }
+ function perguntasDe(it){ return (it.perguntas || []).filter(visivel); }
+ function campoPreenchido(c){ var v = st.meta[c.id]; return Array.isArray(v) ? v.length > 0 : !!String(v || '').trim(); }
+ function progressoItem(it){ var ps = perguntasDe(it), cs = it.campos || []; return {feitos: ps.filter(function(q){ return st.r[q.id]; }).length + cs.filter(campoPreenchido).length, total: ps.length + cs.length}; }
+ function nNC(){ return ORDEM.filter(function(id){ return st.r[id] === 'nc' && visivel(PERG[id]); }).length; }
+ function sugeridas(){ var s = {}; ORDEM.forEach(function(id){ var q = PERG[id]; if(st.r[id] === 'nc' && visivel(q)) (q.inf || []).forEach(function(i){ (s[i] = s[i] || []).push(ONDE[id].n); }); }); return s; }
+ function lista(xs){ return xs.length < 2 ? xs.join('') : xs.slice(0, -1).join(', ') + ' e ' + xs[xs.length - 1]; }
+
+ /* ---------- citações ---------- */
+ function rotulo(id){ var l = D.legal[id]; return l ? l.norma.replace(/^(RDC|Lei) (Anvisa |Federal |Municipal )?nº /, '$1 ') + ' · ' + l.disp : id; }
+ function citacao(id){ var l = D.legal[id]; return l ? l.norma + ', ' + l.disp : id; }
+ function fundamento(refs){ /* agrupa por norma: “RDC Anvisa nº 978/2025, art. 10, I, e art. 173” */
+  var g = [], m = {}; (refs || []).forEach(function(id){ var l = D.legal[id]; if(!l) return; if(!m[l.norma]){ m[l.norma] = []; g.push(l.norma); } if(m[l.norma].indexOf(l.disp) < 0) m[l.norma].push(l.disp); });
+  return g.map(function(n){ return n + ', ' + m[n].join('; '); }).join('; '); }
+ /* A janela padrão de citações (injetada pela casca) intercepta [data-legal] e
+    pergunta o texto a window.UvisLocalReferences; o modal próprio fica de reserva. */
+ window.UvisLocalReferences = function(b){ return String(b.dataset.legal || '').split(',').map(function(id){ return D.legal[id]; }).filter(Boolean).map(function(x){ return {law: x.norma, device: x.disp, text: x.texto, url: x.url}; }); };
+ function botoesCit(refs){ return (refs || []).map(function(id){ return '<button type="button" class="rs-cit" data-legal="' + esc(id) + '">' + esc(rotulo(id)) + '</button>'; }).join(''); }
+ function abreLegal(id){ var l = D.legal[id]; if(!l) return; var m = document.getElementById('rs-modal');
+  if(!m){ m = document.createElement('div'); m.id = 'rs-modal'; m.innerHTML = '<div class="rs-modal-caixa" role="dialog" aria-modal="true"><header><b></b><button type="button" data-rs-fecha aria-label="Fechar">×</button></header><div class="rs-modal-corpo"></div></div>'; document.body.appendChild(m);
+   m.addEventListener('click', function(e){ if(e.target === m || e.target.closest('[data-rs-fecha]')) m.classList.remove('on'); }); }
+  m.querySelector('header b').textContent = l.norma + ' — ' + l.disp;
+  m.querySelector('.rs-modal-corpo').innerHTML = l.texto.split('\n').map(function(p){ return '<p>' + esc(p) + '</p>'; }).join('') + (l.url ? '<p><a href="' + esc(l.url) + '" target="_blank" rel="noopener">Abrir a norma na fonte oficial ↗</a></p>' : '');
+  m.classList.add('on'); }
+
+ /* ---------- frases do relatório ---------- */
+ function frase(q){ var r = st.r[q.id]; if(r === 'c') return q.c; if(r === 'nc'){ var s = String(st.sit[q.id] || '').trim(); return q.nc + (s ? ' Situação encontrada: ' + s.replace(/\.?$/, '.') : ''); } if(r === 'na') return 'Não se aplica: ' + q.t.replace(/\?$/, '.'); return ''; }
+
+ /* ---------- tela do item ---------- */
+ function campoHtml(c){ var v = st.meta[c.id], cls = 'pu-campo rs-campo' + (c.largo ? ' rs-largo' : '');
+  if(c.tipo === 'checks'){ var a = Array.isArray(v) ? v : []; return '<fieldset class="' + cls + ' rs-largo"><legend>' + esc(c.rotulo) + '</legend><div class="rs-checks">' + c.opcoes.map(function(o){ return '<label><input type="checkbox" data-rs-check="' + esc(c.id) + '" value="' + esc(o[0]) + '"' + (a.indexOf(o[0]) >= 0 ? ' checked' : '') + '><span>' + esc(o[1]) + '</span></label>'; }).join('') + '</div></fieldset>'; }
+  if(c.tipo === 'select') return '<label class="' + cls + '"><span>' + esc(c.rotulo) + '</span><select data-rs-meta="' + esc(c.id) + '">' + [['', 'Selecione']].concat(c.opcoes).map(function(o){ return '<option value="' + esc(o[0]) + '"' + (v === o[0] ? ' selected' : '') + '>' + esc(o[1]) + '</option>'; }).join('') + '</select></label>';
+  if(c.tipo === 'textarea') return '<label class="' + cls + '"><span>' + esc(c.rotulo) + '</span><textarea data-rs-meta="' + esc(c.id) + '" rows="3">' + esc(v || '') + '</textarea></label>';
+  return '<label class="' + cls + '"><span>' + esc(c.rotulo) + '</span><input type="' + (c.tipo === 'date' ? 'date' : 'text') + '"' + (c.tipo === 'cnpj' ? ' inputmode="numeric" maxlength="18" data-rs-cnpj' : '') + ' data-rs-meta="' + esc(c.id) + '" value="' + esc(v || '') + '"></label>'; }
+ var fotoAberta = '', previaAberta = {};
+ function perguntaHtml(q){ var r = st.r[q.id] || '', f = st.fotos[q.id], o = ONDE[q.id];
+  var bt = [['c', 'Cumpre', 'ok'], ['nc', 'Não cumpre', 'nao']].concat(q.na ? [['na', 'Não se aplica', 'na']] : []);
+  return '<div class="pu-q rs-q" data-rs-q="' + esc(q.id) + '"><div><p class="pu-q-texto"><b>' + esc(o.n) + '</b> ' + esc(q.t) + '</p><div class="rs-cits">' + botoesCit(q.r) + '</div></div>'
+   + '<div class="pu-resp" role="group" aria-label="Resultado"' + (bt.length === 2 ? ' style="grid-template-columns:repeat(2,minmax(0,1fr))"' : '') + '>' + bt.map(function(b){ return '<button type="button" data-rs-r="' + esc(q.id) + '|' + b[0] + '" data-v="' + b[2] + '" aria-pressed="' + (r === b[0]) + '">' + b[1] + '</button>'; }).join('') + '</div>'
+   + (r === 'nc' ? '<div class="pu-bloco pu-nc rs-nc"><label><span>Situação encontrada <small>(opcional — entra no relatório após a frase)</small></span><textarea data-rs-sit="' + esc(q.id) + '" rows="2" placeholder="Ex.: não havia registro de temperatura nos últimos 15 dias.">' + esc(st.sit[q.id] || '') + '</textarea></label>'
+     + ((q.inf || []).length ? '<p class="pu-q-ajuda">Enquadramento sugerido na aba Infrações: ' + esc(q.inf.map(function(i){ return INF[i] ? INF[i].texto : i; }).join(' · ')) + '</p>' : '') + '</div>' : '')
+   + '<details class="pu-mais"' + (fotoAberta === q.id ? ' open' : '') + '><summary>Foto' + (f ? ' ✓' : '') + '</summary><div><div class="pu-foto-acoes"><button type="button" class="pu-btn" data-rs-foto="' + esc(q.id) + '">📷 ' + (f ? 'Trocar foto' : 'Tirar ou anexar foto') + '</button>' + (f ? '<button type="button" class="pu-btn" data-rs-sem-foto="' + esc(q.id) + '">Remover foto</button>' : '') + '</div>' + (f ? '<img class="rs-foto" alt="Foto vinculada à verificação" src="' + esc(f) + '">' : '') + '<p class="pu-q-ajuda">As fotos saem à parte, no botão Fotos do cabeçalho.</p></div></details>'
+   + (r ? '<details class="pu-mais rs-previa"' + (previaAberta[q.id] ? ' open' : '') + ' data-rs-previa="' + esc(q.id) + '"><summary>👁 Como sai no relatório</summary><div><p>' + esc(frase(q)) + '</p>' + (r === 'nc' ? '<p class="pu-q-ajuda">Fundamento: ' + esc(fundamento(q.r)) + '.</p>' : '') + '</div></details>' : '')
+   + '</div>'; }
+ function desenhaItem(s, it, el){
+  var ps = perguntasDe(it), h = it.descricao ? '<p class="pu-desc">' + esc(it.descricao) + '</p>' : (s.descricao ? '<p class="pu-desc">' + esc(s.descricao) + '</p>' : '');
+  if(it.campos && it.campos.length) h += '<div class="pu-bloco"><div class="pu-campos rs-campos">' + it.campos.map(campoHtml).join('') + '</div></div>';
+  h += ps.map(perguntaHtml).join('');
+  if(!ps.length && !(it.campos || []).length) h += '<div class="pu-bloco pu-aviso"><p>' + esc(it.vazio || 'Nenhuma verificação se aplica a este item.') + '</p></div>';
+  if(ps.length) h += '<div class="pu-acoes-item">' + (ps.some(function(q){ return q.na; }) ? '<button type="button" class="pu-btn" data-rs-lote="na">Marcar pendentes como Não se aplica</button>' : '') + '<button type="button" class="pu-btn" data-rs-lote="c">Marcar pendentes como Cumpre</button></div>';
+  el.innerHTML = h; }
+ function redesenha(){ var n = UvisPadrao.estado(), c = document.getElementById('pu-conteudo');
+  if(n.aba === 'roteiro' && n.item && c){ var s = D.secoes.filter(function(x){ return x.id === n.secao; })[0], it = s && s.itens.filter(function(x){ return x.id === n.item; })[0]; if(it){ var y = window.scrollY; desenhaItem(s, it, c); window.scrollTo(0, y); } }
+  UvisPadrao.atualiza(); }
+
+ /* ---------- relatório (blocos → Word / prévia / texto) ---------- */
+ function fmtData(v){ var m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(v || ''); return m ? m[3] + '/' + m[2] + '/' + m[1] : (v || ''); }
+ function blocos(){ var B = [], R = D.relatorio, sec = 0, irr = [];
+  B.push({t: 'title', x: R.titulo}, {t: 'sub', x: R.subtitulo});
+  B.push({t: 'h1', x: (++sec) + ' IDENTIFICAÇÃO'});
+  D.secoes[0].itens.forEach(function(it){ (it.campos || []).forEach(function(c){ var v = st.meta[c.id]; if(Array.isArray(v)) v = v.map(function(x){ var o = (c.opcoes || []).filter(function(p){ return p[0] === x; })[0]; return o ? o[1] : x; }).join(', '); if(c.tipo === 'select'){ var op = (c.opcoes || []).filter(function(o){ return o[0] === v; })[0]; if(op) v = op[1]; } if(c.tipo === 'date') v = fmtData(v); if(String(v || '').trim()) B.push({t: 'kv', k: c.rotulo.replace(/\?$/, ''), v: String(v).trim()}); }); });
+  B.push({t: 'h1', x: (++sec) + ' OBJETIVO E LEGISLAÇÃO DE REFERÊNCIA'}, {t: 'p', x: R.objetivo});
+  D.normas.forEach(function(n){ B.push({t: 'num', n: '•', x: n[0] + ' — ' + n[1]}); });
+  B.push({t: 'h1', x: (++sec) + ' VERIFICAÇÕES REALIZADAS'});
+  var ns = 0;
+  D.secoes.slice(1).forEach(function(s){ var partes = [];
+   s.itens.forEach(function(it){ var ps = perguntasDe(it).filter(function(q){ return st.r[q.id]; }); if(!ps.length) return;
+    var fr = ps.filter(function(q){ return st.r[q.id] !== 'na'; }).map(frase), na = ps.filter(function(q){ return st.r[q.id] === 'na'; });
+    partes.push({t: 'h2', x: sec + '.' + (ns + 1) + '.' + (partes.filter(function(p){ return p.t === 'h2'; }).length + 1) + ' ' + it.titulo});
+    if(fr.length) partes.push({t: 'p', x: fr.join(' ')});
+    if(na.length) partes.push({t: 'small', x: 'Não se aplicam ao estabelecimento: ' + lista(na.map(function(q){ return q.t.replace(/\?$/, '').replace(/^./, function(c){ return c.toLowerCase(); }); })) + '.'});
+    ps.forEach(function(q){ if(st.r[q.id] === 'nc') irr.push(q); }); });
+   if(partes.length){ ns++; B.push({t: 'h2', x: sec + '.' + ns + ' ' + s.titulo.toUpperCase()}); partes.forEach(function(p){ if(p.t === 'h2') p.x = p.x.replace(/^\d+\.\d+\.\d+/, function(m){ return m.split('.')[0] + '.' + ns + '.' + m.split('.')[2]; }); B.push(p); }); } });
+  if(!ns) B.push({t: 'p', x: 'Nenhuma verificação foi registrada.'});
+  B.push({t: 'h1', x: (++sec) + ' IRREGULARIDADES OBSERVADAS'});
+  if(irr.length) irr.forEach(function(q, i){ B.push({t: 'num', n: i + 1, x: frase(q) + ' Fundamento: ' + fundamento(q.r) + '.'}); });
+  else B.push({t: 'p', x: 'Não foram registradas irregularidades nesta inspeção.'});
+  var sel = D.infracoes.filter(function(i){ return st.inf[i.id]; });
+  if(sel.length){ B.push({t: 'h1', x: (++sec) + ' ENQUADRAMENTO DAS INFRAÇÕES SANITÁRIAS'}); B.push({t: 'table', head: ['Nº', 'Infração sanitária', 'Dispositivos infringidos'], widths: [600, 4700, 4000], rows: sel.map(function(i, k){ return [String(k + 1), i.texto, fundamento(i.r)]; })}); }
+  B.push({t: 'h1', x: (++sec) + ' CONCLUSÃO'}, {t: 'p', x: String(st.concl || '').trim() || R.conclusao});
+  if(st.meta.equipe) B.push({t: 'kv', k: 'Equipe de inspeção', v: st.meta.equipe});
+  B.push({t: 'sign'});
+  return B; }
+ function blocosHtml(B){ return B.map(function(b){
+  if(b.t === 'title') return '<h2 class="rs-r-tit">' + esc(b.x) + '</h2>'; if(b.t === 'sub') return '<p class="rs-r-sub">' + esc(b.x) + '</p>';
+  if(b.t === 'h1') return '<h3 class="rs-r-h1">' + esc(b.x) + '</h3>'; if(b.t === 'h2') return '<h4 class="rs-r-h2">' + esc(b.x) + '</h4>';
+  if(b.t === 'kv') return '<p><b>' + esc(b.k) + ':</b> ' + esc(b.v) + '</p>'; if(b.t === 'num') return '<p class="rs-r-num"><b>' + esc(b.n) + (b.n === '•' ? '' : '.') + '</b> ' + esc(b.x) + '</p>';
+  if(b.t === 'small') return '<p class="rs-r-small">' + esc(b.x) + '</p>';
+  if(b.t === 'table') return '<div class="rs-r-tab"><table><thead><tr>' + b.head.map(function(h){ return '<th>' + esc(h) + '</th>'; }).join('') + '</tr></thead><tbody>' + b.rows.map(function(r){ return '<tr>' + r.map(function(c){ return '<td>' + esc(c) + '</td>'; }).join('') + '</tr>'; }).join('') + '</tbody></table></div>';
+  if(b.t === 'sign') return '<p class="rs-r-small">Local, data e assinaturas da autoridade sanitária e do responsável pelo estabelecimento.</p>';
+  return '<p>' + esc(b.x) + '</p>'; }).join(''); }
+ function blocosTexto(B){ var L = []; B.forEach(function(b){
+  if(b.t === 'title') L.push(b.x, ''); else if(b.t === 'sub') L.push(b.x, ''); else if(b.t === 'h1') L.push('', b.x, ''); else if(b.t === 'h2') L.push('', b.x, '');
+  else if(b.t === 'kv') L.push(b.k + ': ' + b.v); else if(b.t === 'num') L.push(b.n + (b.n === '•' ? ' ' : '. ') + b.x); else if(b.t === 'table'){ L.push(b.head.join(' | ')); b.rows.forEach(function(r){ L.push(r.join(' | ')); }); L.push(''); }
+  else if(b.t === 'sign') L.push('', 'Local e data: ______________________________', '', '________________________________', 'Autoridade sanitária', '', '________________________________', 'Responsável pelo estabelecimento');
+  else L.push(b.x, ''); }); return L.join('\n').replace(/\n{3,}/g, '\n\n').trim(); }
+
+ /* docx mínimo (mesma estrutura do relatório da odontologia) */
+ var xe = function(s){ return String(s == null ? '' : s).replace(/[&<>"']/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&apos;'}[c]; }); };
+ function wRun(t, o){ o = o || {}; var pr = (o.bold ? '<w:b/>' : '') + (o.italic ? '<w:i/>' : ''); return String(t == null ? '' : t).split('\n').map(function(p, i){ return '<w:r>' + (pr ? '<w:rPr>' + pr + '</w:rPr>' : '') + (i ? '<w:br/>' : '') + '<w:t xml:space="preserve">' + xe(p) + '</w:t></w:r>'; }).join(''); }
+ function wP(t, s, o){ return '<w:p><w:pPr><w:pStyle w:val="' + (s || 'Body') + '"/></w:pPr>' + wRun(t, o) + '</w:p>'; }
+ function wMix(ps, s){ return '<w:p><w:pPr><w:pStyle w:val="' + (s || 'Body') + '"/></w:pPr>' + ps.map(function(p){ return wRun(p.text, p); }).join('') + '</w:p>'; }
+ function wCell(c, w, sh){ return '<w:tc><w:tcPr><w:tcW w:w="' + w + '" w:type="dxa"/>' + (sh ? '<w:shd w:val="clear" w:fill="' + sh + '"/>' : '') + '</w:tcPr>' + c + '</w:tc>'; }
+ function wTable(head, rows, widths){ var total = widths.reduce(function(a, b){ return a + b; }, 0), bd = '<w:top w:val="single" w:sz="4" w:color="BFCBD2"/><w:left w:val="single" w:sz="4" w:color="BFCBD2"/><w:bottom w:val="single" w:sz="4" w:color="BFCBD2"/><w:right w:val="single" w:sz="4" w:color="BFCBD2"/><w:insideH w:val="single" w:sz="4" w:color="D6DEE3"/><w:insideV w:val="single" w:sz="4" w:color="D6DEE3"/>';
+  return '<w:tbl><w:tblPr><w:tblW w:w="' + total + '" w:type="dxa"/><w:tblBorders>' + bd + '</w:tblBorders><w:tblCellMar><w:top w:w="70" w:type="dxa"/><w:left w:w="90" w:type="dxa"/><w:bottom w:w="70" w:type="dxa"/><w:right w:w="90" w:type="dxa"/></w:tblCellMar></w:tblPr><w:tblGrid>' + widths.map(function(w){ return '<w:gridCol w:w="' + w + '"/>'; }).join('') + '</w:tblGrid>'
+   + (head ? '<w:tr><w:trPr><w:tblHeader/></w:trPr>' + head.map(function(h, j){ return wCell(wP(h, 'CellHead', {bold: true}), widths[j], 'E3ECF1'); }).join('') + '</w:tr>' : '')
+   + rows.map(function(r){ return '<w:tr>' + r.map(function(c, j){ return wCell(wP(c, 'Cell'), widths[j]); }).join('') + '</w:tr>'; }).join('') + '</w:tbl>' + wP('', 'Gap'); }
+ function toXml(B){ return B.map(function(b){
+  if(b.t === 'title') return wP(b.x, 'Title'); if(b.t === 'sub') return wP(b.x, 'Subtitle'); if(b.t === 'h1') return wP(b.x, 'Heading1'); if(b.t === 'h2') return wP(b.x, 'Heading2');
+  if(b.t === 'kv') return wMix([{text: b.k + ': ', bold: true}, {text: b.v}]); if(b.t === 'num') return wMix([{text: b.n + (b.n === '•' ? ' ' : '. '), bold: true}, {text: b.x}], 'Item');
+  if(b.t === 'small') return wP(b.x, 'Small'); if(b.t === 'table') return wTable(b.head, b.rows, b.widths);
+  if(b.t === 'sign') return wP('Local e data: ______________________________________________') + wP('', 'Gap') + wTable(null, [['\n________________________________________\nAutoridade sanitária', '\n________________________________________\nResponsável pelo estabelecimento']], [4650, 4650]);
+  return wP(b.x); }).join(''); }
+ var COR = String(D.cor || '#1E5A8A').replace('#', '').toUpperCase();
+ var STYLES = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:styles xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:docDefaults><w:rPrDefault><w:rPr><w:rFonts w:ascii="Arial" w:hAnsi="Arial" w:cs="Arial"/><w:sz w:val="22"/><w:szCs w:val="22"/><w:lang w:val="pt-BR"/></w:rPr></w:rPrDefault><w:pPrDefault><w:pPr><w:spacing w:after="120" w:line="276" w:lineRule="auto"/></w:pPr></w:pPrDefault></w:docDefaults>'
+  + '<w:style w:type="paragraph" w:default="1" w:styleId="Normal"><w:name w:val="Normal"/><w:qFormat/></w:style>'
+  + '<w:style w:type="paragraph" w:styleId="Body"><w:name w:val="Body"/><w:basedOn w:val="Normal"/><w:pPr><w:jc w:val="both"/></w:pPr></w:style>'
+  + '<w:style w:type="paragraph" w:styleId="Item"><w:name w:val="Item"/><w:basedOn w:val="Body"/><w:pPr><w:spacing w:after="60"/><w:ind w:left="340" w:hanging="260"/></w:pPr></w:style>'
+  + '<w:style w:type="paragraph" w:styleId="Title"><w:name w:val="Title"/><w:basedOn w:val="Normal"/><w:qFormat/><w:pPr><w:spacing w:after="60"/><w:jc w:val="center"/></w:pPr><w:rPr><w:b/><w:color w:val="' + COR + '"/><w:sz w:val="28"/><w:szCs w:val="28"/></w:rPr></w:style>'
+  + '<w:style w:type="paragraph" w:styleId="Subtitle"><w:name w:val="Subtitle"/><w:basedOn w:val="Normal"/><w:qFormat/><w:pPr><w:spacing w:after="240"/><w:jc w:val="center"/></w:pPr><w:rPr><w:color w:val="4A5A64"/><w:sz w:val="20"/></w:rPr></w:style>'
+  + '<w:style w:type="paragraph" w:styleId="Heading1"><w:name w:val="heading 1"/><w:basedOn w:val="Normal"/><w:next w:val="Body"/><w:qFormat/><w:pPr><w:keepNext/><w:shd w:val="clear" w:fill="E3ECF1"/><w:spacing w:before="300" w:after="120"/><w:ind w:left="80"/><w:outlineLvl w:val="0"/></w:pPr><w:rPr><w:b/><w:color w:val="1B262D"/><w:sz w:val="23"/></w:rPr></w:style>'
+  + '<w:style w:type="paragraph" w:styleId="Heading2"><w:name w:val="heading 2"/><w:basedOn w:val="Normal"/><w:next w:val="Body"/><w:qFormat/><w:pPr><w:keepNext/><w:pBdr><w:bottom w:val="single" w:sz="6" w:space="3" w:color="' + COR + '"/></w:pBdr><w:spacing w:before="200" w:after="80"/><w:outlineLvl w:val="1"/></w:pPr><w:rPr><w:b/><w:color w:val="' + COR + '"/><w:sz w:val="22"/></w:rPr></w:style>'
+  + '<w:style w:type="paragraph" w:styleId="Small"><w:name w:val="Small"/><w:basedOn w:val="Normal"/><w:pPr><w:spacing w:after="120"/></w:pPr><w:rPr><w:i/><w:color w:val="5A6A72"/><w:sz w:val="19"/></w:rPr></w:style>'
+  + '<w:style w:type="paragraph" w:styleId="Cell"><w:name w:val="Cell"/><w:basedOn w:val="Normal"/><w:pPr><w:spacing w:after="0"/></w:pPr><w:rPr><w:sz w:val="18"/></w:rPr></w:style>'
+  + '<w:style w:type="paragraph" w:styleId="CellHead"><w:name w:val="Cell Head"/><w:basedOn w:val="Cell"/><w:rPr><w:b/><w:sz w:val="18"/></w:rPr></w:style>'
+  + '<w:style w:type="paragraph" w:styleId="Gap"><w:name w:val="Gap"/><w:basedOn w:val="Normal"/><w:pPr><w:spacing w:after="0" w:line="120" w:lineRule="auto"/></w:pPr></w:style></w:styles>';
+ function docx(B, titulo){ var z = new JSZip(), X = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>';
+  z.file('[Content_Types].xml', X + '<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/><Override PartName="/word/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.styles+xml"/><Override PartName="/docProps/core.xml" ContentType="application/vnd.openxmlformats-package.core-properties+xml"/></Types>');
+  z.folder('_rels').file('.rels', X + '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/><Relationship Id="rId2" Type="http://schemas.openxmlformats.org/package/2006/relationships/metadata/core-properties" Target="docProps/core.xml"/></Relationships>');
+  z.folder('word').file('document.xml', X + '<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:body>' + toXml(B) + '<w:sectPr><w:pgSz w:w="11906" w:h="16838"/><w:pgMar w:top="1134" w:right="1134" w:bottom="1134" w:left="1418" w:header="567" w:footer="567" w:gutter="0"/></w:sectPr></w:body></w:document>').file('styles.xml', STYLES)
+   .folder('_rels').file('document.xml.rels', X + '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/></Relationships>');
+  var agora = new Date().toISOString();
+  z.folder('docProps').file('core.xml', X + '<cp:coreProperties xmlns:cp="http://schemas.openxmlformats.org/package/2006/metadata/core-properties" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><dc:title>' + xe(titulo) + '</dc:title><dc:creator>Vigilância Sanitária</dc:creator><dcterms:created xsi:type="dcterms:W3CDTF">' + agora + '</dcterms:created></cp:coreProperties>');
+  return z.generateAsync({type: 'blob', mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', compression: 'DEFLATE'}); }
+ function nomeArq(ext){ var b = String(st.meta.fantasia || st.meta.razao || 'inspecao').normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^A-Za-z0-9]+/g, '_').replace(/^_|_$/g, '').slice(0, 40) || 'inspecao'; return 'Relatorio_' + D.tituloCurto.replace(/[^A-Za-z0-9]+/g, '_') + '_' + b + '_' + new Date().toISOString().slice(0, 10) + '.' + ext; }
+ function baixa(blob, nome){ var a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = nome; document.body.appendChild(a); a.click(); setTimeout(function(){ URL.revokeObjectURL(a.href); a.remove(); }, 2000); }
+
+ /* ---------- abas Infrações e Relatório ---------- */
+ function abaInfracoes(el){ var sug = sugeridas(), grupos = [];
+  D.infracoes.forEach(function(i){ if(grupos.indexOf(i.grupo) < 0) grupos.push(i.grupo); });
+  var nsug = Object.keys(sug).filter(function(k){ return !st.inf[k]; }).length;
+  el.innerHTML = '<div class="pu-bloco"><h3>Enquadramento das infrações</h3><p>Marque as infrações que serão enquadradas. As sugeridas vêm dos itens marcados como “Não cumpre”. O enquadramento sai no relatório, em tabela própria.</p>'
+   + (nsug ? '<div class="pu-acoes-item"><button type="button" class="pu-btn pu-btn-pri" data-rs-sugeridas>Marcar as ' + nsug + ' sugeridas</button></div>' : '') + '</div>'
+   + grupos.map(function(g){ return '<div class="pu-bloco rs-inf-grupo"><h3>' + esc(g) + '</h3>' + D.infracoes.filter(function(i){ return i.grupo === g; }).map(function(i){
+     return '<label class="rs-inf' + (sug[i.id] ? ' rs-sug' : '') + '"><input type="checkbox" data-rs-inf="' + esc(i.id) + '"' + (st.inf[i.id] ? ' checked' : '') + '><span><b>' + esc(i.texto) + '</b><small>' + esc(fundamento(i.r)) + '</small>'
+      + (sug[i.id] ? '<em>Sugerida — itens ' + esc(sug[i.id].join(', ')) + ' não cumpridos</em>' : '') + '</span></label>'; }).join('') + '</div>'; }).join(''); }
+ function abaRelatorio(el){ var tot = ORDEM.filter(function(id){ return visivel(PERG[id]); }), resp = tot.filter(function(id){ return st.r[id]; }).length, ninf = D.infracoes.filter(function(i){ return st.inf[i.id]; }).length;
+  el.innerHTML = '<div class="pu-bloco"><h3>Resumo</h3><div class="pu-campos"><div class="pu-campo">Respondidas<b>' + resp + ' de ' + tot.length + '</b></div><div class="pu-campo">Não cumpre<b>' + nNC() + '</b></div><div class="pu-campo">Pendentes<b>' + (tot.length - resp) + '</b></div><div class="pu-campo">Infrações enquadradas<b>' + ninf + '</b></div></div>'
+   + '<label class="pu-campo rs-largo"><span>Conclusão (se vazio, sai o texto padrão)</span><textarea data-rs-concl rows="4" placeholder="' + esc(D.relatorio.conclusao) + '">' + esc(st.concl || '') + '</textarea></label>'
+   + '<div class="pu-acoes-item"><button type="button" class="pu-btn pu-btn-pri" data-rs-word>Baixar relatório em Word</button><button type="button" class="pu-btn" data-rs-copia>Copiar texto</button>' + (resp < tot.length ? '<button type="button" class="pu-btn" data-rs-pendente>Ir à próxima pendente</button>' : '') + '</div>'
+   + '<p class="pu-q-ajuda">As fotos saem à parte, em PDF, no botão Fotos do cabeçalho.</p></div>'
+   + '<div class="pu-bloco rs-relatorio"><h3>Prévia do relatório</h3>' + blocosHtml(blocos()) + '</div>'; }
+
+ /* ---------- fotos ---------- */
+ function foto(id){ var inp = document.createElement('input'); inp.type = 'file'; inp.accept = 'image/*'; inp.style.display = 'none'; document.body.appendChild(inp);
+  inp.onchange = function(){ var f = inp.files && inp.files[0]; inp.remove(); if(!f) return; var r = new FileReader();
+   r.onload = function(){ var grava = function(url){ var ant = st.fotos[id]; st.fotos[id] = url; fotoAberta = id; try { localStorage.setItem(STORE, JSON.stringify(st)); } catch(e){ if(ant) st.fotos[id] = ant; else delete st.fotos[id]; aviso('Sem espaço para a foto neste aparelho. Remova fotos antigas ou exporte as Salvas.'); } redesenha(); };
+    if(window.__uvsReduzFoto) window.__uvsReduzFoto(r.result, grava); else grava(r.result); };
+   r.readAsDataURL(f); };
+  inp.click(); }
+ window.__uvsFotosMeta = function(){ return {estab: st.meta.fantasia || st.meta.razao || '', data: st.meta.data || ''}; };
+ window.__uvsFotosItens = function(){ return ORDEM.filter(function(id){ return st.fotos[id]; }).map(function(id){ var o = ONDE[id]; return {src: st.fotos[id], legenda: o.s.titulo + ' — ' + o.it.titulo + ' — ' + o.n + ' ' + PERG[id].t}; }); };
+ if(window.UvsFotosPDF && window.UvsFotosPDF.adaptadores) window.UvsFotosPDF.adaptadores[D.app] = {titulo: 'Relatório fotográfico — ' + D.titulo, meta: window.__uvsFotosMeta, fotos: function(){ return Promise.resolve(window.__uvsFotosItens()); }};
+
+ /* ---------- eventos ---------- */
+ function mascaraCnpj(v){ var d = String(v).replace(/\D/g, '').slice(0, 14); return d.replace(/^(\d{2})(\d)/, '$1.$2').replace(/^(\d{2})\.(\d{3})(\d)/, '$1.$2.$3').replace(/\.(\d{3})(\d)/, '.$1/$2').replace(/(\d{4})(\d)/, '$1-$2'); }
+ document.addEventListener('click', function(e){ var b;
+  if((b = e.target.closest('[data-legal]'))){ e.preventDefault(); abreLegal(b.dataset.legal); return; }
+  if((b = e.target.closest('[data-rs-r]'))){ var p = b.dataset.rsR.split('|'); st.r[p[0]] = st.r[p[0]] === p[1] ? '' : p[1]; if(!st.r[p[0]]) delete st.r[p[0]]; salva(); redesenha(); return; }
+  if((b = e.target.closest('[data-rs-lote]'))){ var n = UvisPadrao.estado(), s = D.secoes.filter(function(x){ return x.id === n.secao; })[0], it = s && s.itens.filter(function(x){ return x.id === n.item; })[0];
+   if(it) perguntasDe(it).forEach(function(q){ if(!st.r[q.id] && (b.dataset.rsLote === 'c' || q.na)) st.r[q.id] = b.dataset.rsLote; }); salva(); redesenha(); return; }
+  if((b = e.target.closest('[data-rs-foto]'))){ foto(b.dataset.rsFoto); return; }
+  if((b = e.target.closest('[data-rs-sem-foto]'))){ delete st.fotos[b.dataset.rsSemFoto]; fotoAberta = b.dataset.rsSemFoto; salva(); redesenha(); return; }
+  if((b = e.target.closest('[data-rs-sugeridas]'))){ Object.keys(sugeridas()).forEach(function(k){ st.inf[k] = true; }); salva(); abaInfracoes(document.getElementById('pu-aba')); UvisPadrao.atualiza(); return; }
+  if((b = e.target.closest('[data-rs-word]'))){ b.disabled = true; docx(blocos(), D.relatorio.titulo + ' — ' + D.titulo).then(function(blob){ baixa(blob, nomeArq('docx')); aviso('Relatório em Word gerado.'); }, function(){ aviso('Não foi possível gerar o Word.'); }).then(function(){ b.disabled = false; }); return; }
+  if((b = e.target.closest('[data-rs-copia]'))){ var t = blocosTexto(blocos()); (navigator.clipboard ? navigator.clipboard.writeText(t) : Promise.reject()).then(function(){ aviso('Texto do relatório copiado.'); }, function(){ var ta = document.createElement('textarea'); ta.value = t; document.body.appendChild(ta); ta.select(); try { document.execCommand('copy'); aviso('Texto do relatório copiado.'); } catch(x){} ta.remove(); }); return; }
+  if((b = e.target.closest('[data-rs-pendente]'))){ var id = ORDEM.filter(function(k){ return visivel(PERG[k]) && !st.r[k]; })[0]; if(id) UvisPadrao.vai({aba: 'roteiro', secao: ONDE[id].s.id, item: ONDE[id].it.id}); return; }
+ });
+ document.addEventListener('toggle', function(e){ var d = e.target; if(d && d.matches && d.matches('[data-rs-previa]')) previaAberta[d.dataset.rsPrevia] = d.open; }, true);
+ document.addEventListener('input', function(e){ var t = e.target;
+  if(t.matches('[data-rs-meta]')){ if(t.hasAttribute('data-rs-cnpj')){ var pos = t.value.length; t.value = mascaraCnpj(t.value); } st.meta[t.dataset.rsMeta] = t.value; salva(); UvisPadrao.atualiza(); return; }
+  if(t.matches('[data-rs-sit]')){ st.sit[t.dataset.rsSit] = t.value; salva(); var pv = t.closest('.rs-q').querySelector('.rs-previa p'); if(pv) pv.textContent = frase(PERG[t.dataset.rsSit]); return; }
+  if(t.matches('[data-rs-concl]')){ st.concl = t.value; salva(); return; } });
+ document.addEventListener('change', function(e){ var t = e.target;
+  if(t.matches('[data-rs-check]')){ var a = Array.isArray(st.meta[t.dataset.rsCheck]) ? st.meta[t.dataset.rsCheck].slice() : [], v = t.value; if(t.checked){ if(a.indexOf(v) < 0) a.push(v); } else a = a.filter(function(x){ return x !== v; }); st.meta[t.dataset.rsCheck] = a; salva(); UvisPadrao.atualiza(); return; }
+  if(t.matches('select[data-rs-meta]')){ st.meta[t.dataset.rsMeta] = t.value; salva(); redesenha(); return; }
+  if(t.matches('[data-rs-inf]')){ st.inf[t.dataset.rsInf] = t.checked; if(!t.checked) delete st.inf[t.dataset.rsInf]; salva(); UvisPadrao.atualiza(); return; }
+  if(t.matches('[data-rs-concl]')){ var r = document.querySelector('.rs-relatorio'); if(r) abaRelatorio(document.getElementById('pu-aba')); } });
+
+ /* ---------- montagem ---------- */
+ function inicia(){
+  var raiz = document.createElement('div'); raiz.id = 'pu-raiz'; document.body.insertBefore(raiz, document.body.firstChild);
+  UvisPadrao.monta({
+   raiz: raiz, titulo: D.titulo, cor: D.cor,
+   abas: [{id: 'roteiro', rotulo: 'Roteiro'}, {id: 'infracoes', rotulo: 'Infrações'}, {id: 'relatorio', rotulo: 'Relatório'}],
+   secoes: function(){ return D.secoes.map(function(s){ return {id: s.id, titulo: s.titulo, curto: s.curto, icone: s.icone, descricao: s.descricao, itens: s.itens.map(function(it){ var p = progressoItem(it); return {id: it.id, titulo: it.titulo, curto: it.curto, resumo: it.descricao, feitos: p.feitos, total: p.total}; })}; }); },
+   item: function(s, it, el){ var S = D.secoes.filter(function(x){ return x.id === s.id; })[0], I = S.itens.filter(function(x){ return x.id === it.id; })[0]; desenhaItem(S, I, el); },
+   aba: function(id, el){ if(id === 'infracoes') abaInfracoes(el); else if(id === 'relatorio') abaRelatorio(el); },
+   contagem: function(id){ return id === 'roteiro' ? nNC() : id === 'infracoes' ? D.infracoes.filter(function(i){ return st.inf[i.id]; }).length : 0; },
+   limpar: function(s, it){ var S = D.secoes.filter(function(x){ return x.id === s.id; })[0];
+    (it ? S.itens.filter(function(x){ return x.id === it.id; }) : S.itens).forEach(function(I){ (I.campos || []).forEach(function(c){ delete st.meta[c.id]; }); (I.perguntas || []).forEach(function(q){ delete st.r[q.id]; delete st.sit[q.id]; delete st.fotos[q.id]; }); });
+    salva(); }
+  });
+  try { parent.postMessage({__casca: 'pronto'}, '*'); } catch(e){}
+ }
+ if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', inicia); else inicia();
+})();

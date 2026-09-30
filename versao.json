@@ -1,6 +1,6 @@
 {
-  "versao": "20260929-1",
+  "versao": "20260930-1",
   "banco": "13.1",
-  "correcoes": 0,
-  "notas": "Primeira versão do site Medicamentos: drogaria, manipulação, atacadista e transportadora."
+  "correcoes": 3,
+  "notas": "Drogaria: roteiros de EAC e de Vacinação completos, Drogaria em supermercado (Lei 15.357/2026) e Informações gerais da Área física, que não apareciam."
 }

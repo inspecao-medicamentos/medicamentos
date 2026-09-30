@@ -36,7 +36,7 @@ const PALETA = {
 const APPS_FORA = ['estetica', 'odontologia', 'servicos-assistenciais', 'alimentos-integrado',
   'servicos-alimentacao-roteiro', 'produtos-correlatos', 'analise-produtos', 'estoque-produtos'];
 
-const {html: origem, lz} = unpack(path.join(ROT, 'index.html'));
+const {html: origem, lz, blocks: BLOCOS} = unpack(path.join(ROT, 'index.html'));
 let h = origem;
 const esc = s => String(s).replace(/[&<>"]/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;'}[c]));
 
@@ -87,8 +87,39 @@ document.addEventListener('click',function(e){if(e.target.closest('[data-voltar-
 parent.postMessage({__casca:'pronto'},'*');
 </script></body></html>`;
 }
-const novos = Object.entries(CAT.novos).map(([id, def]) =>
-  `<script type="text/plain" id="app--${id}">${lz.compressToBase64(provisorio(id, def))}</script>\n`).join('');
+/* Roteiros prontos (modulos/roteiros/<app>.cjs) usam o motor roteiro-simples;
+   os demais ficam com a página provisória até serem escritos. */
+const LEGAL = JSON.parse(fs.readFileSync(path.join(RAIZ, 'modulos', 'legislacao.json'), 'utf8'));
+const DIR_ROT = path.join(RAIZ, 'modulos', 'roteiros');
+const PRONTOS = fs.readdirSync(DIR_ROT).filter(f => f.endsWith('.cjs')).map(f => require(path.join(DIR_ROT, f)));
+function roteiroSimples(d) {
+  const nuc = CAT.nucleos.find(n => n.roteiros.some(r => r[2] === d.app));
+  const refs = new Set();
+  d.secoes.forEach(s => s.itens.forEach(i => (i.perguntas || []).forEach(q => q.r.forEach(r => refs.add(r)))));
+  d.infracoes.forEach(i => i.r.forEach(r => refs.add(r)));
+  const legal = {};
+  for (const r of refs) { if (!LEGAL[r]) throw Error(`${d.app}: dispositivo sem texto (${r}); rode build/legislacao.cjs`); legal[r] = LEGAL[r]; }
+  const ids = d.secoes.flatMap(s => s.itens.flatMap(i => (i.perguntas || []).map(q => q.id)));
+  const rep = ids.filter((x, i) => ids.indexOf(x) !== i);
+  if (rep.length) throw Error(`${d.app}: perguntas com id repetido: ${rep.join(', ')}`);
+  for (const s of d.secoes) for (const i of s.itens) for (const q of i.perguntas || []) for (const f of q.inf || [])
+    if (!d.infracoes.some(x => x.id === f)) throw Error(`${d.app}: infração inexistente ${f} em ${q.id}`);
+  const dados = JSON.stringify({...d, cor: PALETA[nuc.var][0], legal}).replace(/<\//g, '<\\/');
+  const le = f => fs.readFileSync(path.join(RAIZ, 'modulos', f), 'utf8');
+  return `<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>${esc(d.titulo)}</title>`
+    + `<style>${le('roteiro-simples.css')}</style></head><body>`
+    + `<script>${BLOCOS.get('rec--jszip.js')}</script>`
+    + `<script>${fs.readFileSync(path.join(ROT, 'relatorio-fotos.js'), 'utf8')}</script>`
+    + `<script>window.ROTEIRO=${dados};</script>`
+    + `<script>${le('roteiro-simples.js')}</script></body></html>`;
+}
+const novos = Object.entries(CAT.novos).map(([id, def]) => {
+  const pronto = PRONTOS.find(d => d.app === id);
+  return `<script type="text/plain" id="app--${id}">${lz.compressToBase64(pronto ? roteiroSimples(pronto) : provisorio(id, def))}</script>\n`;
+}).join('');
+/* A casca injeta o componente padrão (UvisPadrao) nos apps desta lista. */
+troca('var padraoApps=["produtos-correlatos","servicos-alimentacao-roteiro","odontologia","servicos-assistenciais"];',
+  'var padraoApps=' + JSON.stringify(["produtos-correlatos", "servicos-alimentacao-roteiro", "odontologia", "servicos-assistenciais"].concat(PRONTOS.map(d => d.app))) + ';', 'apps no padrão');
 troca('<script type="text/plain" id="app--central-consultas">', novos + '<script type="text/plain" id="app--central-consultas">', 'inserir provisórios');
 
 /* 1b. Complementos dentro dos módulos herdados. Cada bloco é descompactado,
@@ -200,6 +231,11 @@ trocaRx(/var ICONES = \{[\s\S]*?\n  \};/, () => `var ICONES = ${JSON.stringify(i
 troca("'drogaria':{nome:'Drogaria',nucleo:'Medicamentos',", "'drogaria':{nome:'Drogaria',nucleo:'Drogaria',", 'salvas drogaria');
 troca("'farmacia-manipulacao':{nome:'Farmácia com Manipulação',nucleo:'Medicamentos',", "'farmacia-manipulacao':{nome:'Farmácia com Manipulação',nucleo:'Manipulação',", 'salvas manipulação');
 troca("'distribuidoras-transportadoras':{nome:'Distribuidora / transportadora',nucleo:'Medicamentos',", "'distribuidoras-transportadoras':{nome:'Atacadista de medicamentos',nucleo:'Atacadista de medicamentos',", 'salvas atacadista');
+/* Salvas dos roteiros simples: respostas e fotos ficam no mesmo registro. */
+troca("  'odontologia':{nome:'Odontologia',nucleo:'Odontologia',", PRONTOS.map(d => {
+  const nuc = CAT.nucleos.find(n => n.roteiros.some(r => r[2] === d.app)).id;
+  return `  ${JSON.stringify(d.app).replace(/"/g, "'")}:{nome:${JSON.stringify(d.titulo).replace(/"/g, "'")},nucleo:${JSON.stringify(nuc).replace(/"/g, "'")},ls:['${d.store}'],fotos:[],barra:'.pu-header .pu-acoes'},\n`;
+}).join('') + "  'odontologia':{nome:'Odontologia',nucleo:'Odontologia',", 'salvas roteiros simples');
 
 /* 7. Arquivo auxiliar carregado pela Central: servido por este site, qualquer
    que seja o endereço (o site não depende de uvisvp.github.io). */
