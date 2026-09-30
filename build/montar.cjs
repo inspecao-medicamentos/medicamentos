@@ -91,6 +91,66 @@ const novos = Object.entries(CAT.novos).map(([id, def]) =>
   `<script type="text/plain" id="app--${id}">${lz.compressToBase64(provisorio(id, def))}</script>\n`).join('');
 troca('<script type="text/plain" id="app--central-consultas">', novos + '<script type="text/plain" id="app--central-consultas">', 'inserir provisórios');
 
+/* 1b. Complementos dentro dos módulos herdados. Cada bloco é descompactado,
+   alterado com a mesma checagem de ocorrência única e compactado de novo. */
+function blocoAltera(id, fn) {
+  const rx = new RegExp(`(<script type="text/plain" id="${id.replace(/[.]/g, '\\.')}">)([\\s\\S]*?)(</script>)`);
+  const m = h.match(rx);
+  if (!m) throw Error(`bloco ${id} não encontrado`);
+  const novo = fn(lz.decompressFromBase64(m[2].trim()));
+  h = h.replace(rx, (_, a, __, c) => a + lz.compressToBase64(novo) + c);
+}
+function trocaEm(s, de, para, rotulo) {
+  const n = s.split(de).length - 1;
+  if (n !== 1) throw Error(`${rotulo}: esperava 1 ocorrência, achei ${n}`);
+  return s.replace(de, () => para);
+}
+/* Referências do catálogo da drogaria (VISA_LOCAL embutido no módulo). */
+function catalogoDrogaria(s, fn) {
+  const at = s.indexOf('const VISA_LOCAL='), ini = s.indexOf('{', at);
+  let prof = 0, aspas = false, esc2 = false, fim = -1;
+  for (let i = ini; i < s.length; i++) {
+    const c = s[i];
+    if (aspas) { if (esc2) esc2 = false; else if (c === '\\') esc2 = true; else if (c === '"') aspas = false; }
+    else if (c === '"') aspas = true;
+    else if (c === '{') prof++;
+    else if (c === '}' && --prof === 0) { fim = i + 1; break; }
+  }
+  const visa = JSON.parse(s.slice(ini, fim));
+  fn(visa);
+  return s.slice(0, ini) + JSON.stringify(visa) + s.slice(fim);
+}
+
+/* Drogaria em supermercado: perguntas na Área física, texto na seção 4 e
+   irregularidades na seção 11 (modulos/drogaria-supermercado.js). */
+const SUPER_JS = fs.readFileSync(path.join(RAIZ, 'modulos', 'drogaria-supermercado.js'), 'utf8');
+blocoAltera('app--drogaria', s => {
+  s = catalogoDrogaria(s, visa => {
+    const cat = visa['roteiros/drogaria.json'];
+    const lei = visa['legislacao_v12/normas/lei-5991-1973.json'], rdc = visa['legislacao_v12/normas/rdc-44-2009.json'];
+    const base44 = cat.referencias['rdc-44-2009::artigo::13'], base5991 = cat.referencias['lei-5991-1973::artigo::35::paragrafo::2'];
+    const novas = [['lei-5991-1973::artigo::6::paragrafo::2', 'Art. 6º, § 2º', base5991, lei], ['lei-5991-1973::artigo::6::paragrafo::3', 'Art. 6º, § 3º', base5991, lei],
+      ['lei-5991-1973::artigo::6::paragrafo::4', 'Art. 6º, § 4º', base5991, lei], ['lei-5991-1973::artigo::6::paragrafo::5', 'Art. 6º, § 5º', base5991, lei],
+      ['rdc-44-2009::artigo::13::paragrafo::2', 'Art. 13, § 2º', base44, rdc]];
+    for (const [id, disp, base, norma] of novas) {
+      if (!norma.nos.some(n => n.id === id)) throw Error('dispositivo ausente no banco: ' + id);
+      cat.referencias[id] ??= {...base, id, dispositivo: disp};
+    }
+  });
+  const fim = s.lastIndexOf('</body>');
+  return s.slice(0, fim) + '<script>' + SUPER_JS + '</script>' + s.slice(fim);
+});
+blocoAltera('rec--drogaria-area-fisica.js', s => trocaEm(s,
+  "question(n,'acesso','O acesso ao estabelecimento é independente ou se enquadra nas exceções aplicáveis para galerias, shoppings e supermercados?',null,false)",
+  "question(n,'acesso','O acesso ao estabelecimento é independente ou se enquadra nas exceções aplicáveis para galerias, shoppings e supermercados?',null,false)+(window.__drgSuperHtml?window.__drgSuperHtml(n,a,{question,select,field,check}):'')",
+  'supermercado: tela'));
+blocoAltera('rec--drogaria-report-final.js', s => {
+  s = trocaEm(s, "else if(no(a.acesso))intro+=' O acesso ao estabelecimento não é independente e não se enquadra nas exceções aplicáveis.';p(B,intro);",
+    "else if(no(a.acesso))intro+=' O acesso ao estabelecimento não é independente e não se enquadra nas exceções aplicáveis.';p(B,intro);if(window.__drgSuperReport)window.__drgSuperReport(B,g,p,yes,no);", 'supermercado: relatório');
+  return trocaEm(s, `if(no(ag.answers.acesso))addIssue(out,'final_area_acesso',2,'4 Área Física','O acesso ao estabelecimento não é independente e não se enquadra nas exceções aplicáveis.',["rdc-44-2009::artigo::13"]);`,
+    `if(no(ag.answers.acesso))addIssue(out,'final_area_acesso',2,'4 Área Física','O acesso ao estabelecimento não é independente e não se enquadra nas exceções aplicáveis.',["rdc-44-2009::artigo::13"]);if(window.__drgSuperIssues)window.__drgSuperIssues(ag,out,addIssue,no);`, 'supermercado: irregularidades');
+});
+
 /* 2. Cabeçalho do documento. */
 troca('<title>Inspeção Sanitária — Roteiros e apoio técnico</title>', '<title>Inspeção Medicamentos</title>', 'title');
 troca('<meta name="apple-mobile-web-app-capable" content="yes">', '<meta name="apple-mobile-web-app-capable" content="yes">\n  <meta name="apple-mobile-web-app-title" content="Inspeção Medicamentos">', 'nome no iOS');
@@ -150,6 +210,17 @@ troca('https://uvisvp.github.io/roteiros/central-nomes-medicamentos.js', "'+new 
    relatório Word, e o módulo quebrava. Injeta logo após a abertura <head>. */
 troca("if(qs){ fonte = fonte.replace('</head>','<script>window.__QS='+JSON.stringify('?'+qs)+';<\\/script></head>'); }",
   "if(qs){ fonte = fonte.replace(/<head(\\s[^>]*)?>/i, function(m){ return m+'<script>window.__QS='+JSON.stringify('?'+qs)+';<\\/script>'; }); }", 'injeção do parâmetro');
+
+/* 7d. Drogaria › Área física › "Informações gerais" (tipo de instalação,
+   pavimentos, acesso, áreas, caixa d'água, ventilação) não aparecia: a casca
+   procurava o bloco no HTML antigo do card, onde ele não existe. Passa a ler
+   da tela própria da Área física. (O mesmo defeito existe no roteiros.) */
+troca("var geral=Array.from(t.content.querySelectorAll('.box')).find(function(el){",
+  "var tg=document.createElement('template');try{tg.innerHTML=(window.DrogariaAreaFisica&&window.DrogariaAreaFisica.render(2))||''}catch(e){}var geral=Array.from(tg.content.querySelectorAll('.box')).concat(Array.from(t.content.querySelectorAll('.box'))).find(function(el){",
+  'drogaria: informações gerais');
+troca("if(geral)itens.push({id:'area-geral',title:'Informações gerais',html:geral.outerHTML});",
+  "if(geral)itens.push({id:'area-geral',title:'Informações gerais',html:geral.innerHTML.replace(/^\\s*<h3>[^<]*<\\/h3>/,'')});",
+  'drogaria: informações gerais aberta');
 
 /* 7c. Tom do módulo: drogaria, manipulação e atacadista trazem o ardósia do
    roteiros fixo no código (#365B73 e vizinhos). Ao montar, essa família vira o
