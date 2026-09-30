@@ -72,7 +72,14 @@ for num_s, titulo, cond, _ in SECOES:
     secoes.append({'code': 'v2-' + num_s, 'num': num_s, 'title': titulo, 'condition': None, 'hint': cond,
                    'item': 'i' + num_s, 'itemNum': num_s, 'itemTitle': titulo, 'requirements': reqs})
 
+# Componentes de cada item, como nos blocos 1–12: cabeçalho com “Não se aplica”
+# do item, observações gerais e a prévia “Como sai no relatório”.
+extras = []
+for s in secoes:
+    extras += [{'fn': 'manV2', 'into': s['item'], 'antes': True, 'c': {'t': 'itemhead', 'na': True}},
+               {'fn': 'manV2', 'into': s['item'], 'antes': False, 'c': {'t': 'obs', 'label': 'Observações gerais do item'}},
+               {'fn': 'manV2', 'into': s['item'], 'c': {'t': 'preview'}}]
 cartao = {'title': 'Manipulação de estéreis', 'subtitle': 'RDC 67/2007, Anexo IV — roteiro do Anexo VII, item 18',
-          'icon': 'lab', 'sections': secoes, 'extraItems': 0}
+          'icon': 'lab', 'sections': secoes, 'extraItems': extras}
 json.dump(cartao, open(os.path.join(AQUI, 'cartao13.json'), 'w'), ensure_ascii=False, indent=1)
 print('cartao13.json:', len(secoes), 'itens,', sum(len(s['requirements']) for s in secoes), 'perguntas')

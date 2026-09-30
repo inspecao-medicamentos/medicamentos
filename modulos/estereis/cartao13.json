@@ -3595,5 +3595,331 @@
    ]
   }
  ],
- "extraItems": 0
+ "extraItems": [
+  {
+   "fn": "manV2",
+   "into": "i13.1",
+   "antes": true,
+   "c": {
+    "t": "itemhead",
+    "na": true
+   }
+  },
+  {
+   "fn": "manV2",
+   "into": "i13.1",
+   "antes": false,
+   "c": {
+    "t": "obs",
+    "label": "Observações gerais do item"
+   }
+  },
+  {
+   "fn": "manV2",
+   "into": "i13.1",
+   "c": {
+    "t": "preview"
+   }
+  },
+  {
+   "fn": "manV2",
+   "into": "i13.2",
+   "antes": true,
+   "c": {
+    "t": "itemhead",
+    "na": true
+   }
+  },
+  {
+   "fn": "manV2",
+   "into": "i13.2",
+   "antes": false,
+   "c": {
+    "t": "obs",
+    "label": "Observações gerais do item"
+   }
+  },
+  {
+   "fn": "manV2",
+   "into": "i13.2",
+   "c": {
+    "t": "preview"
+   }
+  },
+  {
+   "fn": "manV2",
+   "into": "i13.3",
+   "antes": true,
+   "c": {
+    "t": "itemhead",
+    "na": true
+   }
+  },
+  {
+   "fn": "manV2",
+   "into": "i13.3",
+   "antes": false,
+   "c": {
+    "t": "obs",
+    "label": "Observações gerais do item"
+   }
+  },
+  {
+   "fn": "manV2",
+   "into": "i13.3",
+   "c": {
+    "t": "preview"
+   }
+  },
+  {
+   "fn": "manV2",
+   "into": "i13.4",
+   "antes": true,
+   "c": {
+    "t": "itemhead",
+    "na": true
+   }
+  },
+  {
+   "fn": "manV2",
+   "into": "i13.4",
+   "antes": false,
+   "c": {
+    "t": "obs",
+    "label": "Observações gerais do item"
+   }
+  },
+  {
+   "fn": "manV2",
+   "into": "i13.4",
+   "c": {
+    "t": "preview"
+   }
+  },
+  {
+   "fn": "manV2",
+   "into": "i13.5",
+   "antes": true,
+   "c": {
+    "t": "itemhead",
+    "na": true
+   }
+  },
+  {
+   "fn": "manV2",
+   "into": "i13.5",
+   "antes": false,
+   "c": {
+    "t": "obs",
+    "label": "Observações gerais do item"
+   }
+  },
+  {
+   "fn": "manV2",
+   "into": "i13.5",
+   "c": {
+    "t": "preview"
+   }
+  },
+  {
+   "fn": "manV2",
+   "into": "i13.6",
+   "antes": true,
+   "c": {
+    "t": "itemhead",
+    "na": true
+   }
+  },
+  {
+   "fn": "manV2",
+   "into": "i13.6",
+   "antes": false,
+   "c": {
+    "t": "obs",
+    "label": "Observações gerais do item"
+   }
+  },
+  {
+   "fn": "manV2",
+   "into": "i13.6",
+   "c": {
+    "t": "preview"
+   }
+  },
+  {
+   "fn": "manV2",
+   "into": "i13.7",
+   "antes": true,
+   "c": {
+    "t": "itemhead",
+    "na": true
+   }
+  },
+  {
+   "fn": "manV2",
+   "into": "i13.7",
+   "antes": false,
+   "c": {
+    "t": "obs",
+    "label": "Observações gerais do item"
+   }
+  },
+  {
+   "fn": "manV2",
+   "into": "i13.7",
+   "c": {
+    "t": "preview"
+   }
+  },
+  {
+   "fn": "manV2",
+   "into": "i13.8",
+   "antes": true,
+   "c": {
+    "t": "itemhead",
+    "na": true
+   }
+  },
+  {
+   "fn": "manV2",
+   "into": "i13.8",
+   "antes": false,
+   "c": {
+    "t": "obs",
+    "label": "Observações gerais do item"
+   }
+  },
+  {
+   "fn": "manV2",
+   "into": "i13.8",
+   "c": {
+    "t": "preview"
+   }
+  },
+  {
+   "fn": "manV2",
+   "into": "i13.9",
+   "antes": true,
+   "c": {
+    "t": "itemhead",
+    "na": true
+   }
+  },
+  {
+   "fn": "manV2",
+   "into": "i13.9",
+   "antes": false,
+   "c": {
+    "t": "obs",
+    "label": "Observações gerais do item"
+   }
+  },
+  {
+   "fn": "manV2",
+   "into": "i13.9",
+   "c": {
+    "t": "preview"
+   }
+  },
+  {
+   "fn": "manV2",
+   "into": "i13.10",
+   "antes": true,
+   "c": {
+    "t": "itemhead",
+    "na": true
+   }
+  },
+  {
+   "fn": "manV2",
+   "into": "i13.10",
+   "antes": false,
+   "c": {
+    "t": "obs",
+    "label": "Observações gerais do item"
+   }
+  },
+  {
+   "fn": "manV2",
+   "into": "i13.10",
+   "c": {
+    "t": "preview"
+   }
+  },
+  {
+   "fn": "manV2",
+   "into": "i13.11",
+   "antes": true,
+   "c": {
+    "t": "itemhead",
+    "na": true
+   }
+  },
+  {
+   "fn": "manV2",
+   "into": "i13.11",
+   "antes": false,
+   "c": {
+    "t": "obs",
+    "label": "Observações gerais do item"
+   }
+  },
+  {
+   "fn": "manV2",
+   "into": "i13.11",
+   "c": {
+    "t": "preview"
+   }
+  },
+  {
+   "fn": "manV2",
+   "into": "i13.12",
+   "antes": true,
+   "c": {
+    "t": "itemhead",
+    "na": true
+   }
+  },
+  {
+   "fn": "manV2",
+   "into": "i13.12",
+   "antes": false,
+   "c": {
+    "t": "obs",
+    "label": "Observações gerais do item"
+   }
+  },
+  {
+   "fn": "manV2",
+   "into": "i13.12",
+   "c": {
+    "t": "preview"
+   }
+  },
+  {
+   "fn": "manV2",
+   "into": "i13.13",
+   "antes": true,
+   "c": {
+    "t": "itemhead",
+    "na": true
+   }
+  },
+  {
+   "fn": "manV2",
+   "into": "i13.13",
+   "antes": false,
+   "c": {
+    "t": "obs",
+    "label": "Observações gerais do item"
+   }
+  },
+  {
+   "fn": "manV2",
+   "into": "i13.13",
+   "c": {
+    "t": "preview"
+   }
+  }
+ ]
 }

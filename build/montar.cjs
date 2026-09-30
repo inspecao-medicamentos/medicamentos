@@ -219,7 +219,6 @@ trocaRx(/var APP_NUCLEO = \{[\s\S]*?\};/, () => `var APP_NUCLEO = ${JSON.stringi
 const icones = {};
 for (const n of CAT.nucleos) for (const r of n.roteiros) if (r[2] !== 'farmacia-manipulacao') icones[r[2] + (r[3] ? '|' + r[3] : '')] = n.icone;
 Object.assign(icones, {
-  'drogaria|instalacao=supermercado': '<path d="M3 4h2l2.2 10.2a1 1 0 0 0 1 .8h8.9a1 1 0 0 0 1-.8L20 8H6.2M9 19.5a1 1 0 1 0 0 .01M17 19.5a1 1 0 1 0 0 .01"/>',
   'eac': '<path d="M9 3h6M10 3v5l-4.5 9a2.5 2.5 0 0 0 2.2 3.6h8.6a2.5 2.5 0 0 0 2.2-3.6L14 8V3M7.5 14h9"/>',
   'vacina': '<path d="m18 2 4 4M17 7l3-3M19 9 8.7 19.3a1 1 0 0 1-1.4 0l-2.6-2.6a1 1 0 0 1 0-1.4L15 5M9 11l4 4M5 19l-3 3M14 4l6 6"/>',
   'manipulacao-estereis': '<path d="M12 3c3.5 4.2 5.5 7.4 5.5 10a5.5 5.5 0 0 1-11 0C6.5 10.4 8.5 7.2 12 3zM9.5 14.5l2 2 3.5-4"/>',
@@ -246,6 +245,14 @@ troca('https://uvisvp.github.io/roteiros/central-nomes-medicamentos.js', "'+new 
    relatório Word, e o módulo quebrava. Injeta logo após a abertura <head>. */
 troca("if(qs){ fonte = fonte.replace('</head>','<script>window.__QS='+JSON.stringify('?'+qs)+';<\\/script></head>'); }",
   "if(qs){ fonte = fonte.replace(/<head(\\s[^>]*)?>/i, function(m){ return m+'<script>window.__QS='+JSON.stringify('?'+qs)+';<\\/script>'; }); }", 'injeção do parâmetro');
+
+/* 7f. Prévia “Como sai no relatório”: o módulo da distribuidora tem um ouvinte
+   de clique em window (captura) que interrompe a propagação, e a prévia ouvia
+   em document, por isso nunca registrava a resposta dada. Ouvindo em window
+   ela recebe o clique antes da interrupção. */
+for (const id of ['app--drogaria', 'app--distribuidoras-transportadoras'])
+  blocoAltera(id, s => trocaEm(trocaEm(s, "document.addEventListener(k,evento,true)", "window.addEventListener(k,evento,true)", 'prévia: ' + id),
+    "var GEN=/^(Não foram registradas irregularidades|", "var GEN=/^(Nº \\||Avaliação de risco não informada|Análise do plano de ação — será anexada|Não foram registradas irregularidades|", 'prévia GEN: ' + id));
 
 /* 7d. Drogaria › Área física › "Informações gerais" (tipo de instalação,
    pavimentos, acesso, áreas, caixa d'água, ventilação) não aparecia: a casca

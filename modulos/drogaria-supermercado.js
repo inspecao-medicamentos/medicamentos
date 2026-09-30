@@ -3,9 +3,8 @@
    e RDC Anvisa nº 44/2009, art. 13, §§ 1º e 2º.
 
    Gatilho: Área física › "O estabelecimento está instalado em" = área de vendas
-   de supermercado (tipo_instalacao 'mercado_area_vendas'). O card "Drogaria em
-   supermercado" (?instalacao=supermercado) já abre com esse campo preenchido,
-   desde que ainda esteja vazio. As respostas ficam no mesmo rascunho da
+   de supermercado (tipo_instalacao 'mercado_area_vendas'). Não há card próprio:
+   é a mesma drogaria, com este bloco a mais. As respostas ficam no mesmo rascunho da
    drogaria (meta.drogaria_secoes.area_geral), então Salvas, exportação e
    relatório funcionam sem mudança.
 
@@ -76,17 +75,4 @@
     qs.forEach(function(q){ if(no(a[q[0]])) addIssue(out, 'final_super_' + q[0], 2, '4 Área Física', q[5], [q[2][0]]); });
   };
 
-  /* Card "Drogaria em supermercado": preenche o tipo de instalação quando vazio. */
-  function preset(){
-    var api = window.DrogariaAPI;
-    if(!api || !api.getState) return false;
-    var s = structuredClone(api.getState());
-    var sec = ((s.meta.drogaria_secoes || (s.meta.drogaria_secoes = {})).area_geral) || (s.meta.drogaria_secoes.area_geral = {answers: {}, fields: {}, docs: [], items: [], photos: []});
-    sec.fields = sec.fields || {};
-    if(!sec.fields.tipo_instalacao){ sec.fields.tipo_instalacao = SUPER; api.setState(s, {render: true}); }
-    return true;
-  }
-  if(/(^|[?&])instalacao=supermercado(&|$)/.test(String(window.__QS || ''))){
-    var n = 0, t = setInterval(function(){ if(preset() || ++n > 40) clearInterval(t); }, 250);
-  }
 })();

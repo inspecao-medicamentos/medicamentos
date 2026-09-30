@@ -1,7 +1,7 @@
 /* Service worker — Inspeção Sanitária / Medicamentos */
 'use strict';
 
-const VERSAO = '20260930-4';
+const VERSAO = '20260930-5';
 /* Prefixo próprio de cache: mesmo se um dia dividir a origem com o roteiros,
    um não apaga o cache do outro (o roteiros apaga só 'app-*'). */
 const CACHE_APP = 'med-app-' + VERSAO;
