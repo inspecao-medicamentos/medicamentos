@@ -8,8 +8,11 @@
      vinculado depois ao item; o texto pode ir para o campo em edição.
    - Redação: construtor de constatação (fatos → uma frase, sem IA) e
      biblioteca de frases.
-   - Reinspeção: NCs de uma inspeção salva do mesmo roteiro, com a situação
-     atual de cada uma, e o texto para o relatório.
+   - Verificações: equipamento/produto, padrão, esperado, encontrado,
+     conclusão → texto corrido para o relatório.
+   Fotos: o botão “Fotos” do cabeçalho abre a revisão antes do PDF — legenda
+   automática (ponto do roteiro + data e hora do registro), complemento curto e
+   tipo (evidência, documental, só consulta); só consulta fica fora do PDF.
    Ao baixar o relatório (Word, PDF, prévia .docx) com pendências em aberto,
    mostra a lista e pede confirmação.
    Dados: localStorage med-campo-<roteiro> (vai nas Salvas: a casca inclui a
@@ -32,11 +35,11 @@
  /* ---------------- estado ---------------- */
  var C;
  function carrega(){try{C=JSON.parse(localStorage.getItem(CH)||'{}')||{}}catch(e){C={}}
-  C.pend=C.pend||{};C.lemb=C.lemb||[];C.achados=C.achados||[];C.ncs=C.ncs||[];C.cons=C.cons||{local:'',itens:'',verbo:'verificou-se'}}
+  C.pend=C.pend||{};C.lemb=C.lemb||[];C.achados=C.achados||[];C.verif=C.verif||[];C.fotos=C.fotos||{};C.cons=C.cons||{local:'',itens:'',verbo:'verificou-se'}}
  function grava(){C.alterado=agora();try{localStorage.setItem(CH,JSON.stringify(C))}catch(e){aviso('Não foi possível gravar no aparelho (espaço cheio?).')}}
- function temConteudo(){return Object.keys(C.pend).length||C.lemb.length||C.achados.length||C.reinsp}
+ function temConteudo(){return Object.keys(C.pend).length||C.lemb.length||C.achados.length||C.verif.length}
  /* inspeção apagada por Salvas / Nova inspeção: a chave some e o estado recomeça */
- function confereReinicio(){if(localStorage.getItem(CH)===null&&C&&(C.inicio||temConteudo())){carrega();C={pend:{},lemb:[],achados:[],ncs:[],cons:{local:'',itens:'',verbo:'verificou-se'}};pintaFab()}}
+ function confereReinicio(){if(localStorage.getItem(CH)===null&&C&&(C.inicio||temConteudo())){carrega();C={pend:{},lemb:[],achados:[],verif:[],fotos:{},cons:{local:'',itens:'',verbo:'verificou-se'}};pintaFab()}}
 
  /* ---------------- adaptadores dos motores ---------------- */
  function motor(){
@@ -165,19 +168,50 @@
   var v=cons.verbo||'verificou-se',l=limpa(cons.local).replace(/[,.]+$/,'');
   var f=l?l+', '+v+' '+juntaLista(itens)+'.':v.charAt(0).toUpperCase()+v.slice(1)+' '+juntaLista(itens)+'.';return f.charAt(0).toUpperCase()+f.slice(1)}
 
- /* ---------------- reinspeção ---------------- */
- var SIT=[['','Selecione'],['corrigida','Corrigida'],['parcial','Parcialmente corrigida'],['nao','Não corrigida'],['nv','Não verificada']];
- var SIT_TXT={corrigida:'corrigida',parcial:'parcialmente corrigida',nao:'não corrigida',nv:'não verificada nesta inspeção'};
- function salvasAnteriores(){try{if(!PAI||!PAI.UvisSalvas)return Promise.resolve([]);return PAI.UvisSalvas.salvas().then(function(a){return (a||[]).filter(function(x){return x.app===APPS}).map(function(x){var c={};try{c=JSON.parse((x.ls||{})[CH_SALVAS]||'{}')||{}}catch(e){}return {id:x.id,nome:x.nome,criado:x.criado,ncs:c.ncs||[],data:c.inicio||x.criado}})})}catch(e){return Promise.resolve([])}}
- function textoReinsp(){var r=C.reinsp;if(!r)return '';var cab='Verificação das não conformidades apontadas na inspeção anterior'+(r.data?' ('+new Date(r.data).toLocaleDateString('pt-BR')+')':'')+':';
-  return cab+'\n'+r.itens.map(function(x,i){return (i+1)+'. '+x.texto.replace(/\.$/,'')+' — '+(SIT_TXT[x.sit]||'situação não registrada')+(limpa(x.obs)?' ('+limpa(x.obs).replace(/\.$/,'')+')':'')+'.'}).join('\n')}
+
+ /* ---------------- verificações realizadas ---------------- */
+ var TIPOS_V={
+  balanca:['Balança','balança (marca, modelo, nº de série)','peso-padrão (valor nominal e certificado de calibração)','valor nominal ± tolerância','leitura obtida'],
+  temperatura:['Temperatura (refrigerador, câmara)','refrigerador da área de … (identificação)','termômetro de referência (identificação e calibração)','faixa especificada (ex.: 2 °C a 8 °C)','temperatura lida'],
+  termohigrometro:['Termo-higrômetro','termo-higrômetro da área de …','instrumento de referência ou registro diário','faixas especificadas de temperatura e umidade','valores lidos'],
+  estoque:['Estoque','produto (nome, concentração, lote)','saldo escriturado (sistema, livro ou SNGPC)','quantidade escriturada','quantidade física contada'],
+  rastreabilidade:['Rastreabilidade','produto ou insumo (nome, lote)','documentos conferidos (nota fiscal, laudo, ordem de manipulação)','dados coincidentes entre os documentos','dados encontrados'],
+  outra:['Outra','equipamento, produto ou registro verificado','padrão, instrumento ou documento de referência','resultado esperado','resultado encontrado']};
+ var CONCL=[['','Conclusão'],['conforme','De acordo com o esperado'],['nao','Em desacordo com o esperado'],['inconclusiva','Inconclusiva']];
+ function sp(t){return limpa(t).replace(/[.;]+$/,'')}
+ function textoVerif(v){v=v||{};var o=sp(v.obj);if(!o)return '';var t='Realizou-se verificação de '+o+(sp(v.pad)?', utilizando '+sp(v.pad):'')+'.';
+  if(sp(v.esp))t+=' Resultado esperado: '+sp(v.esp)+'.';if(sp(v.enc))t+=' Resultado encontrado: '+sp(v.enc)+'.';
+  t+={conforme:' O resultado encontrado está de acordo com o esperado.',nao:' O resultado encontrado está em desacordo com o esperado.',inconclusiva:' A verificação foi inconclusiva.'}[v.concl]||'';
+  if(sp(v.obs)){var ob=sp(v.obs);t+=' '+ob.charAt(0).toUpperCase()+ob.slice(1)+'.'}return t}
+
+ /* ---------------- fotos: legenda automática e tipo ---------------- */
+ var TIPOS_F=[['evidencia','Evidência'],['documental','Documental'],['consulta','Só consulta (fora do PDF)']];
+ function adFotos(){try{return window.UvsFotosPDF&&UvsFotosPDF.adaptadores[APP]||null}catch(e){return null}}
+ function hashTxt(t){var h=2166136261,n=t.length,passo=Math.max(1,Math.floor(n/512));for(var i=0;i<n;i+=passo){h^=t.charCodeAt(i);h=Math.imul(h,16777619)>>>0}return (h>>>0).toString(36)+'.'+n}
+ function chaveFoto(f){var s=f.src;if(typeof s==='string')return 's'+hashTxt(s);if(s&&typeof s.size==='number')return 'b'+s.size+'.'+hashTxt(String(f.legenda||''));return 'x'+hashTxt(String(f.legenda||''))}
+ /* lista do relatório fotográfico + fotos dos achados, cada uma com a chave */
+ function listaFotos(){var ad=adFotos();var p1=ad?Promise.resolve().then(ad.fotos).catch(function(){return []}):Promise.resolve([]);
+  var p2=Promise.all(C.achados.filter(function(a){return a.foto}).map(function(a){return leFoto(a.foto).then(function(u){return u?{src:u,legenda:'Achado'+(a.item?' — '+a.item:'')+' — '+(a.local?a.local+': ':'')+a.txt,ts:a.ts}:null},function(){return null})}));
+  return Promise.all([p1,p2]).then(function(v){return (v[0]||[]).concat(v[1].filter(Boolean)).filter(function(f){return f&&f.src}).map(function(f){f.k=chaveFoto(f);return f})})}
+ /* ao tirar/escolher foto no roteiro: guarda data, hora e item das fotos novas */
+ var tFotos=0;
+ function registraFotos(marcaHora){return listaFotos().then(function(l){var mud=false;l.forEach(function(f){if(!C.fotos[f.k]){var it=itemAtual();C.fotos[f.k]={ts:marcaHora?agora():(f.ts||null),item:marcaHora&&it?it.titulo:'',tipo:'evidencia'};mud=true}});if(mud)grava();return l})}
+ function legendaFoto(f){var m=C.fotos[f.k]||{},ts=m.ts||f.ts;return limpa(f.legenda||'Registro da inspeção')+(sp(m.leg)?' — '+sp(m.leg):'')+(ts?' — '+dataHora(ts):'')}
+ function gerarPdf(){var ad=adFotos();if(!ad||!window.UvsFotosPDF)return aviso('Este roteiro não tem relatório fotográfico.');aviso('Montando o relatório fotográfico…');
+  return registraFotos(false).then(function(l){var ev=[],doc=[];l.forEach(function(f){var t=(C.fotos[f.k]||{}).tipo||'evidencia';if(t==='evidencia')ev.push(f);else if(t==='documental')doc.push(f)});
+   var sel=ev.concat(doc);if(!sel.length)return aviso('Nenhuma foto marcada como evidência ou documental.');var out=[],p=Promise.resolve();
+   sel.forEach(function(f){p=p.then(function(){return UvsFotosPDF.reduz(f.src,1280,.75).then(function(r){var s=atob(r.url.split(',')[1]),u=new Uint8Array(s.length);for(var i=0;i<s.length;i++)u[i]=s.charCodeAt(i);
+    var tipo=(C.fotos[f.k]||{}).tipo;out.push({n:out.length+1,legenda:(tipo==='documental'?'Documental — ':'')+legendaFoto(f),w:r.w,h:r.h,bytes:u})},function(){})})});
+   return p.then(function(){if(!out.length)return aviso('Não foi possível ler as fotos.');var m={};try{m=ad.meta()||{}}catch(e){}var iso=/^(\d{4})-(\d{2})-(\d{2})/.exec(m.data||'');if(iso)m.data=iso[3]+'/'+iso[2]+'/'+iso[1];
+    var blob=UvsFotosPDF.pdf({titulo:ad.titulo,estab:m.estab,data:m.data},out),a=document.createElement('a'),nome=String(m.estab||'inspecao').normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^A-Za-z0-9]+/g,'_').replace(/^_|_$/g,'').slice(0,40)||'inspecao';
+    a.href=URL.createObjectURL(blob);a.download='Relatorio_fotografico_'+nome+'_'+new Date().toISOString().slice(0,10)+'.pdf';document.body.appendChild(a);a.click();setTimeout(function(){URL.revokeObjectURL(a.href);a.remove()},2000);
+    aviso('Relatório fotográfico: '+out.length+' foto(s)'+(l.length>out.length?'; '+(l.length-out.length)+' só para consulta ficaram fora':'')+'.')})})}
 
  /* ---------------- pendências (para o resumo e o aviso ao emitir) ---------------- */
  function pendencias(){var out=[];
   Object.keys(C.pend).forEach(function(k){var p=C.pend[k];out.push({tipo:'Pergunta pendente',txt:(p.item?p.item+' › ':'')+p.rotulo})});
   C.lemb.forEach(function(l){if(!l.feito)out.push({tipo:'Lembrete',txt:l.txt})});
   C.achados.forEach(function(a){if(!a.item)out.push({tipo:'Achado sem item',txt:(a.local?a.local+': ':'')+a.txt})});
-  if(C.reinsp)C.reinsp.itens.forEach(function(x){if(!x.sit)out.push({tipo:'Reinspeção sem situação',txt:x.texto})});
   return out}
 
  /* ---------------- interface ---------------- */
@@ -197,22 +231,27 @@
    /* os eventos do painel não seguem para os roteiros (que escutam input/change no document) */
    p.addEventListener('input',function(e){e.stopPropagation();entradaPainel(e)});p.addEventListener('change',function(e){e.stopPropagation();mudaPainel(e)})}pinta()}
  function fechaPainel(){var p=document.getElementById('cmp-painel');if(p)p.remove();pintaFab()}
- var ABAS=[['resumo','Resumo'],['pend','Pendências'],['achados','Achados'],['redacao','Redação'],['reinsp','Reinspeção']];
+ var ABAS=[['resumo','Resumo'],['pend','Pendências'],['achados','Achados'],['fotos','Fotos'],['redacao','Redação'],['verif','Verificações']];
  function pinta(){var p=document.getElementById('cmp-painel');if(!p)return;var np=pendencias().length;
   p.innerHTML='<div class="cx" role="dialog" aria-label="Ferramentas de campo"><header><b>Ferramentas de campo</b><button type="button" class="x" data-c="fecha" aria-label="Fechar">✕</button></header><nav>'
    +ABAS.map(function(a){return '<button type="button" data-aba="'+a[0]+'" class="'+(a[0]===aba?'on':'')+'">'+a[1]+(a[0]==='pend'&&np?' ('+np+')':'')+'</button>'}).join('')+'</nav><div class="corpo">'+corpo()+'</div></div>';
   if(aba==='resumo')contaFotos().then(function(n){var e=p.querySelector('[data-fotos]');if(e)e.textContent=n==null?'—':n});
   if(aba==='achados')[].forEach.call(p.querySelectorAll('img[data-foto]'),function(im){leFoto(im.dataset.foto).then(function(u){if(u)im.src=u})});
-  if(aba==='reinsp'&&!C.reinsp)salvasAnteriores().then(function(l){var e=p.querySelector('[data-lista-salvas]');if(!e)return;var com=l.filter(function(x){return x.ncs.length});
-   e.innerHTML=com.length?com.map(function(x){return '<div class="lin"><b>'+esc(x.nome)+'</b><small>'+esc(dataHora(x.data))+' · '+x.ncs.length+' não conformidade(s)</small><div class="acoes"><button type="button" class="b pri" data-c="usa-salva" data-id="'+esc(x.id)+'">Usar esta inspeção</button></div></div>'}).join('')
-    :'<p class="nota">Nenhuma inspeção salva deste roteiro com não conformidades registradas. A lista de NCs passa a ser guardada nas inspeções salvas a partir desta versão; salvas anteriores a ela não trazem essa lista.</p>'})}
+  if(aba==='fotos')registraFotos(false).then(function(l){var e=p.querySelector('[data-lista-fotos]');if(!e)return;
+   if(!l.length){e.innerHTML='<p class="nota">Nenhuma foto registrada nesta inspeção.</p>';return}
+   var n={evidencia:0,documental:0,consulta:0};l.forEach(function(f){n[(C.fotos[f.k]||{}).tipo||'evidencia']++});
+   e.innerHTML='<p class="nota">'+l.length+' foto(s): '+n.evidencia+' evidência, '+n.documental+' documental, '+n.consulta+' só consulta.</p>'+l.map(function(f,i){var m=C.fotos[f.k]||{};
+    return '<div class="lin cmp-ft"><img class="ft" data-ft="'+i+'" alt="Foto '+(i+1)+'"><small>'+esc(legendaFoto(f))+'</small><label class="f"><span>Complemento da legenda</span><input type="text" data-foto2="'+esc(f.k)+'" data-campo="leg" placeholder="Ex.: balança MARK 50" value="'+esc(m.leg||'')+'"></label>'
+     +'<label class="f"><span>Tipo</span><select data-foto2="'+esc(f.k)+'" data-campo="tipo">'+TIPOS_F.map(function(t){return '<option value="'+t[0]+'"'+((m.tipo||'evidencia')===t[0]?' selected':'')+'>'+t[1]+'</option>'}).join('')+'</select></label></div>'}).join('');
+   l.forEach(function(f,i){var im=e.querySelector('[data-ft="'+i+'"]');if(!im)return;if(typeof f.src==='string')im.src=f.src;else try{im.src=URL.createObjectURL(f.src)}catch(er){}})});
+  }
  function k(v,r,al){return '<div class="k'+(al?' al':'')+'"><b>'+v+'</b><span>'+r+'</span></div>'}
  function corpo(){
   if(aba==='resumo'){var n=contagem(),pend=pendencias(),ach=C.achados,vinc=ach.filter(function(a){return a.item}).length,nome=nomeEstab();
    var sec='';try{if(n.m==='rs'){var ss=UvisPadrao.secoes(),tot=0,ok=0;ss.forEach(function(s){s.itens.forEach(function(i){if(i.total){tot++;if(i.feitos>=i.total)ok++}})});sec=k(ok+'/'+tot,'itens concluídos')}}catch(e){}
    return '<div class="lin"><b>'+esc(nome||'Estabelecimento não identificado')+'</b><small>'+esc(document.title||'')+' · início '+esc(dataHora(C.inicio))+' · última alteração '+esc(dataHora(C.alterado))+'</small></div>'
     +'<h4>Respostas</h4><div class="grade">'+k(n.resp,'respondidas')+(n.m==='drogaria'?'':k(n.c,'conformes'))+k(n.nc,'não conformes'+(n.m==='drogaria'?' (irregularidades)':''),n.nc)+k(n.na,'não se aplica')+sec+'</div>'
-    +'<h4>Controle</h4><div class="grade">'+k(Object.keys(C.pend).length,'perguntas pendentes',Object.keys(C.pend).length)+k(C.lemb.filter(function(l){return !l.feito}).length,'lembretes abertos',C.lemb.some(function(l){return !l.feito}))+k(vinc+'/'+ach.length,'achados vinculados',vinc<ach.length)+'<div class="k"><b data-fotos>…</b><span>fotos</span></div>'+(C.reinsp?k(C.reinsp.itens.filter(function(x){return x.sit}).length+'/'+C.reinsp.itens.length,'NCs anteriores avaliadas',C.reinsp.itens.some(function(x){return !x.sit})):'')+'</div>'
+    +'<h4>Controle</h4><div class="grade">'+k(Object.keys(C.pend).length,'perguntas pendentes',Object.keys(C.pend).length)+k(C.lemb.filter(function(l){return !l.feito}).length,'lembretes abertos',C.lemb.some(function(l){return !l.feito}))+k(vinc+'/'+ach.length,'achados vinculados',vinc<ach.length)+'<div class="k"><b data-fotos>…</b><span>fotos</span></div>'+k(C.verif.length,'verificações registradas')+'</div>'
     +(pend.length?'<h4>A resolver antes de encerrar ('+pend.length+')</h4>'+pend.slice(0,8).map(function(x){return '<div class="lin"><small>'+esc(x.tipo)+'</small>'+esc(x.txt)+'</div>'}).join('')+(pend.length>8?'<p class="nota">… e mais '+(pend.length-8)+' na aba Pendências.</p>':''):'<p class="nota">Nada pendente.</p>')
     +'<p class="nota">'+(n.m==='drogaria'?'Na drogaria há perguntas descritivas (Sim/Não); por isso o número de não conformes é o de irregularidades do relatório. ':'')+'Controle de completude da inspeção; não é pontuação sanitária.</p>'}
   if(aba==='pend'){var ks=Object.keys(C.pend);
@@ -236,13 +275,18 @@
     +'<h4>Frases</h4><p class="nota">Toque para inserir no campo e adapte o trecho “…”. A lista é comum a todos os roteiros deste aparelho.</p>'
     +fr.map(function(f,i){return '<div class="lin">'+esc(f)+'<div class="acoes"><button type="button" class="b pri" data-c="ins-frase" data-i="'+i+'">Inserir</button><button type="button" class="b" data-c="cop-frase" data-i="'+i+'">Copiar</button><button type="button" class="b del" data-c="del-frase" data-i="'+i+'">Excluir</button></div></div>'}).join('')
     +'<label class="f"><span>Nova frase</span><input type="text" data-nova-frase placeholder="Frase que você usa com frequência"></label><div class="acoes"><button type="button" class="b" data-c="add-frase">Adicionar frase</button><button type="button" class="b" data-c="frases-padrao">Restaurar frases padrão</button></div>'}
-  if(aba==='reinsp'){var r=C.reinsp;
-   if(!r)return '<p class="nota">Escolha a inspeção anterior deste estabelecimento entre as inspeções salvas deste roteiro. As não conformidades dela aparecem aqui para registrar a situação atual de cada uma.</p><div data-lista-salvas><p class="nota">Lendo as inspeções salvas…</p></div>';
-   var t=textoReinsp();
-   return '<div class="lin"><b>'+esc(r.nome)+'</b><small>Inspeção anterior de '+esc(dataHora(r.data))+' · '+r.itens.length+' não conformidade(s)</small><div class="acoes"><button type="button" class="b del" data-c="tira-reinsp">Trocar ou retirar a inspeção anterior</button></div></div>'
-    +r.itens.map(function(x,i){return '<div class="lin">'+(i+1)+'. '+esc(x.texto)+'<label class="f"><span>Situação atual</span><select data-cmp-sit="'+i+'">'+SIT.map(function(s){return '<option value="'+s[0]+'"'+(x.sit===s[0]?' selected':'')+'>'+s[1]+'</option>'}).join('')+'</select></label><label class="f"><span>Observação (opcional)</span><input type="text" data-cmp-obs="'+i+'" value="'+esc(x.obs||'')+'"></label></div>'}).join('')
-    +'<h4>Texto para o relatório</h4><div class="prev" data-reinsp-prev>'+esc(t)+'</div><div class="acoes"><button type="button" class="b pri" data-c="ins-reinsp">Inserir no campo</button><button type="button" class="b" data-c="cop-reinsp">Copiar</button></div>'
-    +'<p class="nota">Destino no modelo: Manipulação — “Não conformidades anteriores” (1.1, identificação); Atacadista/Transportadora — item 6 do Anexo I. Toque nesse campo no roteiro antes de inserir.</p>'}
+  if(aba==='fotos')return '<p class="nota">A legenda sai do ponto do roteiro em que a foto foi registrada, com data e hora (fotos tiradas a partir desta versão). Acrescente um complemento curto e escolha o tipo: evidência e documental entram no relatório fotográfico; “só consulta” fica fora.</p><div class="acoes"><button type="button" class="b pri" data-c="gera-pdf">Gerar relatório fotográfico (PDF)</button></div><div data-lista-fotos><p class="nota">Lendo as fotos…</p></div>';
+  if(aba==='verif'){var v=C.vrasc||{tipo:'balanca'},tp=TIPOS_V[v.tipo]||TIPOS_V.outra,tv=textoVerif(v);
+   return '<p class="nota">Registre a verificação feita na inspeção; o texto sai dos dados informados.</p>'
+    +'<label class="f"><span>Tipo</span><select data-v="tipo">'+Object.keys(TIPOS_V).map(function(k){return '<option value="'+k+'"'+(v.tipo===k?' selected':'')+'>'+TIPOS_V[k][0]+'</option>'}).join('')+'</select></label>'
+    +'<label class="f"><span>Equipamento, produto ou registro</span><input type="text" data-v="obj" placeholder="'+esc(tp[1])+'" value="'+esc(v.obj||'')+'"></label>'
+    +'<label class="f"><span>Padrão ou referência utilizada</span><input type="text" data-v="pad" placeholder="'+esc(tp[2])+'" value="'+esc(v.pad||'')+'"></label>'
+    +'<label class="f"><span>Resultado esperado</span><input type="text" data-v="esp" placeholder="'+esc(tp[3])+'" value="'+esc(v.esp||'')+'"></label>'
+    +'<label class="f"><span>Resultado encontrado</span><input type="text" data-v="enc" placeholder="'+esc(tp[4])+'" value="'+esc(v.enc||'')+'"></label>'
+    +'<label class="f"><span>Conclusão</span><select data-v="concl">'+CONCL.map(function(c){return '<option value="'+c[0]+'"'+((v.concl||'')===c[0]?' selected':'')+'>'+c[1]+'</option>'}).join('')+'</select></label>'
+    +'<label class="f"><span>Observação (opcional)</span><input type="text" data-v="obs" placeholder="Ex.: a equipe orientou a recalibração" value="'+esc(v.obs||'')+'"></label>'
+    +'<div class="prev" data-v-prev>'+esc(tv||'O texto aparece aqui.')+'</div><div class="acoes"><button type="button" class="b pri" data-c="ins-verif">Inserir no campo</button><button type="button" class="b" data-c="cop-verif">Copiar</button><button type="button" class="b" data-c="reg-verif">Registrar e limpar</button></div>'
+    +'<h4>Verificações registradas ('+C.verif.length+')</h4>'+(C.verif.length?C.verif.map(function(x,i){return '<div class="lin"><small>'+esc(dataHora(x.ts))+' · '+esc((TIPOS_V[x.tipo]||TIPOS_V.outra)[0])+'</small>'+esc(textoVerif(x))+'<div class="acoes"><button type="button" class="b pri" data-c="ins-verif-i" data-i="'+i+'">Inserir no campo</button><button type="button" class="b" data-c="cop-verif-i" data-i="'+i+'">Copiar</button><button type="button" class="b del" data-c="del-verif" data-i="'+i+'">Excluir</button></div></div>'}).join(''):'<p class="nota">Nenhuma.</p>')}
   return ''}
  function cliquePainel(e){var b=e.target.closest('[data-aba],[data-c]');if(!b)return;if(e.target===e.currentTarget)return fechaPainel();
   if(b.dataset.aba){aba=b.dataset.aba;return pinta()}
@@ -267,20 +311,24 @@
   if(c==='cop-frase')return copia(frases()[i]);
   if(c==='del-frase'){var f=frases();f.splice(i,1);gravaFrases(f);return pinta()}
   if(c==='add-frase'){var nf=limpa(p.querySelector('[data-nova-frase]').value);if(!nf)return;var f2=frases();f2.push(nf);gravaFrases(f2);return pinta()}
+  if(c==='gera-pdf')return gerarPdf();
+  if(c==='ins-verif'||c==='cop-verif'){var tx=textoVerif(C.vrasc);if(!tx)return aviso('Informe ao menos o equipamento, produto ou registro verificado.');return c==='ins-verif'?insere(tx):copia(tx)}
+  if(c==='reg-verif'){if(!textoVerif(C.vrasc))return aviso('Informe ao menos o equipamento, produto ou registro verificado.');var vr=Object.assign({},C.vrasc,{ts:agora()});C.verif.unshift(vr);C.vrasc={tipo:vr.tipo};marcaInicio();grava();return pinta()}
+  if(c==='ins-verif-i')return insere(textoVerif(C.verif[i]));
+  if(c==='cop-verif-i')return copia(textoVerif(C.verif[i]));
+  if(c==='del-verif'){C.verif.splice(i,1);grava();return pinta()}
   if(c==='frases-padrao'){if(confirm('Restaurar as frases padrão? As frases que você incluiu serão apagadas.')){gravaFrases(FRASES0.slice());pinta()}return}
-  if(c==='usa-salva'){return salvasAnteriores().then(function(l){var s=l.filter(function(x){return x.id===b.dataset.id})[0];if(!s)return;C.reinsp={nome:s.nome,data:s.data,itens:s.ncs.map(function(t){return {texto:t,sit:'',obs:''}})};marcaInicio();grava();pinta()})}
-  if(c==='tira-reinsp'){if(confirm('Retirar a inspeção anterior e as situações registradas?')){C.reinsp=null;grava();pinta()}return}
-  if(c==='ins-reinsp')return insere(textoReinsp());
-  if(c==='cop-reinsp')return copia(textoReinsp());
  }
  function entradaPainel(e){var t=e.target;
   if(t.dataset.cons){C.cons[t.dataset.cons]=t.value;grava();var pv=document.querySelector('[data-cons-prev]');if(pv)pv.textContent=constroi(C.cons)||'O texto aparece aqui.';return}
   if(t.dataset.a==='local'||t.dataset.a==='txt'){C.rasc=C.rasc||{};C.rasc[t.dataset.a]=t.value;grava();return}
-  if(t.dataset.cmpObs!==undefined){C.reinsp.itens[+t.dataset.cmpObs].obs=t.value;grava();var rp=document.querySelector('[data-reinsp-prev]');if(rp)rp.textContent=textoReinsp()}}
+  if(t.dataset.foto2&&t.dataset.campo==='leg'){var fm=C.fotos[t.dataset.foto2]=C.fotos[t.dataset.foto2]||{};fm.leg=t.value;grava();return}
+  if(t.dataset.v){(C.vrasc=C.vrasc||{})[t.dataset.v]=t.value;grava();var pv=document.querySelector('[data-v-prev]');if(pv)pv.textContent=textoVerif(C.vrasc)||'O texto aparece aqui.';return}}
  function mudaPainel(e){var t=e.target;
   if(t.dataset.a==='foto'){var nm=document.querySelector('[data-foto-nome]');if(nm)nm.textContent=t.files[0]?'📷 Foto escolhida: '+t.files[0].name:'📷 Tirar ou escolher foto (opcional)';return}
   if(t.dataset.lemb!==undefined){C.lemb[+t.dataset.lemb].feito=t.checked;grava();return pinta()}
-  if(t.dataset.cmpSit!==undefined){C.reinsp.itens[+t.dataset.cmpSit].sit=t.value;grava();var rp=document.querySelector('[data-reinsp-prev]');if(rp)rp.textContent=textoReinsp();pintaFab()}}
+  if(t.dataset.v==='tipo'||t.dataset.v==='concl'){(C.vrasc=C.vrasc||{})[t.dataset.v]=t.value;grava();return pinta()}
+  if(t.dataset.foto2){var fm=C.fotos[t.dataset.foto2]=C.fotos[t.dataset.foto2]||{};fm[t.dataset.campo]=t.value;grava();return}}
 
  /* ---------------- aviso ao emitir o relatório ---------------- */
  var EMITE=/^(Baixar (o )?(Word|relatório|prévia|Anexo)|Baixar relatório para Word|Imprimir( \/ PDF)?|Gerar (Word|relatório))/i,liberado=0;
@@ -293,9 +341,6 @@
   document.body.appendChild(m);m.addEventListener('click',function(ev){var x=ev.target.closest('[data-m]');if(!x&&ev.target!==m)return;m.remove();if(!x)return;
    if(x.dataset.m==='ver')abrePainel('pend');else if(x.dataset.m==='emite'){liberado=Date.now()+1500;b.click()}})}
 
- /* ---------------- lista de NCs guardada (para a reinspeção futura) ---------------- */
- var tNcs=0;
- function atualizaNcs(){clearTimeout(tNcs);tNcs=setTimeout(function(){confereReinicio();var l=irregularidades(),nome=nomeEstab();if(JSON.stringify(l)!==JSON.stringify(C.ncs)||nome!==C.nome){C.ncs=l;C.nome=nome;if(l.length||temConteudo())grava()}pintaFab()},1500)}
 
  /* ---------------- início ---------------- */
  function inicia(){if(!motor()){if((inicia.n=(inicia.n||0)+1)<40)return setTimeout(inicia,250);return}
@@ -303,11 +348,14 @@
   var f=document.createElement('button');f.id='cmp-fab';f.type='button';f.setAttribute('aria-label','Ferramentas de campo');f.innerHTML='<span>Campo</span><span class="n" hidden></span>';f.addEventListener('click',function(){abrePainel()});document.body.appendChild(f);pintaFab();
   window.addEventListener('focusin',function(e){var t0=e.target;if(!t0||!t0.closest)return;var t=e.target;if(t.closest('#cmp-painel,#cmp-modal'))return;if(t.tagName==='TEXTAREA'||(t.tagName==='INPUT'&&/^(text|search|)$/i.test(t.type||''))){ultimo=t;ultimoDesc=descritor(t)}},true);
   window.addEventListener('click',function(e){var b=e.target.closest&&e.target.closest('button');if(!b||b.closest('#cmp-painel,#cmp-modal'))return;
+   if(b.id==='uvs-fotos'&&adFotos()){e.preventDefault();e.stopImmediatePropagation();return abrePainel('fotos')}
    if(b.classList.contains('cmp-pbtn')){e.preventDefault();e.stopImmediatePropagation();return alternaPend(b)}
-   emissao(e);if(!e.defaultPrevented)respondeu(b);atualizaNcs()},true);
-  window.addEventListener('input',function(e){if(!e.target.closest||!e.target.closest('#cmp-painel'))atualizaNcs()},true);
+   emissao(e);if(!e.defaultPrevented)respondeu(b);setTimeout(function(){confereReinicio();pintaFab()},300)},true);
   var tm=0;new MutationObserver(function(ms){if(varre.ocupado)return;if(ms.every(function(m){return m.target.closest&&m.target.closest('#cmp-painel,#cmp-modal,#cmp-aviso,#cmp-fab')}))return;clearTimeout(tm);tm=setTimeout(varre,120)}).observe(document.body,{childList:true,subtree:true});
-  varre();atualizaNcs()}
+  window.addEventListener('change',function(e){var t=e.target;if(t&&t.type==='file'&&!t.closest('#cmp-painel')){clearTimeout(tFotos);tFotos=setTimeout(function(){registraFotos(true);tFotos=setTimeout(function(){registraFotos(true)},5000)},2500)}},true);
+  /* fotos já existentes quando o roteiro abre ficam sem hora (não se sabe quando foram tiradas) */
+  setTimeout(function(){registraFotos(false)},3000);
+  varre()}
  window.MedCampo={pendencias:pendencias,contagem:contagem,irregularidades:irregularidades,abre:abrePainel,estado:function(){return C}};
  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',inicia);else inicia();
 })();

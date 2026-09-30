@@ -1,10 +1,10 @@
 #!/usr/bin/env node
 /* Teste das ferramentas de campo (modulos/campo.js) em um roteiro de cada
    motor: marca pendência e confere que some ao responder; registra achado com
-   foto e vincula ao item; monta constatação e insere no campo de texto; salva a
-   inspeção (Salvas) e confere que a lista de NCs foi junto; na inspeção nova,
-   usa a salva na reinspeção e insere o texto; confere o aviso ao emitir o
-   relatório com pendência. Falha em erro de JavaScript. */
+   foto e vincula ao item; monta constatação e insere no campo de texto; confere
+   o aviso ao emitir o relatório com pendência; tira foto no roteiro e confere
+   data, hora, complemento e tipo no PDF de fotos; registra verificação; salva
+   a inspeção (Salvas) com a chave do campo. Falha em erro de JavaScript. */
 'use strict';
 const path = require('node:path'), fs = require('node:fs'), http = require('node:http');
 const {execSync} = require('node:child_process');
@@ -47,8 +47,8 @@ const CASOS = [
     ok(await f.evaluate(() => MedCampo.pendencias().length) === 1, 'pendência não registrada');
     await f.locator('button:text-is("Não cumpre")').first().click(); await p.waitForTimeout(2500);
     ok(await f.evaluate(() => MedCampo.pendencias().length) === 0, 'pendência não saiu ao responder');
-    const ncs = await f.evaluate(() => MedCampo.estado().ncs);
-    ok(ncs.length === 1, `lista de NCs com ${ncs.length}`);
+    const cont = await f.evaluate(() => MedCampo.contagem());
+    ok(cont.nc === 1, `resumo com ${cont.nc} não conformidade(s)`);
     /* achado com foto, vinculado ao item aberto */
     await f.click('#cmp-fab'); await f.click('#cmp-painel [data-aba="achados"]');
     await f.fill('#cmp-painel [data-a="local"]', 'sanitário do mezanino'); await f.fill('#cmp-painel [data-a="txt"]', 'ralo danificado');
@@ -84,27 +84,56 @@ const CASOS = [
     const emite = await f.evaluate(() => { const b = [...document.querySelectorAll('button')].find(x => x.matches('[data-rs-word]') || /^(Baixar (Word|relatório|prévia)|Baixar relatório para Word|Imprimir)/.test(x.textContent.trim())); if (!b) return false; b.click(); return true; });
     if (emite) { await p.waitForTimeout(400); ok(await f.evaluate(() => /pendência/.test((document.getElementById('cmp-modal') || {}).textContent || '')), 'sem aviso de pendência ao emitir'); await f.evaluate(() => { const m = document.getElementById('cmp-modal'); if (m) m.remove(); }); }
     else console.log(`  ${app}: botão de emitir não visível nesta tela (aviso testado em outro roteiro)`);
-    /* salva a inspeção e começa outra */
-    await p.waitForTimeout(1800);
+    /* foto tirada no roteiro: data, hora e item registrados; revisão e PDF */
+    /* botão de foto do próprio roteiro (abre o seletor de arquivo) */
+    const temBotao = await f.evaluate(() => { document.querySelectorAll('details').forEach(d => { if (!d.closest('#cmp-painel') && d.querySelector('button')) d.open = true; });
+      const b = [...document.querySelectorAll('button,label')].find(x => !x.closest('#cmp-painel,header,.ui-header,#uvs-fotos') && x.id !== 'uvs-fotos' && /📷|^\s*Fotos?\b|Tirar foto|Adicionar foto/i.test(x.textContent) && x.checkVisibility && x.checkVisibility());
+      if (!b) return false; b.setAttribute('data-teste-foto', '1'); return true; });
+    if (temBotao) {
+      const [fc] = await Promise.all([p.waitForEvent('filechooser', {timeout: 5000}).catch(() => null), f.click('[data-teste-foto]')]);
+      if (fc) await fc.setFiles({name: 'r.png', mimeType: 'image/png', buffer: PNG});
+      else if (await f.evaluate(() => !!(document.getElementById('med-tools-dialog') || {}).open)) {
+        /* manipulação: janela própria com Fotografar / Selecionar foto */
+        await f.setInputFiles('#med-tools-dialog [data-file-input]', {name: 'r.png', mimeType: 'image/png', buffer: PNG}); await p.waitForTimeout(1500);
+        await f.evaluate(() => { const b = document.querySelector('#med-tools-dialog [data-close]'); if (b) b.click(); });
+      } else console.log(`  ${app}: o botão de foto não abriu seletor de arquivo`);
+      await p.waitForTimeout(1500);
+      await f.evaluate(() => document.querySelectorAll('.modal .btn.primary, dialog button').forEach(b => { if (/salvar|confirmar|ok/i.test(b.textContent)) b.click(); }));
+      await p.waitForTimeout(6500);
+      const fm = await f.evaluate(() => Object.values(MedCampo.estado().fotos));
+      const comHora = fm.filter(x => x.ts);
+      if (!comHora.length) console.log(`  ${app}: foto do roteiro não identificada com hora (${fm.length} foto(s) no registro)`);
+      await f.click('#cmp-fab'); await f.click('#cmp-painel [data-aba="fotos"]'); await p.waitForTimeout(1500);
+      const nf = await f.evaluate(() => document.querySelectorAll('#cmp-painel .cmp-ft').length);
+      ok(nf >= 1, 'aba Fotos vazia');
+      await f.fill('#cmp-painel .cmp-ft input[data-campo="leg"]', 'balança MARK 50');
+      if (nf > 1) await f.selectOption('#cmp-painel .cmp-ft >> nth=1 >> select', 'consulta');
+      const [dl] = await Promise.all([p.waitForEvent('download', {timeout: 15000}).catch(() => null), f.click('#cmp-painel [data-c="gera-pdf"]')]);
+      ok(!!dl, 'PDF de fotos não gerado');
+      if (dl) { const arq = path.join(__dirname, 'capturas', `${app}-fotos.pdf`); fs.mkdirSync(path.dirname(arq), {recursive: true}); await dl.saveAs(arq);
+        const txt = fs.readFileSync(arq, 'latin1'); ok(txt.includes('balan') && txt.includes('MARK 50'), 'complemento da legenda fora do PDF'); if (comHora.length) ok(/\d{2}\/\d{2}\/\d{4} \d{2}:\d{2}/.test(txt), 'hora fora da legenda');
+        const nimg = (txt.match(/\/Subtype \/Image/g) || []).length; ok(nimg === nf - (nf > 1 ? 1 : 0), `PDF com ${nimg} foto(s) para ${nf} na lista`); }
+      await f.evaluate(() => { const x = document.querySelector('#cmp-painel [data-c="fecha"]'); if (x) x.click(); });
+    } else console.log(`  ${app}: sem botão de foto nesta tela`);
+    /* verificação realizada → texto */
+    await f.click('#cmp-fab'); await f.click('#cmp-painel [data-aba="verif"]');
+    await f.fill('#cmp-painel [data-v="obj"]', 'balança analítica MARK 50'); await f.fill('#cmp-painel [data-v="pad"]', 'peso-padrão de 100 g');
+    await f.fill('#cmp-painel [data-v="esp"]', '100,00 g ± 0,10 g'); await f.fill('#cmp-painel [data-v="enc"]', '100,02 g'); await f.selectOption('#cmp-painel [data-v="concl"]', 'conforme');
+    const tv = await f.evaluate(() => document.querySelector('[data-v-prev]').textContent);
+    ok(tv === 'Realizou-se verificação de balança analítica MARK 50, utilizando peso-padrão de 100 g. Resultado esperado: 100,00 g ± 0,10 g. Resultado encontrado: 100,02 g. O resultado encontrado está de acordo com o esperado.', 'verificação: ' + tv);
+    await f.click('#cmp-painel [data-c="reg-verif"]'); ok(await f.evaluate(() => MedCampo.estado().verif.length) === 1, 'verificação não registrada');
+    await f.click('#cmp-painel [data-c="fecha"]');
+    /* salva a inspeção: a chave do campo vai junto; a inspeção nova começa limpa */
+    await p.waitForTimeout(1500);
     await p.evaluate(() => { window.__avisos = []; new MutationObserver(() => { const a = document.getElementById('uvs-aviso'); if (a && window.__avisos.indexOf(a.textContent) < 0) window.__avisos.push(a.textContent); }).observe(document.body, {childList: true, subtree: true, characterData: true}); });
     await p.evaluate(a => window.UvisSalvas.salvarENova(a), app); await p.waitForTimeout(5000);
-    const avisoCasca = await p.evaluate(() => window.__avisos.join(' | '));
     const salvas = await p.evaluate(a => window.UvisSalvas.salvas().then(l => l.filter(x => x.app === a).map(x => ({ls: Object.keys(x.ls), n: x.fotos.length}))), app);
-    ok(salvas.length === 1 && salvas[0].ls.some(k => /med-campo-/.test(k)), 'salva sem a chave do campo: ' + JSON.stringify(salvas) + ' aviso: ' + avisoCasca);
+    ok(salvas.length === 1 && salvas[0].ls.some(k => /med-campo-/.test(k)), 'salva sem a chave do campo: ' + JSON.stringify(salvas) + ' aviso: ' + await p.evaluate(() => window.__avisos.join(' | ')));
     ok(salvas.length === 1 && salvas[0].n >= 1, 'salva sem a foto do achado');
-    f = p.frames().find(x => x !== p.mainFrame());
-    await p.waitForTimeout(1500);
-    ok(await f.evaluate(() => MedCampo.estado().achados.length) === 0, 'inspeção nova ainda com achados');
-    /* reinspeção a partir da salva */
-    await f.click('#cmp-fab'); await f.click('#cmp-painel [data-aba="reinsp"]'); await p.waitForTimeout(800);
-    await f.click('#cmp-painel [data-c="usa-salva"]').catch(() => falha(`${app}: salva não aparece na reinspeção`));
-    await p.waitForTimeout(300);
-    await f.selectOption('#cmp-painel [data-cmp-sit="0"]', 'parcial').catch(() => {});
-    const tr = await f.evaluate(() => (document.querySelector('[data-reinsp-prev]') || {}).textContent || '');
-    ok(/^Verificação das não conformidades apontadas na inspeção anterior/.test(tr) && /parcialmente corrigida/.test(tr), 'texto da reinspeção: ' + tr.slice(0, 120));
-    await f.click('#cmp-painel [data-c="fecha"]');
+    f = p.frames().find(x => x !== p.mainFrame()); await p.waitForTimeout(1500);
+    ok(await f.evaluate(() => MedCampo.estado().achados.length + MedCampo.estado().verif.length) === 0, 'inspeção nova ainda com achados/verificações');
     for (const e of erros) falha(`${app}: erro JS ${e}`);
-    console.log(`${app}: ${nBotoes} botões de pendência, NC "${(ncs[0] || '').slice(0, 50)}…", reinspeção ok`);
+    console.log(`${app}: ${nBotoes} botões de pendência, ${cont.resp} resposta(s), ${cont.nc} NC, ok`);
     await ctx.close();
   }
   /* Central de Consultas: modo Automático */
