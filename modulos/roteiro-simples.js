@@ -62,64 +62,94 @@
   if(c.tipo === 'select') return '<label class="' + cls + '"><span>' + esc(c.rotulo) + '</span><select data-rs-meta="' + esc(c.id) + '">' + [['', 'Selecione']].concat(c.opcoes).map(function(o){ return '<option value="' + esc(o[0]) + '"' + (v === o[0] ? ' selected' : '') + '>' + esc(o[1]) + '</option>'; }).join('') + '</select></label>';
   if(c.tipo === 'textarea') return '<label class="' + cls + '"><span>' + esc(c.rotulo) + '</span><textarea data-rs-meta="' + esc(c.id) + '" rows="3">' + esc(v || '') + '</textarea></label>';
   return '<label class="' + cls + '"><span>' + esc(c.rotulo) + '</span><input type="' + (c.tipo === 'date' ? 'date' : 'text') + '"' + (c.tipo === 'cnpj' ? ' inputmode="numeric" maxlength="18" data-rs-cnpj' : '') + ' data-rs-meta="' + esc(c.id) + '" value="' + esc(v || '') + '"></label>'; }
- /* ---------- equipamentos: lista com busca na base de produtos para saúde da Anvisa ----------
-    Cada equipamento: busca pelo registro (11 dígitos) ou processo (15 a 17) na base
-    pública (dispositivos/<5 primeiros dígitos do registro>.json; processo pelo índice
-    indices/processos). A busca preenche registro, processo, produto, fabricante (país),
-    detentor e classe; tudo continua editável e pode ser digitado sem busca. */
- var EQ_CAMPOS = [['tipo', 'Tipo', 'select'], ['nome', 'Nome comercial / produto'], ['modelo', 'Marca e modelo'], ['registro', 'Registro na Anvisa'], ['processo', 'Processo na Anvisa'],
-  ['fabricante', 'Fabricante (país)'], ['detentor', 'Detentor do registro'], ['classe', 'Classe de risco'], ['serie', 'Nº de série / patrimônio'], ['local', 'Local e uso'], ['obs', 'Observações', 'textarea']];
+ /* ---------- listas de produtos com busca nas bases públicas da Anvisa ----------
+    Campo tipo 'equipamentos' com c.perfil: 'refrigeracao' (equipamentos de
+    refrigeração das vacinas), 'teste' (testes rápidos e reagentes do EAC) e
+    'vacina' (vacinas do serviço). Cada item: busca pelo registro ou pelo processo
+    (dispositivos/<prefixo do registro>.json; medicamentos/<prefixo>.json;
+    processo pelo índice indices/processos), preenchimento dos dados do registro e
+    edição/digitação livre. Sai no relatório em tabela, sob o título do item. */
+ var CAMPO = {}; D.secoes.forEach(function(s){ s.itens.forEach(function(it){ (it.campos || []).forEach(function(c){ CAMPO[c.id] = c; }); }); });
+ function vencMA(v){ var m = /^(\d{2})(\d{4})$/.exec(String(v || '')); return m ? m[1] + '/' + m[2] : String(v || ''); }
+ var PERFIS = {
+  refrigeracao: {item: 'Equipamento', mais: '+ Adicionar equipamento', base: 'dispositivos',
+   campos: [['tipo', 'Tipo', 'select'], ['nome', 'Nome comercial / produto'], ['modelo', 'Marca e modelo'], ['registro', 'Registro na Anvisa'], ['processo', 'Processo na Anvisa'],
+    ['fabricante', 'Fabricante (país)'], ['detentor', 'Detentor do registro'], ['classe', 'Classe de risco'], ['serie', 'Nº de série / patrimônio'], ['local', 'Local e uso'], ['obs', 'Observações', 'textarea']],
+   confere: function(x){ return /C[ÂA]MARA|REFRIGER|CONSERVA[ÇC][ÃA]O|FREEZER|CONGELA|GELADEIRA|T[ÉE]RMIC/i.test(x.produto || ''); }, estranho: 'o produto deste registro não parece ser equipamento de refrigeração',
+   tipoAuto: function(x){ return /C[ÂA]MARA/i.test(x.produto || '') ? 'Câmara refrigerada para imunobiológicos' : ''; },
+   head: ['Equipamento', 'Registro e processo na Anvisa', 'Fabricante e detentor', 'Série, local e observações'],
+   linha: function(e){ return [[e.tipo, e.nome, e.modelo], [rot('Registro ', e.registro) || 'Registro não informado', rot('Processo ', e.processo), e.classe], [rot('Fabricante: ', e.fabricante), rot('Detentor: ', e.detentor)], [rot('Série / patrimônio: ', e.serie), rot('Local: ', e.local), e.obs]]; }},
+  teste: {item: 'Produto', mais: '+ Adicionar teste ou reagente', base: 'dispositivos',
+   campos: [['tipo', 'Tipo', 'select'], ['nome', 'Produto (nome comercial)'], ['exame', 'Exame / analito'], ['registro', 'Registro na Anvisa'], ['processo', 'Processo na Anvisa'],
+    ['fabricante', 'Fabricante (país)'], ['detentor', 'Detentor do registro'], ['classe', 'Classe de risco'], ['lote', 'Lote'], ['validade', 'Validade do lote'], ['obs', 'Observações', 'textarea']],
+   confere: function(x){ return /TESTE|R[ÁA]PID|IMUNO|REAGENTE|TIRA|GLIC|COLESTER|HEMOGLOB|LIP[ÍI]D|TRIGLI|ANALISADOR|MONITOR|CASSETE|KIT|SARS|COVID|HIV|HEPATITE|DENGUE|S[ÍI]FILIS|INFLUENZA|ANT[ÍI]GENO|ANTICORPO|IG[GM]|PCR|LACTATO|CETONA|[ÁA]CIDO [ÚU]RICO|BETA ?HCG|GRAVIDEZ|CONTROLE|CALIBRADOR/i.test(x.produto || ''); }, estranho: 'o produto deste registro não parece ser teste ou reagente para diagnóstico in vitro',
+   head: ['Produto', 'Registro e processo na Anvisa', 'Fabricante e detentor', 'Lote, validade e observações'],
+   linha: function(e){ return [[e.tipo, e.nome, rot('Exame: ', e.exame)], [rot('Registro ', e.registro) || 'Registro não informado', rot('Processo ', e.processo), e.classe], [rot('Fabricante: ', e.fabricante), rot('Detentor: ', e.detentor)], [rot('Lote: ', e.lote), rot('Validade: ', e.validade), e.obs]]; }},
+  vacina: {item: 'Vacina', mais: '+ Adicionar vacina', base: 'medicamentos',
+   campos: [['nome', 'Vacina (nome comercial)'], ['principio', 'Princípio ativo'], ['registro', 'Registro na Anvisa'], ['processo', 'Processo na Anvisa'], ['detentor', 'Detentor do registro'],
+    ['situacao', 'Situação do registro'], ['vencimento', 'Vencimento do registro'], ['lote', 'Lote'], ['validade', 'Validade do lote'], ['obs', 'Observações', 'textarea']],
+   confere: function(x){ return /VACINA/i.test([x.produto, x.principio_ativo, x.classe_terapeutica].join(' ')); }, estranho: 'o produto deste registro não parece ser vacina',
+   head: ['Vacina', 'Registro e processo na Anvisa', 'Detentor e situação do registro', 'Lote, validade e observações'],
+   linha: function(e){ return [[e.nome, e.principio], [rot('Registro ', e.registro) || 'Registro não informado', rot('Processo ', e.processo)], [e.detentor, rot('Situação: ', e.situacao), rot('Vencimento do registro: ', e.vencimento)], [rot('Lote: ', e.lote), rot('Validade: ', e.validade), e.obs]]; }}
+ };
+ function perfil(c){ return PERFIS[(c && c.perfil) || 'refrigeracao'] || PERFIS.refrigeracao; }
+ function rot(pre, v){ return sv(v) ? pre + String(v).trim() : ''; }
  var eqMsg = {};
  function eqLista(id){ return Array.isArray(st.meta[id]) ? st.meta[id] : []; }
- function eqTem(e){ return EQ_CAMPOS.some(function(f){ return String(e[f[0]] || '').trim(); }); }
- function equipHtml(c){ var L = eqLista(c.id), n = Math.max(L.length, 1), h = '';
+ function eqTem(e){ return Object.keys(e || {}).some(function(k){ return !/^(busca|consulta|consultaReg)$/.test(k) && sv(e[k]); }); }
+ function equipHtml(c){ var P = perfil(c), L = eqLista(c.id), n = Math.max(L.length, 1), h = '';
   for(var i = 0; i < n; i++){ var e = L[i] || {}, k = c.id + '|' + i, m = eqMsg[k];
-   h += '<div class="rs-eq"><div class="rs-eq-top"><b>Equipamento ' + (i + 1) + '</b>' + (i < L.length ? '<button type="button" class="pu-btn" data-rs-eq-del="' + esc(k) + '">Remover</button>' : '') + '</div>'
+   h += '<div class="rs-eq"><div class="rs-eq-top"><b>' + esc(P.item) + ' ' + (i + 1) + '</b>' + (i < L.length ? '<button type="button" class="pu-btn" data-rs-eq-del="' + esc(k) + '">Remover</button>' : '') + '</div>'
     + '<div class="rs-eq-busca"><label class="pu-campo rs-campo"><span>Buscar na Anvisa pelo registro ou processo</span><input type="text" inputmode="numeric" data-rs-eq="' + esc(k) + '|busca" placeholder="Registro ou processo para pesquisar" value="' + esc(e.busca || '') + '"></label><button type="button" class="pu-btn pu-btn-pri" data-rs-eq-buscar="' + esc(k) + '">Buscar</button></div>'
     + (m ? '<p class="rs-eq-msg' + (m.tipo ? ' rs-eq-' + m.tipo : '') + '" role="status">' + esc(m.t) + '</p>' : '')
-    + '<div class="rs-campos">' + EQ_CAMPOS.map(function(f){ var v = e[f[0]] || '', a = ' data-rs-eq="' + esc(k) + '|' + f[0] + '"';
+    + '<div class="rs-campos">' + P.campos.map(function(f){ var v = e[f[0]] || '', a = ' data-rs-eq="' + esc(k) + '|' + f[0] + '"';
       if(f[2] === 'select') return '<label class="pu-campo rs-campo"><span>' + f[1] + '</span><select' + a + '>' + [''].concat(c.tipos || []).map(function(o){ return '<option value="' + esc(o) + '"' + (v === o ? ' selected' : '') + '>' + esc(o || 'Selecione') + '</option>'; }).join('') + '</select></label>';
       if(f[2] === 'textarea') return '<label class="pu-campo rs-campo rs-largo"><span>' + f[1] + '</span><textarea rows="2"' + a + '>' + esc(v) + '</textarea></label>';
       return '<label class="pu-campo rs-campo"><span>' + f[1] + '</span><input type="text"' + a + ' value="' + esc(v) + '"></label>'; }).join('') + '</div>'
-    + (e.consulta ? '<p class="pu-q-ajuda">Dados do registro conferidos na base de produtos para saúde da Anvisa em ' + esc(fmtData(e.consulta)) + '.</p>' : '') + '</div>'; }
-  return '<fieldset class="' + 'pu-campo rs-campo rs-largo rs-eqs"><legend>' + esc(c.rotulo) + '</legend>' + h + '<div><button type="button" class="pu-btn" data-rs-eq-add="' + esc(c.id) + '">+ Adicionar equipamento</button></div></fieldset>'; }
+    + (e.consulta ? '<p class="pu-q-ajuda">Dados do registro conferidos na base de ' + (P.base === 'medicamentos' ? 'medicamentos' : 'produtos para saúde') + ' da Anvisa em ' + esc(fmtData(e.consulta)) + '.</p>' : '') + '</div>'; }
+  return '<fieldset class="pu-campo rs-campo rs-largo rs-eqs"><legend>' + esc(c.rotulo) + '</legend>' + h + '<div><button type="button" class="pu-btn" data-rs-eq-add="' + esc(c.id) + '">' + esc(P.mais) + '</button></div></fieldset>'; }
  function eqSet(k, dados){ var p = k.split('|'), id = p[0], i = +p[1], L = eqLista(id).slice(); while(L.length <= i) L.push({}); var e = Object.assign({}, L[i], dados);
   /* registro trocado à mão depois da busca: a nota de conferência deixa de valer */
   if(e.consulta && dig(e.registro) !== e.consultaReg){ delete e.consulta; delete e.consultaReg; }
   L[i] = e; st.meta[id] = L; salva(); }
  var BASES = ['https://uvisvp.github.io/base-vigilancia/dados/', 'https://raw.githubusercontent.com/uvisvp/base-vigilancia/main/dados/'];
  function jget(path){ var i = 0; function tenta(){ var u = BASES[i++] + path; return fetch(u, {cache: 'no-store'}).then(function(r){ if(r.status === 404) return null; if(!r.ok) throw Error('HTTP ' + r.status); return r.json(); }).catch(function(e){ if(i < BASES.length) return tenta(); throw e; }); } return tenta(); }
+ var manif = null; function prefixo(base){ if(!manif) manif = jget('manifest.json').catch(function(){ return null; }); return manif.then(function(m){ var n = Number(m && m.bases && m.bases[base] && m.bases[base].prefixo); return n > 0 && n < 10 ? n : (base === 'medicamentos' ? 4 : 5); }); }
  function dig(v){ return String(v || '').replace(/\D/g, ''); }
- function porRegistro(reg){ return jget('dispositivos/' + reg.slice(0, 5) + '.json').then(function(d){ return (d || []).filter(function(x){ return dig(x.registro) === reg; }); }); }
- function buscaEquip(txt){ var d = dig(txt);
-  if(d.length >= 15 || (/^25/.test(d) && d.length >= 13)) return jget('indices/processos/' + d.slice(5, 8) + '.json').then(function(idx){
-   var regs = ((idx && idx[d]) || []).filter(function(r){ return r && r.b === 'dispositivos'; }).map(function(r){ return dig(r.r); });
-   return Promise.all(regs.map(porRegistro)).then(function(a){ return {por: 'processo', achados: [].concat.apply([], a).filter(function(x){ return dig(x.processo) === d; })}; }); });
+ function porRegistro(base, reg){ return prefixo(base).then(function(n){ return jget(base + '/' + reg.slice(0, n) + '.json'); }).then(function(d){ return (d || []).filter(function(x){ return dig(x.registro) === reg; }); }); }
+ function buscaEquip(P, txt){ var d = dig(txt), base = P.base;
+  if(d.length >= 15 || (/^25/.test(d) && d.length >= 13)) return jget('indices/processos/' + d.slice(5, 8) + '.json').then(function(idx){ var refs = (idx && idx[d]) || [];
+   if(base === 'medicamentos') return (refs.length ? jget('medicamentos_processos/' + d.slice(5, 8) + '.json') : Promise.resolve([])).then(function(a){ return {por: 'processo', achados: (a || []).filter(function(x){ return dig(x.processo) === d; })}; });
+   var regs = refs.filter(function(r){ return r && r.b === base; }).map(function(r){ return dig(r.r); });
+   return Promise.all(regs.map(function(r){ return porRegistro(base, r); })).then(function(a){ return {por: 'processo', achados: [].concat.apply([], a).filter(function(x){ return dig(x.processo) === d; })}; }); });
   if(d.length < 7) return Promise.reject(Error('curto'));
-  return porRegistro(d).then(function(a){ return !a.length && d.length > 11 ? porRegistro(d.slice(0, 11)) : a; }).then(function(a){ return {por: 'registro', achados: a}; }); }
- function eqBuscar(k){ var p = k.split('|'), e = eqLista(p[0])[+p[1]] || {}, q = e.busca || e.registro || e.processo || '';
-  if(!dig(q)){ eqMsg[k] = {t: 'Digite o registro (11 dígitos) ou o processo (17 dígitos) do equipamento.', tipo: 'aviso'}; redesenha(); return; }
+  var curto = base === 'medicamentos' ? 9 : 11;
+  return porRegistro(base, d).then(function(a){ return !a.length && d.length > curto ? porRegistro(base, d.slice(0, curto)) : a; }).then(function(a){ return {por: 'registro', achados: a}; }); }
+ function eqBuscar(k){ var p = k.split('|'), c = CAMPO[p[0]], P = perfil(c), e = eqLista(p[0])[+p[1]] || {}, q = e.busca || e.registro || e.processo || '';
+  var dica = P.base === 'medicamentos' ? 'o registro (9 ou 13 dígitos) ou o processo' : 'o registro (11 dígitos) ou o processo';
+  if(!dig(q)){ eqMsg[k] = {t: 'Digite ' + dica + '.', tipo: 'aviso'}; redesenha(); return; }
   eqMsg[k] = {t: 'Consultando a base da Anvisa…'}; redesenha();
-  buscaEquip(q).then(function(r){ var x = r.achados[0];
-   if(!x){ eqMsg[k] = {t: (r.por === 'processo' ? 'Processo' : 'Registro') + ' não localizado na base de produtos para saúde da Anvisa. Confira o número na consulta oficial; se o equipamento não tiver registro, registre isso na pergunta sobre regularização. Os dados podem ser digitados.', tipo: 'aviso'}; redesenha(); return; }
-   var refrig = /C[ÂA]MARA|REFRIGER|CONSERVA[ÇC][ÃA]O|FREEZER|CONGELA|GELADEIRA|T[ÉE]RMIC/i.test(x.produto || ''), atual = eqLista(p[0])[+p[1]] || {};
-   var dados = {registro: x.registro || '', processo: x.processo || '', nome: x.produto || '', fabricante: [x.fabricante, x.pais].filter(Boolean).join(' — '), detentor: x.detentor || '', classe: x.classe ? 'Classe ' + x.classe : ''};
-   if(!atual.tipo && /C[ÂA]MARA/i.test(x.produto || '')) dados.tipo = 'Câmara refrigerada para imunobiológicos';
+  buscaEquip(P, q).then(function(r){ /* a base repete o mesmo registro (com e sem fabricante): fica a linha mais completa */
+   var u = {}; r.achados.forEach(function(y){ var kr = dig(y.registro) || JSON.stringify(y); if(!u[kr] || Object.keys(y).length > Object.keys(u[kr]).length) u[kr] = y; }); r.achados = Object.keys(u).map(function(kr){ return u[kr]; }); var x = r.achados[0];
+   if(!x){ eqMsg[k] = {t: (r.por === 'processo' ? 'Processo' : 'Registro') + ' não localizado na base de ' + (P.base === 'medicamentos' ? 'medicamentos' : 'produtos para saúde') + ' da Anvisa. Confira o número na consulta oficial; os dados podem ser digitados.', tipo: 'aviso'}; redesenha(); return; }
+   var atual = eqLista(p[0])[+p[1]] || {}, dados, obs = [];
+   if(P.base === 'medicamentos'){ dados = {registro: x.registro || '', processo: x.processo || '', nome: x.produto || '', principio: x.principio_ativo || '', detentor: String(x.detentor || '').replace(/^\d{14}\s*-\s*/, ''), situacao: x.situacao || '', vencimento: vencMA(x.vencimento)};
+    if(x.situacao && !/^ativ/i.test(x.situacao)) obs.push('registro ' + String(x.situacao).toLowerCase());
+    var mv = /^(\d{2})(\d{4})$/.exec(String(x.vencimento || '')), hoje = new Date(); if(mv && (+mv[2] < hoje.getFullYear() || (+mv[2] === hoje.getFullYear() && +mv[1] < hoje.getMonth() + 1))) obs.push('registro vencido em ' + vencMA(x.vencimento)); }
+   else { dados = {registro: x.registro || '', processo: x.processo || '', nome: x.produto || '', fabricante: [x.fabricante, x.pais].filter(Boolean).join(' — '), detentor: x.detentor || '', classe: x.classe ? 'Classe ' + x.classe : ''}; }
+   if(P.tipoAuto && !atual.tipo && P.tipoAuto(x)) dados.tipo = P.tipoAuto(x);
    eqSet(k, dados); eqSet(k, {consulta: new Date().toISOString().slice(0, 10), consultaReg: dig(x.registro)});
-   eqMsg[k] = {t: 'Encontrado: ' + String(x.produto || '').replace(/\.+$/, '') + (r.achados.length > 1 ? ' (' + r.achados.length + ' registros; usado o primeiro).' : '.') + (refrig ? '' : ' Atenção: o produto deste registro não parece ser equipamento de refrigeração; confira.'), tipo: refrig ? 'ok' : 'aviso'};
+   if(!P.confere(x)) obs.push(P.estranho);
+   eqMsg[k] = {t: 'Encontrado: ' + String(x.produto || '').replace(/\.+$/, '') + (r.achados.length > 1 ? ' (' + r.achados.length + ' registros; usado o primeiro).' : '.') + (obs.length ? ' Atenção: ' + obs.join('; ') + '; confira.' : ''), tipo: obs.length ? 'aviso' : 'ok'};
    redesenha(); },
-  function(err){ eqMsg[k] = {t: err && err.message === 'curto' ? 'Número curto demais: digite o registro (11 dígitos) ou o processo (17 dígitos).' : 'Não foi possível consultar a base agora (sem internet?). Preencha os dados à mão.', tipo: 'aviso'}; redesenha(); }); }
+  function(err){ eqMsg[k] = {t: err && err.message === 'curto' ? 'Número curto demais: digite ' + dica + '.' : 'Não foi possível consultar a base agora (sem internet?). Preencha os dados à mão.', tipo: 'aviso'}; redesenha(); }); }
  function sv(x){ return !!String(x || '').trim(); }
  /* campo de item fora da identificação → blocos do relatório, sob o título do item */
  function campoRel(c){ var v = st.meta[c.id];
-  if(c.tipo === 'equipamentos'){ var L = (Array.isArray(v) ? v : []).filter(eqTem); if(!L.length) return [];
-   var out = [{t: 'table', head: ['Equipamento', 'Registro e processo na Anvisa', 'Fabricante e detentor', 'Série, local e observações'], widths: [2500, 2200, 2500, 2100], rows: L.map(function(e){ return [
-    [e.tipo, e.nome, e.modelo].filter(sv).join('\n') || '—',
-    [sv(e.registro) ? 'Registro ' + e.registro : 'Registro não informado', sv(e.processo) ? 'Processo ' + e.processo : '', e.classe].filter(sv).join('\n'),
-    [sv(e.fabricante) ? 'Fabricante: ' + e.fabricante : '', sv(e.detentor) ? 'Detentor: ' + e.detentor : ''].filter(sv).join('\n') || '—',
-    [sv(e.serie) ? 'Série / patrimônio: ' + e.serie : '', sv(e.local) ? 'Local: ' + e.local : '', e.obs].filter(sv).join('\n') || '—']; })}];
+  if(c.tipo === 'equipamentos'){ var P = perfil(c), L = (Array.isArray(v) ? v : []).filter(eqTem); if(!L.length) return [];
+   var out = [{t: 'table', head: P.head, widths: [2500, 2200, 2500, 2100], rows: L.map(function(e){ return P.linha(e).map(function(cel){ return cel.filter(sv).join('\n') || '—'; }); })}];
    var cons = []; L.forEach(function(e){ if(e.consulta && cons.indexOf(fmtData(e.consulta)) < 0) cons.push(fmtData(e.consulta)); });
-   if(cons.length) out.push({t: 'small', x: 'Dados de registro conferidos na base de produtos para saúde da Anvisa em ' + lista(cons) + '.'});
+   if(cons.length) out.push({t: 'small', x: 'Dados de registro conferidos na base de ' + (P.base === 'medicamentos' ? 'medicamentos' : 'produtos para saúde') + ' da Anvisa em ' + lista(cons) + '.'});
    return out; }
   if(Array.isArray(v)) v = v.map(function(x){ var o = (c.opcoes || []).filter(function(p){ return p[0] === x; })[0]; return o ? o[1] : x; }).join(', ');
   if(c.tipo === 'select'){ var op = (c.opcoes || []).filter(function(o){ return o[0] === v; })[0]; if(op) v = op[1]; }

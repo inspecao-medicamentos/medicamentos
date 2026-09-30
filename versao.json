@@ -1,6 +1,6 @@
 {
-  "versao": "20260930-16",
+  "versao": "20260930-17",
   "banco": "13.1",
   "correcoes": 1,
-  "notas": "Vacinação: equipamentos de refrigeração em 3.3, com busca pelo registro ou processo na Anvisa e tabela no relatório. Central: alertas sem “[object Object]”. Atacadista: tela Estabelecimento não pisca mais ao escolher o tipo de operação; atividades de Dados da inspeção saem no Anexo I."
+  "notas": "EAC: lista de testes rápidos e reagentes com busca pelo registro ou processo na Anvisa. Vacinação: lista de vacinas com busca (situação e vencimento do registro). CNPJ validado em todos os roteiros (letras e dígito verificador), com aviso na emissão. OCR: páginas de imagem além do limite passam a ser informadas."
 }

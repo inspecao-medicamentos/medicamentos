@@ -211,6 +211,8 @@
   Object.keys(C.pend).forEach(function(k){var p=C.pend[k];out.push({tipo:'Pergunta pendente',txt:(p.item?p.item+' › ':'')+p.rotulo})});
   C.lemb.forEach(function(l){if(!l.feito)out.push({tipo:'Lembrete',txt:l.txt})});
   C.achados.forEach(function(a){if(!a.item)out.push({tipo:'Achado sem item',txt:(a.local?a.local+': ':'')+a.txt})});
+  /* CNPJ reprovado no formulário (modulos/cnpj-guarda.js) */
+  if(window.__medCnpjInvalidos)window.__medCnpjInvalidos().forEach(function(x){out.push({tipo:'CNPJ inválido',txt:x})});
   return out}
 
  /* ---------------- interface ---------------- */

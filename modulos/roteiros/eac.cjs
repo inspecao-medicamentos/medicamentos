@@ -151,7 +151,11 @@ module.exports = {
             c: 'Há política de acesso e proteção dos dados dos pacientes e de controle de lançamento e alteração de resultados.',
             nc: 'Não há política de acesso e proteção dos dados dos pacientes e de controle de alteração de resultados.', inf: ['eac_doc']}
         ]},
-        {id: 'produtos', titulo: 'Produtos, equipamentos e armazenamento', curto: 'Produtos e equipamentos', perguntas: [
+        {id: 'produtos', titulo: 'Produtos, equipamentos e armazenamento', curto: 'Produtos e equipamentos',
+          descricao: 'Liste os testes rápidos, tiras, reagentes e analisadores em uso: busque pelo registro na Anvisa ou pelo processo, ou digite os dados. A lista sai em tabela no relatório.',
+          campos: [{id: 'testes_lista', rotulo: 'Testes rápidos, reagentes e equipamentos em uso', tipo: 'equipamentos', perfil: 'teste', largo: true,
+            tipos: ['Teste rápido', 'Tira reagente', 'Reagente / cartucho', 'Analisador / monitor portátil', 'Controle ou calibrador', 'Outro']}],
+          perguntas: [
           {id: 'regularizados', t: 'Os produtos para diagnóstico in vitro, reagentes e equipamentos estão regularizados na Anvisa e são usados conforme as instruções do fabricante?', r: [A(88)],
             c: 'Os produtos para diagnóstico in vitro, reagentes e equipamentos estão regularizados na Anvisa e são usados conforme as instruções do fabricante.',
             nc: 'Foram constatados produtos para diagnóstico in vitro, reagentes ou equipamentos sem regularização ou usados fora das instruções do fabricante.', inf: ['eac_produto']},

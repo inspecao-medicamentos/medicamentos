@@ -97,7 +97,7 @@ module.exports = {
         {id: 'refrigeracao', titulo: 'Equipamento de refrigeração', curto: 'Refrigeração',
           descricao: 'Cadastre cada equipamento que guarda vacinas: busque pelo registro na Anvisa ou pelo processo, ou digite os dados. Os equipamentos saem em tabela no relatório.',
           /* legado: o texto livre que ficava em 1.2 (meta.refrigeracao) vira o primeiro equipamento */
-          campos: [{id: 'equip_refrig', rotulo: 'Equipamentos de refrigeração das vacinas', tipo: 'equipamentos', largo: true, legado: 'refrigeracao',
+          campos: [{id: 'equip_refrig', rotulo: 'Equipamentos de refrigeração das vacinas', tipo: 'equipamentos', perfil: 'refrigeracao', largo: true, legado: 'refrigeracao',
             tipos: ['Câmara refrigerada para imunobiológicos', 'Refrigerador doméstico', 'Freezer / congelador', 'Caixa térmica', 'Outro']}],
           perguntas: [
           {id: 'exclusivo', t: 'As vacinas ficam em equipamento de refrigeração exclusivo, com termômetro de momento, máxima e mínima?', r: [AL('f')],
@@ -117,7 +117,10 @@ module.exports = {
     {
       id: 'processos', titulo: 'Vacinas e processos', curto: 'Processos', icone: 'shield',
       itens: [
-        {id: 'produtos', titulo: 'Vacinas e prescrição', curto: 'Vacinas', perguntas: [
+        {id: 'produtos', titulo: 'Vacinas e prescrição', curto: 'Vacinas',
+          descricao: 'Liste as vacinas em estoque: busque pelo registro na Anvisa ou pelo processo (preenche nome, princípio ativo, detentor, situação e vencimento do registro), informe lote e validade. A lista sai em tabela no relatório.',
+          campos: [{id: 'vacinas_lista', rotulo: 'Vacinas em estoque', tipo: 'equipamentos', perfil: 'vacina', largo: true}],
+          perguntas: [
           {id: 'registro_anvisa', t: 'Só são utilizadas vacinas registradas ou autorizadas pela Anvisa?', r: [I(11, 'iii')],
             c: 'Só são utilizadas vacinas registradas ou autorizadas pela Anvisa.', nc: 'Foram constatadas vacinas sem registro ou autorização da Anvisa.', inf: ['vac_vacina']},
           {id: 'origem', t: 'Estão disponíveis os documentos que comprovam a origem das vacinas?', r: [I(15, 'iii')],

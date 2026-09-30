@@ -354,7 +354,7 @@ troca("k.indexOf('uvis-previa-')===0", "(k.indexOf('uvis-previa-')===0||k.indexO
 troca('  function montar(app){',
   `  var ATACADISTA_JS = ${jsStr(le('atacadista-ajustes.js'))};
   var CAMPO_APPS = ${JSON.stringify(CAMPO_APPS)};
-  var CAMPO_JS = ${jsStr(le('campo.js'))};
+  var CAMPO_JS = ${jsStr(le('cnpj-guarda.js') + '\n' + le('campo.js'))};
   var CENTRAL_AUTO_JS = ${jsStr(le('central-auto.js'))};
   var MANIP_JS = ${jsStr(le('manipulacao-ajustes.js'))};
   var ORIENT_TRANSP = ${jsStr(JSON.stringify(ORIENT.transporte))};
@@ -452,6 +452,21 @@ async function alerts(kind,value){`, 'central: função achataAlerta');
   s = trocaEm(s, "Object.assign(field,{infracao:'Infração',", "Object.assign(field,{identificadores:'Identificadores (lote, série, modelo)',anexos:'Anexos do alerta',outras_publicacoes:'Outras publicações',url_oficial:'Página oficial',informacoes_complementares:'Informações complementares',data_atualizacao:'Atualização',tipo_alerta:'Tipo',registros:'Registros',cnpjs:'CNPJ',motivacao:'Motivação',infracao:'Infração',", 'central: rótulos dos alertas');
   return s;
 });
+
+/* 7k. OCR de PDF (auditoria de 30/09/2026, R-01): passam pelo OCR no máximo 4
+   páginas de imagem (6 em POP/manual/PGRSS e sumário). As páginas só de imagem
+   além desse limite eram puladas sem aviso; agora entram na descrição da leitura
+   (“sem OCR: página(s) …”), que aparece no painel do documento. */
+for (const bloco of ['rec--drogaria-ocr-tools.js', 'app--farmacia-manipulacao', 'app--distribuidoras-transportadoras']) {
+  blocoAltera(bloco, s => {
+    s = trocaEm(s, 'let ocrPages = 0;', 'let ocrPages = 0; const semOcr = [];', `ocr ${bloco}: lista`);
+    s = trocaEm(s, '      pages.push({ number: p, page, textLayer, region });', '      if (!region && ocrPages >= maxOcrPages && chars < 25) semOcr.push(p);\n      pages.push({ number: p, page, textLayer, region });', `ocr ${bloco}: página pulada`);
+    s = trocaEm(s, 'return { pdf, pages, total: pdf.numPages };', 'return { pdf, pages, total: pdf.numPages, semOcr, maxOcrPages };', `ocr ${bloco}: retorno`);
+    s = trocaEm(s, 'const { pdf, pages, total } = await pdfPages(file, type, progress);', 'const { pdf, pages, total, semOcr, maxOcrPages } = await pdfPages(file, type, progress);', `ocr ${bloco}: leitura`);
+    return trocaEm(s, "const cut = total > pages.length ? ' · lidas ' + pages.length + ' de ' + total + ' páginas' : '';",
+      "const cut = (total > pages.length ? ' · lidas ' + pages.length + ' de ' + total + ' páginas' : '') + (semOcr && semOcr.length ? ' · sem OCR (limite de ' + maxOcrPages + ' páginas de imagem por documento): página' + (semOcr.length > 1 ? 's ' : ' ') + semOcr.join(', ') + ' — confira essas páginas no documento' : '');", `ocr ${bloco}: aviso`);
+  });
+}
 
 /* 8. Versão. */
 trocaRx(/const APP_VERSAO = '[^']+';/, `const APP_VERSAO = '${VERSAO}';`, 'APP_VERSAO');
