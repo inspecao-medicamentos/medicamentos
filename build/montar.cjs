@@ -232,7 +232,7 @@ troca("'drogaria':{nome:'Drogaria',nucleo:'Medicamentos',", "'drogaria':{nome:'D
 troca("'farmacia-manipulacao':{nome:'Farmácia com Manipulação',nucleo:'Medicamentos',", "'farmacia-manipulacao':{nome:'Farmácia com Manipulação',nucleo:'Manipulação',", 'salvas manipulação');
 troca("'distribuidoras-transportadoras':{nome:'Distribuidora / transportadora',nucleo:'Medicamentos',", "'distribuidoras-transportadoras':{nome:'Atacadista de medicamentos',nucleo:'Atacadista de medicamentos',", 'salvas atacadista');
 /* Salvas dos roteiros simples: respostas e fotos ficam no mesmo registro. */
-troca("  'odontologia':{nome:'Odontologia',nucleo:'Odontologia',", "  'transportadora':{nome:'Transportadora de medicamentos',nucleo:'Transportadora de medicamentos',ls:['transp:uvis-dist-bpdiat-v2','transp:dist-anexo2-campos-v1','transp:distribuidoras-transportadoras-v2','transp:uvis-previa-distribuidoras-transportadoras'],fotos:['transp-dist-'],barra:'header.top .topin'},\n" + PRONTOS.map(d => {
+troca("  'odontologia':{nome:'Odontologia',nucleo:'Odontologia',", "  'manipulacao-estereis':{nome:'Manipulação de estéreis',nucleo:'Manipulação',ls:['esteril:uvisvp_manipulacao_v1','esteril:uvis-previa-farmacia-manipulacao'],fotos:['esteril-manipulacao-']},\n  'transportadora':{nome:'Transportadora de medicamentos',nucleo:'Transportadora de medicamentos',ls:['transp:uvis-dist-bpdiat-v2','transp:dist-anexo2-campos-v1','transp:distribuidoras-transportadoras-v2','transp:uvis-previa-distribuidoras-transportadoras'],fotos:['transp-dist-'],barra:'header.top .topin'},\n" + PRONTOS.map(d => {
   const nuc = CAT.nucleos.find(n => n.roteiros.some(r => r[2] === d.app)).id;
   return `  ${JSON.stringify(d.app).replace(/"/g, "'")}:{nome:${JSON.stringify(d.titulo).replace(/"/g, "'")},nucleo:${JSON.stringify(nuc).replace(/"/g, "'")},ls:['${d.store}'],fotos:[],barra:'.pu-header .pu-acoes'},\n`;
 }).join('') + "  'odontologia':{nome:'Odontologia',nucleo:'Odontologia',", 'salvas roteiros simples');
@@ -258,25 +258,45 @@ troca("if(geral)itens.push({id:'area-geral',title:'Informações gerais',html:ge
   "if(geral)itens.push({id:'area-geral',title:'Informações gerais',html:geral.innerHTML.replace(/^\\s*<h3>[^<]*<\\/h3>/,'')});",
   'drogaria: informações gerais aberta');
 
-/* 7e. Transportadora: o mesmo módulo da distribuidora, com rascunho e fotos
-   próprios e as partes de distribuidora já em “Não se aplica”
-   (modulos/transportadora-inicio.js e transportadora-fim.js). */
-const TRANSP_INI = JSON.stringify(fs.readFileSync(path.join(RAIZ, 'modulos', 'transportadora-inicio.js'), 'utf8')).replace(/<\//g, '<\\/');
-/* no site Medicamentos o mesmo módulo, aberto pelo card Atacadista, leva o nome do card */
-const ATACADISTA_TIT = JSON.stringify("(function(){function t(){var w=document.createTreeWalker(document.querySelector('header')||document.body,NodeFilter.SHOW_TEXT),n;while((n=w.nextNode()))if(/distribuidora\\s*\\/\\s*transportadora/i.test(n.nodeValue))n.nodeValue=n.nodeValue.replace(/distribuidora\\s*\\/\\s*transportadora/i,'Atacadista de medicamentos')}function i(){t();setTimeout(t,400)}document.readyState==='loading'?document.addEventListener('DOMContentLoaded',i):i()})();");
-const TRANSP_FIM = JSON.stringify(fs.readFileSync(path.join(RAIZ, 'modulos', 'transportadora-fim.js'), 'utf8')).replace(/<\//g, '<\\/');
+/* 7e. Variantes: cards que reaproveitam o módulo de outro, com rascunho e
+   fotos próprios (modulos/variante-inicio.js) e ajustes no fim do módulo.
+   - Transportadora: módulo da distribuidora; atividade Transportar e partes de
+     distribuidora em “Não se aplica” (transportadora-fim.js).
+   - Manipulação de estéreis: módulo da manipulação com o bloco 13, Anexo IV da
+     RDC 67/2007 (modulos/estereis/cartao13.json, gerado por estereis/gerar.py). */
+const le = f => fs.readFileSync(path.join(RAIZ, 'modulos', f), 'utf8');
+const jsStr = t => JSON.stringify(t).replace(/<\//g, '<\\/');
+const CARTAO13 = JSON.parse(le('estereis/cartao13.json'));
+const VARIANTES = {
+  transportadora: {base: 'distribuidoras-transportadoras', app: 'transportadora', prefixo: 'transp:', escopo: 'dist-',
+    chaves: ['uvis-dist-bpdiat-v2', 'dist-anexo2-campos-v1', 'distribuidoras-transportadoras-v2', 'uvis-previa-distribuidoras-transportadoras'],
+    fim: le('transportadora-fim.js')},
+  'manipulacao-estereis': {base: 'farmacia-manipulacao', app: 'manipulacao-estereis', prefixo: 'esteril:', escopo: 'manipulacao-',
+    chaves: ['uvisvp_manipulacao_v1', 'uvis-previa-farmacia-manipulacao'],
+    dados: ['const APP_DATA={"cards":{', 'const APP_DATA={"cards":{"13":' + JSON.stringify(CARTAO13) + ','],
+    fim: le('estereis-fim.js')}
+};
+const VAR_INI = le('variante-inicio.js');
+/* no site Medicamentos o módulo da distribuidora, aberto pelo card Atacadista, leva o nome do card */
+const ATACADISTA_TIT = "(function(){function t(){var w=document.createTreeWalker(document.querySelector('header')||document.body,NodeFilter.SHOW_TEXT),n;while((n=w.nextNode()))if(/distribuidora\\s*\\/\\s*transportadora/i.test(n.nodeValue))n.nodeValue=n.nodeValue.replace(/distribuidora\\s*\\/\\s*transportadora/i,'Atacadista de medicamentos')}function i(){t();setTimeout(t,400)}document.readyState==='loading'?document.addEventListener('DOMContentLoaded',i):i()})();";
+const VARIANTES_JS = '{' + Object.entries(VARIANTES).map(([k, v]) => JSON.stringify(k) + ':{base:' + JSON.stringify(v.base)
+  + ',ini:' + jsStr('window.__uvisVariante=' + JSON.stringify({app: v.app, prefixo: v.prefixo, chaves: v.chaves, escopo: v.escopo}) + ';' + VAR_INI)
+  + ',fim:' + jsStr(v.fim) + (v.dados ? ',dados:[' + jsStr(v.dados[0]) + ',' + jsStr(v.dados[1]) + ']' : '') + '}').join(',') + '}';
 troca('  function montar(app){',
-  `  function montar(app){ if(app === 'transportadora') return montarTransportadora(); var s = montarBase(app);
-    if(app === 'distribuidoras-transportadoras'){ var k = s.lastIndexOf('</body>'); s = s.slice(0, k) + '<scr' + 'ipt>' + ${ATACADISTA_TIT} + '</scr' + 'ipt>' + s.slice(k); }
+  `  var VARIANTES = ${VARIANTES_JS};
+  function montar(app){ var v = VARIANTES[app]; if(v) return montarVariante(v); var s = montarBase(app);
+    if(app === 'distribuidoras-transportadoras'){ var k = s.lastIndexOf('</body>'); s = s.slice(0, k) + '<scr' + 'ipt>' + ${jsStr(ATACADISTA_TIT)} + '</scr' + 'ipt>' + s.slice(k); }
     return s; }
-  function montarTransportadora(){
-    var s = montarBase('distribuidoras-transportadoras');
-    s = s.replace(/<head(\\s[^>]*)?>/i, function(m){ return m + '<scr' + 'ipt>' + ${TRANSP_INI} + '</scr' + 'ipt>'; });
+  function montarVariante(v){
+    var s = montarBase(v.base);
+    if(v.dados){ if(s.indexOf(v.dados[0]) < 0) throw new Error('dados da variante não encontrados'); s = s.replace(v.dados[0], function(){ return v.dados[1]; }); }
+    s = s.replace(/<head(\\s[^>]*)?>/i, function(m){ return m + '<scr' + 'ipt>' + v.ini + '</scr' + 'ipt>'; });
     var k = s.lastIndexOf('</body>');
-    return s.slice(0, k) + '<scr' + 'ipt>' + ${TRANSP_FIM} + '</scr' + 'ipt>' + s.slice(k);
+    return s.slice(0, k) + '<scr' + 'ipt>' + v.fim + '</scr' + 'ipt>' + s.slice(k);
   }
-  function montarBase(app){`, 'transportadora: montar');
-troca('window.parent.UvisSalvas.novaInspecao(modulo)', 'window.parent.UvisSalvas.novaInspecao(window.__uvisAppSalvas||modulo)', 'transportadora: apagar inspeção');
+  function montarBase(app){`, 'variantes: montar');
+troca('window.parent.UvisSalvas.novaInspecao(modulo)', 'window.parent.UvisSalvas.novaInspecao(window.__uvisAppSalvas||modulo)', 'variantes: apagar inspeção');
+troca("if(window.RoteiroEvidence)for(var k=1;k<=12;k++)await RoteiroEvidence.clear('manipulacao-card-'+k);", "if(window.RoteiroEvidence)for(var k=1;k<=13;k++)await RoteiroEvidence.clear('manipulacao-card-'+k);", 'manipulação: fotos do bloco 13');
 
 /* 7c. Tom do módulo: drogaria, manipulação e atacadista trazem o ardósia do
    roteiros fixo no código (#365B73 e vizinhos). Ao montar, essa família vira o

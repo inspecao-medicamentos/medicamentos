@@ -132,22 +132,6 @@
         ]
       ]
     },
-    "manipulacao-estereis": {
-      "titulo": "Manipulação de estéreis",
-      "nucleo": "Manipulação",
-      "normas": [
-        [
-          "RDC Anvisa nº 67/2007 — Anexo IV",
-          "Boas práticas de manipulação de produtos estéreis (BPMPE) em farmácias",
-          ""
-        ],
-        [
-          "RDC Anvisa nº 67/2007 — Anexo I",
-          "Boas práticas de manipulação em farmácias (requisitos gerais)",
-          ""
-        ]
-      ]
-    },
     "gases-medicinais": {
       "titulo": "Atacadista de gases medicinais",
       "nucleo": "Atacadista de medicamentos",

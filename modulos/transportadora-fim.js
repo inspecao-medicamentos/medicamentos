@@ -1,5 +1,5 @@
 /* Transportadora de medicamentos — entra no fim do <body> do módulo da
-   distribuidora (ver transportadora-inicio.js). Numa inspeção nova (sem
+   distribuidora (ver variante-inicio.js). Numa inspeção nova (sem
    atividades marcadas), marca a atividade “Transportar” e deixa como “Não se
    aplica” as verificações próprias de distribuidora; a equipe pode mudar
    qualquer marcação. O título do cabeçalho passa a ser o da transportadora. */
