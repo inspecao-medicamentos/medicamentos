@@ -1,6 +1,6 @@
 {
-  "versao": "20260930-5",
+  "versao": "20260930-6",
   "banco": "13.1",
   "correcoes": 1,
-  "notas": "Drogaria em supermercado deixa de ser card separado: é a Drogaria com o local marcado em Área física › Informações gerais. Prévia “Como sai no relatório” corrigida na distribuidora/transportadora e incluída no bloco de estéreis."
+  "notas": "Manipulação em um roteiro só: o bloco 13 (estéreis, RDC 67/2007 Anexo IV) fica na Farmácia com manipulação e é ativado marcando Estéreis em Preparações, na caracterização."
 }

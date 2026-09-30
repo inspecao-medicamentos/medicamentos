@@ -26,18 +26,13 @@
     {
       "id": "Manipulação",
       "var": "--t-man",
-      "sub": "Farmácia com manipulação e manipulação de estéreis",
+      "sub": "Farmácia com manipulação, inclusive estéreis",
       "icone": "<path d=\"M9 3h6M10 3v6.2L4.6 18.4A1.7 1.7 0 0 0 6.1 21h11.8a1.7 1.7 0 0 0 1.5-2.6L14 9.2V3M7.5 15h9\"/>",
       "roteiros": [
         [
           "Farmácia com manipulação",
-          "Preparações não estéreis: roteiro, documentos, estoque e relatório (RDC 67/2007).",
+          "Roteiro completo, inclusive preparações estéreis (marque Estéreis em Preparações, na caracterização): documentos, estoque e relatório (RDC 67/2007).",
           "farmacia-manipulacao"
-        ],
-        [
-          "Manipulação de estéreis",
-          "Boas práticas de manipulação de produtos estéreis (RDC 67/2007, Anexo IV).",
-          "manipulacao-estereis"
         ]
       ]
     },

@@ -221,7 +221,6 @@ for (const n of CAT.nucleos) for (const r of n.roteiros) if (r[2] !== 'farmacia-
 Object.assign(icones, {
   'eac': '<path d="M9 3h6M10 3v5l-4.5 9a2.5 2.5 0 0 0 2.2 3.6h8.6a2.5 2.5 0 0 0 2.2-3.6L14 8V3M7.5 14h9"/>',
   'vacina': '<path d="m18 2 4 4M17 7l3-3M19 9 8.7 19.3a1 1 0 0 1-1.4 0l-2.6-2.6a1 1 0 0 1 0-1.4L15 5M9 11l4 4M5 19l-3 3M14 4l6 6"/>',
-  'manipulacao-estereis': '<path d="M12 3c3.5 4.2 5.5 7.4 5.5 10a5.5 5.5 0 0 1-11 0C6.5 10.4 8.5 7.2 12 3zM9.5 14.5l2 2 3.5-4"/>',
   'gases-medicinais': '<path d="M9 7h6v13a1 1 0 0 1-1 1h-4a1 1 0 0 1-1-1zM10 7V4.5A1.5 1.5 0 0 1 11.5 3h1A1.5 1.5 0 0 1 14 4.5V7M9 11h6"/>'
 });
 trocaRx(/var ICONES = \{[\s\S]*?\n  \};/, () => `var ICONES = ${JSON.stringify(icones, null, 2).replace(/\n/g, '\n  ')};`, 'ICONES');
@@ -231,7 +230,7 @@ troca("'drogaria':{nome:'Drogaria',nucleo:'Medicamentos',", "'drogaria':{nome:'D
 troca("'farmacia-manipulacao':{nome:'Farmácia com Manipulação',nucleo:'Medicamentos',", "'farmacia-manipulacao':{nome:'Farmácia com Manipulação',nucleo:'Manipulação',", 'salvas manipulação');
 troca("'distribuidoras-transportadoras':{nome:'Distribuidora / transportadora',nucleo:'Medicamentos',", "'distribuidoras-transportadoras':{nome:'Atacadista de medicamentos',nucleo:'Atacadista de medicamentos',", 'salvas atacadista');
 /* Salvas dos roteiros simples: respostas e fotos ficam no mesmo registro. */
-troca("  'odontologia':{nome:'Odontologia',nucleo:'Odontologia',", "  'manipulacao-estereis':{nome:'Manipulação de estéreis',nucleo:'Manipulação',ls:['esteril:uvisvp_manipulacao_v1','esteril:uvis-previa-farmacia-manipulacao'],fotos:['esteril-manipulacao-']},\n  'transportadora':{nome:'Transportadora de medicamentos',nucleo:'Transportadora de medicamentos',ls:['transp:uvis-dist-bpdiat-v2','transp:dist-anexo2-campos-v1','transp:distribuidoras-transportadoras-v2','transp:uvis-previa-distribuidoras-transportadoras'],fotos:['transp-dist-'],barra:'header.top .topin'},\n" + PRONTOS.map(d => {
+troca("  'odontologia':{nome:'Odontologia',nucleo:'Odontologia',", "  'transportadora':{nome:'Transportadora de medicamentos',nucleo:'Transportadora de medicamentos',ls:['transp:uvis-dist-bpdiat-v2','transp:dist-anexo2-campos-v1','transp:distribuidoras-transportadoras-v2','transp:uvis-previa-distribuidoras-transportadoras'],fotos:['transp-dist-'],barra:'header.top .topin'},\n" + PRONTOS.map(d => {
   const nuc = CAT.nucleos.find(n => n.roteiros.some(r => r[2] === d.app)).id;
   return `  ${JSON.stringify(d.app).replace(/"/g, "'")}:{nome:${JSON.stringify(d.titulo).replace(/"/g, "'")},nucleo:${JSON.stringify(nuc).replace(/"/g, "'")},ls:['${d.store}'],fotos:[],barra:'.pu-header .pu-acoes'},\n`;
 }).join('') + "  'odontologia':{nome:'Odontologia',nucleo:'Odontologia',", 'salvas roteiros simples');
@@ -245,6 +244,21 @@ troca('https://uvisvp.github.io/roteiros/central-nomes-medicamentos.js', "'+new 
    relatório Word, e o módulo quebrava. Injeta logo após a abertura <head>. */
 troca("if(qs){ fonte = fonte.replace('</head>','<script>window.__QS='+JSON.stringify('?'+qs)+';<\\/script></head>'); }",
   "if(qs){ fonte = fonte.replace(/<head(\\s[^>]*)?>/i, function(m){ return m+'<script>window.__QS='+JSON.stringify('?'+qs)+';<\\/script>'; }); }", 'injeção do parâmetro');
+
+/* 7g. Manipulação: bloco 13 “Manipulação de estéreis” (RDC 67/2007, Anexo IV;
+   verificações do Anexo VII, item 18) dentro do roteiro principal. Aparece
+   quando a caracterização marca a preparação “Estéreis” (condição estereis).
+   Dados em modulos/estereis/cartao13.json, gerado por estereis/gerar.py. */
+{
+  const CARTAO13 = JSON.parse(fs.readFileSync(path.join(RAIZ, 'modulos', 'estereis', 'cartao13.json'), 'utf8'));
+  blocoAltera('app--farmacia-manipulacao', s => {
+    s = trocaEm(s, 'const APP_DATA={"cards":{', 'const APP_DATA={"cards":{"13":' + JSON.stringify(CARTAO13).replace(/<\//g, '<\\/') + ',', 'estéreis: cartão 13');
+    s = trocaEm(s, '"conditionLabels":{', '"conditionLabels":{"estereis":"Manipula preparações estéreis",', 'estéreis: rótulo da condição');
+    s = trocaEm(s, 'chip("preps","oficinais","Oficinais")', 'chip("preps","oficinais","Oficinais")}${chip("preps","estereis","Estéreis")', 'estéreis: caracterização');
+    s = trocaEm(s, "homeopatia:preps.includes('homeopaticas')", "estereis:preps.includes('estereis'),homeopatia:preps.includes('homeopaticas')", 'estéreis: condição');
+    return trocaEm(s, "const L={homeopaticas:'homeopáticas',", "const L={homeopaticas:'homeopáticas',estereis:'estéreis',", 'estéreis: relatório');
+  });
+}
 
 /* 7f. Prévia “Como sai no relatório”: o módulo da distribuidora tem um ouvinte
    de clique em window (captura) que interrompe a propagação, e a prévia ouvia
@@ -268,20 +282,13 @@ troca("if(geral)itens.push({id:'area-geral',title:'Informações gerais',html:ge
 /* 7e. Variantes: cards que reaproveitam o módulo de outro, com rascunho e
    fotos próprios (modulos/variante-inicio.js) e ajustes no fim do módulo.
    - Transportadora: módulo da distribuidora; atividade Transportar e partes de
-     distribuidora em “Não se aplica” (transportadora-fim.js).
-   - Manipulação de estéreis: módulo da manipulação com o bloco 13, Anexo IV da
-     RDC 67/2007 (modulos/estereis/cartao13.json, gerado por estereis/gerar.py). */
+     distribuidora em “Não se aplica” (transportadora-fim.js). */
 const le = f => fs.readFileSync(path.join(RAIZ, 'modulos', f), 'utf8');
 const jsStr = t => JSON.stringify(t).replace(/<\//g, '<\\/');
-const CARTAO13 = JSON.parse(le('estereis/cartao13.json'));
 const VARIANTES = {
   transportadora: {base: 'distribuidoras-transportadoras', app: 'transportadora', prefixo: 'transp:', escopo: 'dist-',
     chaves: ['uvis-dist-bpdiat-v2', 'dist-anexo2-campos-v1', 'distribuidoras-transportadoras-v2', 'uvis-previa-distribuidoras-transportadoras'],
-    fim: le('transportadora-fim.js')},
-  'manipulacao-estereis': {base: 'farmacia-manipulacao', app: 'manipulacao-estereis', prefixo: 'esteril:', escopo: 'manipulacao-',
-    chaves: ['uvisvp_manipulacao_v1', 'uvis-previa-farmacia-manipulacao'],
-    dados: ['const APP_DATA={"cards":{', 'const APP_DATA={"cards":{"13":' + JSON.stringify(CARTAO13) + ','],
-    fim: le('estereis-fim.js')}
+    fim: le('transportadora-fim.js')}
 };
 const VAR_INI = le('variante-inicio.js');
 /* no site Medicamentos o módulo da distribuidora, aberto pelo card Atacadista, leva o nome do card */

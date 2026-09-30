@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 """Gera modulos/estereis/cartao13.json: o bloco 13 "Manipulação de estéreis" no
 formato de APP_DATA.cards do roteiro de manipulação (roteiros/farmacia-manipulacao).
+O bloco só aparece quando a caracterização marca a preparação "Estéreis"
+(condição estereis, incluída no módulo por build/montar.cjs).
 
 Uso: python3 modulos/estereis/gerar.py [caminho/base-vigilancia] [caminho/roteiros]
 Confere: toda pergunta do Anexo VII item 18 aparece uma vez, os números existem no
@@ -69,7 +71,7 @@ for num_s, titulo, cond, _ in SECOES:
         refs.append({'law': 'RDC nº 67/2007', 'device': 'Anexo VII · Item ' + num})
         reqs.append({'id': 'e' + num.replace('.', '_'), 'text': texto + ' (Anexo VII ' + num + ': ' + CLASSE[cls] + ')', 'condition': None, 'refs': refs,
                      'informativo': cls == 'INF', 'pos': pos, 'neg': neg, 'classe': cls})
-    secoes.append({'code': 'v2-' + num_s, 'num': num_s, 'title': titulo, 'condition': None, 'hint': cond,
+    secoes.append({'code': 'v2-' + num_s, 'num': num_s, 'title': titulo, 'condition': 'estereis', 'hint': cond,
                    'item': 'i' + num_s, 'itemNum': num_s, 'itemTitle': titulo, 'requirements': reqs})
 
 # Componentes de cada item, como nos blocos 1–12: cabeçalho com “Não se aplica”
