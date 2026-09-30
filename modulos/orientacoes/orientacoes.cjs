@@ -11,7 +11,7 @@
    calendário, guia), o texto manda conferir a versão vigente. */
 'use strict';
 const NR32 = 'NR-32 (Segurança e saúde no trabalho em serviços de saúde)';
-const REDE_FRIO = 'Manual de Rede de Frio do Programa Nacional de Imunizações (Ministério da Saúde, 5ª ed., 2017)';
+const REDE_FRIO = 'Manual de Rede de Frio do Programa Nacional de Imunizações (Ministério da Saúde, 6ª ed., 2025)';
 const RBC = 'ABNT NBR ISO/IEC 17025; laboratórios acreditados pela Cgcre/Inmetro (Rede Brasileira de Calibração — RBC)';
 const FB = 'Farmacopeia Brasileira, 6ª edição';
 
@@ -82,15 +82,17 @@ module.exports = {
     {t: 'Sala exclusiva para vacinação, com pia e lavatório, bancada, cadeira ou maca, recipiente para perfurocortantes e acesso a material para atendimento de reações (ex.: adrenalina 1 mg/mL, conforme protocolo do serviço).', f: 'RDC Anvisa nº 197/2017; Manual de Normas e Procedimentos para Vacinação (Ministério da Saúde, 2014)'}
    ],
    refrigeracao: [
-    {t: 'Conservação das vacinas entre +2 °C e +8 °C, com temperatura ideal de +5 °C.', f: REDE_FRIO},
-    {t: 'Prefira câmara refrigerada regularizada; o refrigerador doméstico não é recomendado. Não guarde alimentos, bebidas ou outros produtos no equipamento das vacinas.', f: REDE_FRIO},
-    {t: 'Registre a temperatura de momento, a máxima e a mínima no início e no fim do expediente; termômetro de máxima e mínima calibrado; plano de contingência para falta de energia (tempo de autonomia do equipamento e local alternativo).', f: REDE_FRIO + '; ' + RBC}
+    {t: 'É proibido guardar vacinas em refrigerador de uso doméstico ou frigobar. O equipamento deve ser câmara científica refrigerada regularizada na Anvisa (ou pré-qualificada pela OMS), de uso exclusivo para imunobiológicos; o freezer científico, quando houver, guarda só as bobinas reutilizáveis. Encontrado equipamento doméstico, a substituição deve ser imediata.', f: 'RDC Anvisa nº 197/2017, art. 10, § 2º; ' + REDE_FRIO},
+    {t: 'A câmara refrigerada opera entre 2 °C e 8 °C, com set point de 5 °C; deve ter registrador eletrônico de temperatura contínuo, controlador de alta e baixa temperatura com alarme visual e sonoro e bateria, e ventilação por ar forçado.', f: REDE_FRIO},
+    {t: 'Leitura e registro da temperatura no mapa diário, no mínimo duas vezes ao dia (início e fim da jornada); datalogger em paralelo ao registrador do equipamento; verificação diária de porta, alarmes e alimentação elétrica ao fim do expediente; calibração periódica (e após intervenção) por laboratório da Rede Brasileira de Calibração (RBC/Inmetro).', f: REDE_FRIO},
+    {t: 'Equipamento longe da luz solar direta, em ambiente ventilado, com no mínimo 15 cm livres ao redor; identificado, com “mapa ilustrativo” (vacina, lote, laboratório, validade, quantidade) e organização “primeiro a vencer, primeiro a sair”; plano de contingência para falha de energia ou do equipamento, conhecido pela equipe.', f: REDE_FRIO}
    ],
    produtos: [
     {t: 'Vacinas regularizadas na Anvisa e adquiridas de distribuidor com AFE; frascos multidose abertos usados dentro do prazo da bula, com data e hora de abertura anotadas.', f: 'RDC Anvisa nº 197/2017; bula do produto'}
    ],
    transporte: [
-    {t: 'Caixa térmica com bobinas reutilizáveis ambientadas (sem gelo em contato direto com os frascos) e termômetro de máxima e mínima; temperatura mantida entre +2 °C e +8 °C durante todo o trajeto, com registro.', f: REDE_FRIO}
+    {t: 'Caixa térmica de poliuretano (na sala de vacinação, capacidade mínima de 12 litros) com bobinas reutilizáveis ambientadas: retiradas do freezer até sumir a névoa e confirmado 0 °C com termômetro de cabo extensor, secas antes de entrar na caixa; vacinas mantidas entre 2 °C e 8 °C.', f: REDE_FRIO},
+    {t: 'Datalogger em todas as caixas térmicas durante o transporte, mesmo nas qualificadas, posicionado no centro da carga; registro das temperaturas e das intercorrências.', f: REDE_FRIO}
    ],
    registros: [
     {t: 'Registre em caderneta/comprovante: vacina, dose, lote, validade, data, local e vacinador; e no sistema de informação definido pelo Ministério da Saúde.', f: 'RDC Anvisa nº 197/2017'}
@@ -99,7 +101,7 @@ module.exports = {
     {t: 'Eventos supostamente atribuíveis à vacinação ou imunização (ESAVI) e erros de imunização devem ser notificados no sistema indicado pelo Ministério da Saúde (e-SUS Notifica).', f: 'Manual de Vigilância Epidemiológica de Eventos Supostamente Atribuíveis à Vacinação ou Imunização (Ministério da Saúde, 4ª ed.)'}
    ],
    extramuros: [
-    {t: 'Na vacinação extramuros, mantenha a cadeia de frio (caixa térmica monitorada), o registro das doses e o material para atendimento de reações; confira a comunicação/autorização exigida pela vigilância local.', f: 'RDC Anvisa nº 197/2017; ' + REDE_FRIO}
+    {t: 'Na vacinação extramuros, mantenha a cadeia de frio (caixa térmica com bobinas ambientadas e datalogger), o registro das doses e o material para atendimento de reações; confira a comunicação/autorização exigida pela vigilância local.', f: 'RDC Anvisa nº 197/2017; ' + REDE_FRIO}
    ],
    civp: [
     {t: 'O Certificado Internacional de Vacinação ou Profilaxia segue o Regulamento Sanitário Internacional; para febre amarela, a dose única vale por toda a vida (Anexo 7 do RSI, emenda em vigor desde 2016). Confira o credenciamento do serviço para emissão.', f: 'Regulamento Sanitário Internacional (RSI 2005), Anexo 7; Anvisa'}

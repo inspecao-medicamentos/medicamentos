@@ -1,6 +1,6 @@
 {
-  "versao": "20260930-12",
+  "versao": "20260930-13",
   "banco": "13.1",
   "correcoes": 1,
-  "notas": "Central de Consultas: o botão Automático deixa de se marcar como modo ativo (a busca por processo pelo Automático não trazia os cadastros de medicamentos e saneantes)."
+  "notas": "Vacinação: orientações de refrigeração, transporte e extramuros atualizadas pelo Manual de Rede de Frio do PNI, 6ª edição (2025): proibição de refrigerador doméstico e frigobar, câmara científica regularizada na Anvisa, set point 5 °C, datalogger, calibração RBC."
 }
