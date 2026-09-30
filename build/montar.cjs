@@ -369,6 +369,59 @@ troca("if(window.RoteiroEvidence)for(var k=1;k<=12;k++)await RoteiroEvidence.cle
    tom do card aberto; a Central (sem card) fica como está. */
 troca("try { fonte = montar(app);", "try { fonte = montar(app); if(nucleoAtual && window.__medTom) fonte = window.__medTom(fonte, css(VAR_NUCLEO[nucleoAtual], ''), css(VAR_NUCLEO[nucleoAtual] + '-d', ''));", 'tom do módulo');
 
+/* 7j. Central de Consultas — três correções no núcleo de busca:
+   - CNPJ ou EAN com dígito verificador errado: o aviso aparecia, mas a área de
+     resultados continuava com a consulta anterior (dado de outra empresa na
+     tela). Agora limpa os resultados até o usuário escolher “Consultar assim
+     mesmo”.
+   - Processo: o índice aponta saneantes e medicamentos para as visões por
+     processo (saneantes_processos, medicamentos_processos), que materialize()
+     não lia; só o complemento da casca achava, com atraso fixo, e perdia para a
+     renderização (ex.: saneante 25351121048202134 dava 0). Agora o núcleo lê
+     essas visões.
+   - Medidas fiscais: empresa, produtos e medidas são objetos e saíam como
+     “[object Object]” (título e campos). Agora viram texto. */
+blocoAltera('app--central-consultas', s => {
+  const LIMPA = "$('results').className='results-empty';$('results').textContent='Consulta não realizada. Confira o número digitado ou toque em “Consultar assim mesmo”.';ultimo=null;";
+  s = trocaEm(s, "status(forcar(raw,'O dígito verificador deste CNPJ não confere", LIMPA + "status(forcar(raw,'O dígito verificador deste CNPJ não confere", 'central: DV CNPJ limpa');
+  s = trocaEm(s, "status(forcar(raw,'O dígito verificador deste EAN/GTIN não confere", LIMPA + "status(forcar(raw,'O dígito verificador deste EAN/GTIN não confere", 'central: DV EAN limpa');
+  s = trocaEm(s, "else if(b==='cosmeticos')data=await json(`cosmeticos/${shardProcessBase('cosmeticos',processo)}.json`)||[];",
+    "else if(b==='cosmeticos')data=await json(`cosmeticos/${shardProcessBase('cosmeticos',processo)}.json`)||[];"
+    + "else if(b==='saneantes_processos'||b==='medicamentos_processos'){const base=b.replace('_processos','');"
+    + "if(out.some(x=>x._base===base&&digits(x.processo)===processo))continue;"
+    + "out.push(...(await json(`${b}/${shardProcessBase(b,processo)}.json`)||[]).filter(x=>digits(x.processo)===processo).map(x=>{const y={...x,_base:base};"
+    + "if(y.situacao==='S')y.situacao='Ativo';else if(y.situacao==='N')y.situacao='Inativo';"
+    + "if(String(y.registrado)==='0'&&!y.registro)y.regularizacao='Notificado / sem número de registro';"
+    + "const v=/^(\\d{2})\\/(\\d{2})\\/(\\d{4})/.exec(String(y.vencimento||''));if(v)y.vencimento=v[2]+'/'+v[1]+'/'+v[3];"
+    + "delete y.registrado;delete y.atualizado_em;return y}));continue}",
+    'central: processo em saneantes/medicamentos_processos');
+  s = trocaEm(s, "const item=data?.[processo];if(item)out.push({...item,processo,_base:'produtos_irregulares'})",
+    "const item=data?.[processo];if(item)out.push(achataIrregular({...item,processo,_base:'produtos_irregulares'}))", 'central: medida fiscal achatada');
+  s = trocaEm(s, 'async function irregular(kind,value){',
+    `function achataIrregular(it){
+  const x={...it},dt=v=>{const m=/^(\\d{4})-(\\d{2})-(\\d{2})/.exec(String(v||''));return m?m[3]+'/'+m[2]+'/'+m[1]:String(v||'')},uniq=a=>[...new Set(a.filter(Boolean).map(String))].join(' · ');
+  const ps=Array.isArray(it.produtos)?it.produtos.filter(p=>p&&typeof p==='object'):[];
+  x.produto=(typeof it.produto==='string'&&it.produto)||uniq(ps.map(p=>p.produto))||String(it.produto_resumo||'').replace(/\\s*-\\s*Registrad[oa]:.*$/i,'')||'Produto com medida fiscal';
+  if(ps.length){const r=uniq(ps.map(p=>p.registro)),l=uniq(ps.map(p=>p.lotes||p.lote));if(r)x.registro=r;if(l)x.lote=l}
+  const e=it.empresa&&typeof it.empresa==='object'?it.empresa:null;
+  if(e){x.empresa=e.razao_social||'';if(e.cnpj)x.cnpj=e.cnpj;if(e.municipio)x.municipio=e.municipio;if(e.uf)x.uf=e.uf}
+  const ms=Array.isArray(it.medidas)?it.medidas.filter(m=>m&&typeof m==='object'):[];
+  if(ms.length)x.medidas=ms.map(m=>[m.numero_resolucao?'RE '+m.numero_resolucao:'',m.data_publicacao?'DOU de '+dt(m.data_publicacao):'',Array.isArray(m.acoes_atividades)?m.acoes_atividades.join('; '):'',m.situacao_medida?'medida '+String(m.situacao_medida).toLowerCase():''].filter(Boolean).join(' — '));
+  if(it.assunto&&typeof it.assunto==='object')x.assunto=it.assunto.descricao||'';
+  if(it.data_ultima_medida)x.data_ultima_medida=dt(it.data_ultima_medida);
+  ['produtos','controle','consultado_em','detalhe_status','codigo_risco','codigo_tipo_produto','id_dossie','presente_na_fonte','data_atualizacao','produto_resumo'].forEach(k=>delete x[k]);
+  Object.keys(x).forEach(k=>{if(x[k]&&typeof x[k]==='object'&&!Array.isArray(x[k]))delete x[k]});
+  return x;
+}
+async function irregular(kind,value){`, 'central: função achataIrregular');
+  s = trocaEm(s, 'function valor(k,v){', "Object.assign(field,{infracao:'Infração',acoes_resumo:'Ações',medidas:'Medidas publicadas',assunto:'Assunto',risco:'Risco',data_ultima_medida:'Última medida',total_medidas:'Total de medidas',situacao_investigacao:'Em investigação',prova_processual_apensa:'Prova processual apensa'});\nfunction valor(k,v){", 'central: rótulos das medidas fiscais');
+  /* Situação “S”/“N” e vencimento “mm/dd/aaaa hh:mm:ss” das bases de saneantes, em
+     qualquer caminho (registro, processo); CNPJ tirado do “detentor” quando falta. */
+  s = trocaEm(s, 'function valor(k,v){', "function valor(k,v){if(k==='situacao'&&(v==='S'||v==='N'))v=v==='S'?'Ativo':'Inativo';if(k==='vencimento'){const u=/^(\\d{2})\\/(\\d{2})\\/(\\d{4})\\s+\\d/.exec(String(v));if(u)return esc(u[2]+'/'+u[1]+'/'+u[3])}", 'central: situação e vencimento');
+  s = trocaEm(s, "delete y.registrado;delete y.atualizado_em;return y}", "if(!y.cnpj){const c=/^(\\d{14})\\s*-/.exec(String(y.detentor||''));if(c)y.cnpj=c[1]}delete y.registrado;delete y.atualizado_em;return y}", 'central: cnpj do detentor');
+  return s;
+});
+
 /* 8. Versão. */
 trocaRx(/const APP_VERSAO = '[^']+';/, `const APP_VERSAO = '${VERSAO}';`, 'APP_VERSAO');
 trocaRx(/<span id="casca-versao">v[^ <]+/, `<span id="casca-versao">v${VERSAO}`, 'versão rodapé');

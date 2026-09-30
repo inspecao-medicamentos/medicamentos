@@ -1,6 +1,6 @@
 {
-  "versao": "20260930-14",
+  "versao": "20260930-15",
   "banco": "13.1",
   "correcoes": 1,
-  "notas": "Transportadora passa a ser trilha do Atacadista (tipo de operação na identificação; sem Não se aplica automático). Tela inicial com 3 cards em tons de azul. Estéreis: conceitos (ISO 5/7, fluxo laminar, CSB, HEPA, pressão). Vacinação: sala pelo Manual de Normas e Procedimentos (2024)."
+  "notas": "Central de Consultas: CNPJ/EAN com dígito errado não mostra mais a consulta anterior; processo de saneantes e medicamentos lido direto das bases por processo; medidas fiscais sem “[object Object]”."
 }
