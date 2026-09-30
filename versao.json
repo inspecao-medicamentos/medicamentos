@@ -1,6 +1,6 @@
 {
-  "versao": "20260930-1",
+  "versao": "20260930-2",
   "banco": "13.1",
-  "correcoes": 3,
-  "notas": "Drogaria: roteiros de EAC e de Vacinação completos, Drogaria em supermercado (Lei 15.357/2026) e Informações gerais da Área física, que não apareciam."
+  "correcoes": 2,
+  "notas": "Transportadora: roteiro completo da distribuidora com rascunho e fotos próprios, atividade Transportar marcada e as partes de distribuidora em Não se aplica. Atacadista com o nome do card no cabeçalho."
 }

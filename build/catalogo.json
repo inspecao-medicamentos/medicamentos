@@ -1,32 +1,168 @@
 {
   "nucleos": [
-    {"id":"Drogaria","var":"--t-dro","sub":"Drogaria, drogaria em supermercado, exames de análises clínicas e vacinação",
-     "icone":"<path d=\"M4 9h16v11a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1zM4 9l1.6-5h12.8L20 9M12 12v5M9.5 14.5h5\"/>",
-     "roteiros":[
-       ["Drogaria","Roteiro completo. A conferência de estoque já está dentro da inspeção.","drogaria"],
-       ["Drogaria em supermercado","Farmácia ou drogaria na área de vendas de supermercado (Lei 5.991/1973, art. 6º, §§ 2º a 7º, incluídos pela Lei 15.357/2026).","drogaria","instalacao=supermercado"],
-       ["Exames de análises clínicas (EAC)","Serviço farmacêutico de EAC em farmácia e drogaria (RDC 978/2025).","eac"],
-       ["Vacinação","Serviço de vacinação humana em farmácia e drogaria (RDC 197/2017).","vacina"]]},
-    {"id":"Manipulação","var":"--t-man","sub":"Farmácia com manipulação e manipulação de estéreis",
-     "icone":"<path d=\"M9 3h6M10 3v6.2L4.6 18.4A1.7 1.7 0 0 0 6.1 21h11.8a1.7 1.7 0 0 0 1.5-2.6L14 9.2V3M7.5 15h9\"/>",
-     "roteiros":[
-       ["Farmácia com manipulação","Preparações não estéreis: roteiro, documentos, estoque e relatório (RDC 67/2007).","farmacia-manipulacao"],
-       ["Manipulação de estéreis","Boas práticas de manipulação de produtos estéreis (RDC 67/2007, Anexo IV).","manipulacao-estereis"]]},
-    {"id":"Atacadista de medicamentos","var":"--t-ata","sub":"Atacadista de medicamentos e de gases medicinais",
-     "icone":"<path d=\"M3 21V9l9-5 9 5v12M7 21v-7h10v7M7 17h10\"/>",
-     "roteiros":[
-       ["Atacadista de medicamentos","Distribuição e armazenagem de medicamentos (RDC 430/2020).","distribuidoras-transportadoras"],
-       ["Atacadista de gases medicinais","Distribuição, armazenagem e transporte de gases medicinais (RDC 887/2024 e RDC 870/2024).","gases-medicinais"]]},
-    {"id":"Transportadora de medicamentos","var":"--t-tra","sub":"Transporte de medicamentos",
-     "icone":"<path d=\"M2 7h11v10H2zM13 10h4l3 3v4h-7zM6.5 17a1.6 1.6 0 1 0 0 3.2A1.6 1.6 0 0 0 6.5 17M16.5 17a1.6 1.6 0 1 0 0 3.2 1.6 1.6 0 0 0 0-3.2\"/>",
-     "roteiros":[
-       ["Transportadora de medicamentos","Transporte de medicamentos: as partes próprias de distribuidora não se aplicam (RDC 430/2020).","transportadora"]]}
+    {
+      "id": "Drogaria",
+      "var": "--t-dro",
+      "sub": "Drogaria, drogaria em supermercado, exames de análises clínicas e vacinação",
+      "icone": "<path d=\"M4 9h16v11a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1zM4 9l1.6-5h12.8L20 9M12 12v5M9.5 14.5h5\"/>",
+      "roteiros": [
+        [
+          "Drogaria",
+          "Roteiro completo. A conferência de estoque já está dentro da inspeção.",
+          "drogaria"
+        ],
+        [
+          "Drogaria em supermercado",
+          "Farmácia ou drogaria na área de vendas de supermercado (Lei 5.991/1973, art. 6º, §§ 2º a 7º, incluídos pela Lei 15.357/2026).",
+          "drogaria",
+          "instalacao=supermercado"
+        ],
+        [
+          "Exames de análises clínicas (EAC)",
+          "Serviço farmacêutico de EAC em farmácia e drogaria (RDC 978/2025).",
+          "eac"
+        ],
+        [
+          "Vacinação",
+          "Serviço de vacinação humana em farmácia e drogaria (RDC 197/2017).",
+          "vacina"
+        ]
+      ]
+    },
+    {
+      "id": "Manipulação",
+      "var": "--t-man",
+      "sub": "Farmácia com manipulação e manipulação de estéreis",
+      "icone": "<path d=\"M9 3h6M10 3v6.2L4.6 18.4A1.7 1.7 0 0 0 6.1 21h11.8a1.7 1.7 0 0 0 1.5-2.6L14 9.2V3M7.5 15h9\"/>",
+      "roteiros": [
+        [
+          "Farmácia com manipulação",
+          "Preparações não estéreis: roteiro, documentos, estoque e relatório (RDC 67/2007).",
+          "farmacia-manipulacao"
+        ],
+        [
+          "Manipulação de estéreis",
+          "Boas práticas de manipulação de produtos estéreis (RDC 67/2007, Anexo IV).",
+          "manipulacao-estereis"
+        ]
+      ]
+    },
+    {
+      "id": "Atacadista de medicamentos",
+      "var": "--t-ata",
+      "sub": "Atacadista de medicamentos e de gases medicinais",
+      "icone": "<path d=\"M3 21V9l9-5 9 5v12M7 21v-7h10v7M7 17h10\"/>",
+      "roteiros": [
+        [
+          "Atacadista de medicamentos",
+          "Distribuição e armazenagem de medicamentos (RDC 430/2020).",
+          "distribuidoras-transportadoras"
+        ],
+        [
+          "Atacadista de gases medicinais",
+          "Distribuição, armazenagem e transporte de gases medicinais (RDC 887/2024 e RDC 870/2024).",
+          "gases-medicinais"
+        ]
+      ]
+    },
+    {
+      "id": "Transportadora de medicamentos",
+      "var": "--t-tra",
+      "sub": "Transporte de medicamentos",
+      "icone": "<path d=\"M2 7h11v10H2zM13 10h4l3 3v4h-7zM6.5 17a1.6 1.6 0 1 0 0 3.2A1.6 1.6 0 0 0 6.5 17M16.5 17a1.6 1.6 0 1 0 0 3.2 1.6 1.6 0 0 0 0-3.2\"/>",
+      "roteiros": [
+        [
+          "Transportadora de medicamentos",
+          "Transporte de medicamentos: as partes próprias de distribuidora não se aplicam (RDC 430/2020).",
+          "transportadora"
+        ]
+      ]
+    }
   ],
   "novos": {
-    "eac":{"titulo":"Exames de análises clínicas (EAC)","nucleo":"Drogaria","normas":[["RDC Anvisa nº 978/2025","Funcionamento de serviços que executam atividades relacionadas aos EAC","https://anvisalegis.datalegis.net/action/ActionDatalegis.php?acao=abrirTextoAto&cod_menu=8542&cod_modulo=310&link=S&numeroAto=00000978&orgao=RDC%2FDC%2FANVISA%2FMS&seqAto=000&tipo=RDC&valorAno=2025"],["RDC Anvisa nº 44/2009","Boas práticas farmacêuticas e serviços farmacêuticos em farmácias e drogarias",""],["Lei Federal nº 13.021/2014","Exercício e fiscalização das atividades farmacêuticas",""],["RDC Anvisa nº 222/2018","Gerenciamento de resíduos de serviços de saúde",""]]},
-    "vacina":{"titulo":"Vacinação","nucleo":"Drogaria","normas":[["RDC Anvisa nº 197/2017","Requisitos mínimos para o funcionamento dos serviços de vacinação humana","https://anvisalegis.datalegis.net/action/ActionDatalegis.php?acao=abrirTextoAto&cod_menu=8542&cod_modulo=310&link=S&numeroAto=00000197&orgao=RDC%2FDC%2FANVISA%2FMS&seqAto=000&tipo=RDC&valorAno=2017"],["RDC Anvisa nº 44/2009","Serviços farmacêuticos em farmácias e drogarias",""],["Lei Federal nº 13.021/2014","Exercício e fiscalização das atividades farmacêuticas",""],["RDC Anvisa nº 222/2018","Gerenciamento de resíduos de serviços de saúde",""]]},
-    "manipulacao-estereis":{"titulo":"Manipulação de estéreis","nucleo":"Manipulação","normas":[["RDC Anvisa nº 67/2007 — Anexo IV","Boas práticas de manipulação de produtos estéreis (BPMPE) em farmácias",""],["RDC Anvisa nº 67/2007 — Anexo I","Boas práticas de manipulação em farmácias (requisitos gerais)",""]]},
-    "gases-medicinais":{"titulo":"Atacadista de gases medicinais","nucleo":"Atacadista de medicamentos","normas":[["RDC Anvisa nº 887/2024","Boas práticas de distribuição, armazenagem, transporte e dispensação de gases medicinais","https://anvisalegis.datalegis.net/action/ActionDatalegis.php?acao=abrirTextoAto&cod_menu=8542&cod_modulo=310&link=S&numeroAto=00000887&orgao=RDC%2FDC%2FANVISA%2FMS&seqAto=000&tipo=RDC&valorAno=2024"],["RDC Anvisa nº 870/2024","Regularização de gases medicinais","https://anvisalegis.datalegis.net/action/ActionDatalegis.php?acao=abrirTextoAto&cod_menu=8542&cod_modulo=310&link=S&numeroAto=00000870&orgao=RDC%2FDC%2FANVISA%2FMS&seqAto=000&tipo=RDC&valorAno=2024"]]},
-    "transportadora":{"titulo":"Transportadora de medicamentos","nucleo":"Transportadora de medicamentos","normas":[["RDC Anvisa nº 430/2020","Boas práticas de distribuição, armazenagem e transporte de medicamentos (capítulos de transporte)",""]]}
+    "eac": {
+      "titulo": "Exames de análises clínicas (EAC)",
+      "nucleo": "Drogaria",
+      "normas": [
+        [
+          "RDC Anvisa nº 978/2025",
+          "Funcionamento de serviços que executam atividades relacionadas aos EAC",
+          "https://anvisalegis.datalegis.net/action/ActionDatalegis.php?acao=abrirTextoAto&cod_menu=8542&cod_modulo=310&link=S&numeroAto=00000978&orgao=RDC%2FDC%2FANVISA%2FMS&seqAto=000&tipo=RDC&valorAno=2025"
+        ],
+        [
+          "RDC Anvisa nº 44/2009",
+          "Boas práticas farmacêuticas e serviços farmacêuticos em farmácias e drogarias",
+          ""
+        ],
+        [
+          "Lei Federal nº 13.021/2014",
+          "Exercício e fiscalização das atividades farmacêuticas",
+          ""
+        ],
+        [
+          "RDC Anvisa nº 222/2018",
+          "Gerenciamento de resíduos de serviços de saúde",
+          ""
+        ]
+      ]
+    },
+    "vacina": {
+      "titulo": "Vacinação",
+      "nucleo": "Drogaria",
+      "normas": [
+        [
+          "RDC Anvisa nº 197/2017",
+          "Requisitos mínimos para o funcionamento dos serviços de vacinação humana",
+          "https://anvisalegis.datalegis.net/action/ActionDatalegis.php?acao=abrirTextoAto&cod_menu=8542&cod_modulo=310&link=S&numeroAto=00000197&orgao=RDC%2FDC%2FANVISA%2FMS&seqAto=000&tipo=RDC&valorAno=2017"
+        ],
+        [
+          "RDC Anvisa nº 44/2009",
+          "Serviços farmacêuticos em farmácias e drogarias",
+          ""
+        ],
+        [
+          "Lei Federal nº 13.021/2014",
+          "Exercício e fiscalização das atividades farmacêuticas",
+          ""
+        ],
+        [
+          "RDC Anvisa nº 222/2018",
+          "Gerenciamento de resíduos de serviços de saúde",
+          ""
+        ]
+      ]
+    },
+    "manipulacao-estereis": {
+      "titulo": "Manipulação de estéreis",
+      "nucleo": "Manipulação",
+      "normas": [
+        [
+          "RDC Anvisa nº 67/2007 — Anexo IV",
+          "Boas práticas de manipulação de produtos estéreis (BPMPE) em farmácias",
+          ""
+        ],
+        [
+          "RDC Anvisa nº 67/2007 — Anexo I",
+          "Boas práticas de manipulação em farmácias (requisitos gerais)",
+          ""
+        ]
+      ]
+    },
+    "gases-medicinais": {
+      "titulo": "Atacadista de gases medicinais",
+      "nucleo": "Atacadista de medicamentos",
+      "normas": [
+        [
+          "RDC Anvisa nº 887/2024",
+          "Boas práticas de distribuição, armazenagem, transporte e dispensação de gases medicinais",
+          "https://anvisalegis.datalegis.net/action/ActionDatalegis.php?acao=abrirTextoAto&cod_menu=8542&cod_modulo=310&link=S&numeroAto=00000887&orgao=RDC%2FDC%2FANVISA%2FMS&seqAto=000&tipo=RDC&valorAno=2024"
+        ],
+        [
+          "RDC Anvisa nº 870/2024",
+          "Regularização de gases medicinais",
+          "https://anvisalegis.datalegis.net/action/ActionDatalegis.php?acao=abrirTextoAto&cod_menu=8542&cod_modulo=310&link=S&numeroAto=00000870&orgao=RDC%2FDC%2FANVISA%2FMS&seqAto=000&tipo=RDC&valorAno=2024"
+        ]
+      ]
+    }
   }
 }
