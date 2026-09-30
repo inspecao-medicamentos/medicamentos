@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 /* Abre o site num servidor local em /medicamentos/, entra em cada card e em
    cada roteiro, e falha se houver erro de JavaScript, módulo que não abre ou
-   rolagem horizontal. Com --fotos, grava capturas em build/capturas/. */
+   rolagem horizontal. Com --fotos, grava capturas em build/capturas/.
+   URL_SITE=https://... testa o site publicado em vez do servidor local. */
 'use strict';
 const path = require('node:path'), fs = require('node:fs'), http = require('node:http');
 const {execSync} = require('node:child_process');
@@ -21,13 +22,13 @@ const srv = http.createServer((q, r) => {
 
 (async () => {
   await new Promise(ok => srv.listen(0, ok));
-  const URL0 = `http://localhost:${srv.address().port}/medicamentos/`;
+  const URL0 = process.env.URL_SITE || `http://localhost:${srv.address().port}/medicamentos/`;
   if (FOTOS) fs.mkdirSync(OUT, {recursive: true});
-  const b = await pw.chromium.launch();
+  const b = await pw.chromium.launch({args: ['--ignore-certificate-errors']});
   let falhas = 0;
   const falha = m => { falhas++; console.error('FALHA: ' + m); };
   for (const [nome, vp] of [['celular', {width: 390, height: 844}], ['tablet', {width: 800, height: 1280}], ['pc', {width: 1366, height: 900}]]) {
-    const p = await b.newPage({viewport: vp, deviceScaleFactor: FOTOS ? 2 : 1});
+    const p = await b.newPage({ignoreHTTPSErrors: true, viewport: vp, deviceScaleFactor: FOTOS ? 2 : 1});
     const erros = [];
     p.on('pageerror', e => { erros.push(String(e.message).slice(0, 200)); if (process.env.DEPURA) console.log('  erro:', e.message, (e.stack || '').split('\n').slice(0, 3).join(' | ')); });
     await p.goto(URL0); await p.waitForTimeout(900);
