@@ -271,6 +271,26 @@ troca("if(qs){ fonte = fonte.replace('</head>','<script>window.__QS='+JSON.strin
   });
 }
 
+/* 7h. Drogaria: a equipe inspetora (Seção 1 › Dados da inspeção) não saía no
+   relatório; entra como 2.4 na seção 2 INSPEÇÃO. */
+blocoAltera('rec--drogaria-report-final.js', s => trocaEm(s,
+  "kv(B,'2.3. Período da última inspeção',m.ultima_inspecao_periodo||m.ultima_inspecao);",
+  "kv(B,'2.3. Período da última inspeção',m.ultima_inspecao_periodo||m.ultima_inspecao);kv(B,'2.4. Equipe inspetora',m.equipe);",
+  'drogaria: equipe inspetora'));
+
+/* 7i. Atacadista/Transportadora — Anexo I: itens 5 (informações gerais) e 6
+   (NCs anteriores) usam o rascunho montado da etapa 1 do roteiro quando a
+   equipe não escreveu o texto na aba Relatório (antes saíam “Não informado”
+   mesmo com a caracterização e o histórico preenchidos). */
+blocoAltera('app--distribuidoras-transportadoras', s => {
+  s = trocaEm(s, "it(5,'Informações gerais');ddParas(R.general).forEach(t=>p(t));if(!ddTem(R.general))p('Não informado.');",
+    "it(5,'Informações gerais');{const g=ddTem(R.general)?R.general:ddRascunhoGeral();ddParas(g).forEach(t=>p(t));if(!ddTem(g))p('Não informado.')}", 'anexo I: item 5');
+  s = trocaEm(s, "it(6,'Não conformidades anteriores');ddParas(R.previous).forEach(t=>p(t));if(!ddTem(R.previous))p(primeira?'Não se aplica: primeira inspeção.':'Não informado.');",
+    "it(6,'Não conformidades anteriores');{const q=ddTem(R.previous)?R.previous:ddRascunhoAnterior();ddParas(q).forEach(t=>p(t));if(!ddTem(q))p(primeira?'Não se aplica: primeira inspeção.':'Não informado.')}", 'anexo I: item 6');
+  s = trocaEm(s, "if(!ddTem(R.general))out.push('Item 5: informações gerais não preenchidas.');", "if(!ddTem(R.general)&&!ddTem(ddRascunhoGeral()))out.push('Item 5: informações gerais não preenchidas.');", 'anexo I: pendência 5');
+  return trocaEm(s, "if(!ddTem(R.previous)&&m.first!=='Sim')", "if(!ddTem(R.previous)&&!ddTem(ddRascunhoAnterior())&&m.first!=='Sim')", 'anexo I: pendência 6');
+});
+
 /* 7f. Prévia “Como sai no relatório”: o módulo da distribuidora tem um ouvinte
    de clique em window (captura) que interrompe a propagação, e a prévia ouvia
    em document, por isso nunca registrava a resposta dada. Ouvindo em window
@@ -323,10 +343,12 @@ troca('  function montar(app){',
   var CAMPO_APPS = ${JSON.stringify(CAMPO_APPS)};
   var CAMPO_JS = ${jsStr(le('campo.js'))};
   var CENTRAL_AUTO_JS = ${jsStr(le('central-auto.js'))};
+  var MANIP_JS = ${jsStr(le('manipulacao-ajustes.js'))};
   var ORIENT_TRANSP = ${jsStr(JSON.stringify(ORIENT.transporte))};
   var TRANSP_ORIENT_JS = ${jsStr(le('transporte-orient.js'))};
   function montar(app){ var v = VARIANTES[app]; var s = v ? montarVariante(v) : montarBase(app);
     if(app === 'distribuidoras-transportadoras'){ var k = s.lastIndexOf('</body>'); s = s.slice(0, k) + '<scr' + 'ipt>' + ${jsStr(ATACADISTA_TIT)} + '</scr' + 'ipt>' + s.slice(k); }
+    if(app === 'farmacia-manipulacao'){ var mj = s.lastIndexOf('</body>'); s = s.slice(0, mj) + '<scr' + 'ipt>' + MANIP_JS + '</scr' + 'ipt>' + s.slice(mj); }
     if(app === 'central-consultas'){ var c = s.lastIndexOf('</body>'); s = s.slice(0, c) + '<scr' + 'ipt>' + CENTRAL_AUTO_JS + '</scr' + 'ipt>' + s.slice(c); }
     if(app === 'distribuidoras-transportadoras' || app === 'transportadora'){ var o = s.lastIndexOf('</body>'); s = s.slice(0, o) + '<scr' + 'ipt>window.__ORIENT_TRANSP=' + ORIENT_TRANSP + ';' + TRANSP_ORIENT_JS + '</scr' + 'ipt>' + s.slice(o); }
     if(CAMPO_APPS.indexOf(app) >= 0){ var j = s.lastIndexOf('</body>'); s = s.slice(0, j) + '<scr' + 'ipt>' + CAMPO_JS + '</scr' + 'ipt>' + s.slice(j); }
