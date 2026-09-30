@@ -1,7 +1,6 @@
 /* Variante de um módulo herdado — entra no início do <head> quando o roteiro é
    aberto por um card que reaproveita o módulo de outro (build/montar.cjs):
-   Transportadora (módulo da distribuidora) e Manipulação de estéreis (módulo
-   da manipulação). Dá à variante rascunho e fotos próprios, sem tocar no código:
+   Transportadora (módulo da distribuidora). Dá à variante rascunho e fotos próprios, sem tocar no código:
    - as chaves de localStorage do módulo ganham um prefixo (V.prefixo);
    - os escopos de foto do RoteiroEvidence que começam por V.escopo ganham o
      mesmo prefixo, sem os dois-pontos (ex.: “dist-card-2” → “transp-dist-card-2”);

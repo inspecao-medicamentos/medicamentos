@@ -296,10 +296,26 @@ const ATACADISTA_TIT = "(function(){function t(){var w=document.createTreeWalker
 const VARIANTES_JS = '{' + Object.entries(VARIANTES).map(([k, v]) => JSON.stringify(k) + ':{base:' + JSON.stringify(v.base)
   + ',ini:' + jsStr('window.__uvisVariante=' + JSON.stringify({app: v.app, prefixo: v.prefixo, chaves: v.chaves, escopo: v.escopo}) + ';' + VAR_INI)
   + ',fim:' + jsStr(v.fim) + (v.dados ? ',dados:[' + jsStr(v.dados[0]) + ',' + jsStr(v.dados[1]) + ']' : '') + '}').join(',') + '}';
+/* Central de Consultas: modo Automático (modulos/central-auto.js).
+   Ferramentas de campo (modulos/campo.js) em todos os roteiros: entra no fim
+   do módulo; a chave med-campo-<roteiro> e o prefixo das fotos dos achados
+   entram na lista das Salvas; Nova inspeção apaga também essa chave. */
+const CAMPO_APPS = CAT.nucleos.flatMap(n => n.roteiros.map(r => r[2]));
+troca("k.indexOf('uvis-previa-')===0", "(k.indexOf('uvis-previa-')===0||k.indexOf('med-campo-')>=0)", 'campo: nova inspeção');
+{
+  const SALVAS_CAMPO = "(function(){var n=0;function f(){var S=window.UvisSalvas;if(!S){if(++n<80)setTimeout(f,150);return}Object.keys(S.CFG).forEach(function(a){var c=S.CFG[a],k='med-campo-'+a;if(c.ls.indexOf(k)<0)c.ls.push(k);if(!c.fotos.length)c.fotos.push(a+'-campo-')})}f()})();";
+  const k = h.lastIndexOf('</body>');
+  h = h.slice(0, k) + '<script>' + SALVAS_CAMPO + '</script>\n' + h.slice(k);
+}
 troca('  function montar(app){',
   `  var VARIANTES = ${VARIANTES_JS};
-  function montar(app){ var v = VARIANTES[app]; if(v) return montarVariante(v); var s = montarBase(app);
+  var CAMPO_APPS = ${JSON.stringify(CAMPO_APPS)};
+  var CAMPO_JS = ${jsStr(le('campo.js'))};
+  var CENTRAL_AUTO_JS = ${jsStr(le('central-auto.js'))};
+  function montar(app){ var v = VARIANTES[app]; var s = v ? montarVariante(v) : montarBase(app);
     if(app === 'distribuidoras-transportadoras'){ var k = s.lastIndexOf('</body>'); s = s.slice(0, k) + '<scr' + 'ipt>' + ${jsStr(ATACADISTA_TIT)} + '</scr' + 'ipt>' + s.slice(k); }
+    if(app === 'central-consultas'){ var c = s.lastIndexOf('</body>'); s = s.slice(0, c) + '<scr' + 'ipt>' + CENTRAL_AUTO_JS + '</scr' + 'ipt>' + s.slice(c); }
+    if(CAMPO_APPS.indexOf(app) >= 0){ var j = s.lastIndexOf('</body>'); s = s.slice(0, j) + '<scr' + 'ipt>' + CAMPO_JS + '</scr' + 'ipt>' + s.slice(j); }
     return s; }
   function montarVariante(v){
     var s = montarBase(v.base);

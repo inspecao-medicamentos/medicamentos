@@ -1,6 +1,6 @@
 {
-  "versao": "20260930-6",
+  "versao": "20260930-7",
   "banco": "13.1",
   "correcoes": 1,
-  "notas": "Manipulação em um roteiro só: o bloco 13 (estéreis, RDC 67/2007 Anexo IV) fica na Farmácia com manipulação e é ativado marcando Estéreis em Preparações, na caracterização."
+  "notas": "Ferramentas de campo em todos os roteiros (botão Campo): resumo da inspeção, perguntas pendentes de verificação e lembretes, achados avulsos com foto, construtor de constatação e frases, reinspeção a partir de inspeção salva; aviso de pendências ao baixar o relatório. Central de Consultas com modo Automático."
 }
