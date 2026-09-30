@@ -46,3 +46,10 @@
 #rs-aviso{position:fixed;left:50%;bottom:86px;z-index:1001;max-width:min(92vw,520px);padding:10px 16px;border-radius:10px;background:#1f2f38;color:#fff;font-size:.88rem;transform:translateX(-50%);opacity:0;pointer-events:none;transition:opacity .2s}
 #rs-aviso.on{opacity:1}
 @media(max-width:640px){.rs-campos{grid-template-columns:1fr}.rs-checks{grid-template-columns:1fr}}
+
+/* orientação técnica e itens de consulta */
+.rs-orient ul{margin:6px 0 4px;padding-left:18px}.rs-orient li{margin:6px 0;line-height:1.45}
+.rs-fonte{display:block;color:var(--pu-muted,#5b6b78);font-size:.8rem;margin-top:2px}
+.rs-consulta h4{margin:14px 0 6px;font-size:.95rem}.rs-consulta p{margin:6px 0}
+.rs-tab{overflow-x:auto;-webkit-overflow-scrolling:touch}.rs-tab table{border-collapse:collapse;width:100%;font-size:.84rem}.rs-tab td:first-child{white-space:normal;min-width:72px}
+.rs-tab th,.rs-tab td{border:1px solid #d5dde3;padding:6px 8px;text-align:left;vertical-align:top}.rs-tab th{background:#eef3f6}

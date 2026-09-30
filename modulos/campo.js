@@ -215,7 +215,7 @@
   return out}
 
  /* ---------------- interface ---------------- */
- var CSS='#cmp-fab{position:fixed;right:12px;bottom:84px;z-index:2147482000;display:inline-flex;align-items:center;gap:6px;min-height:42px;padding:8px 14px;border-radius:21px;border:0;background:var(--uvis-tone,#365B73);color:#fff;font:700 14px/1 system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;box-shadow:0 4px 14px #0003;cursor:pointer}#cmp-fab .n{min-width:20px;padding:3px 6px;border-radius:10px;background:#d69e2e;color:#1a1a1a;font-size:12px}#cmp-fab .n[hidden]{display:none}'
+ var CSS='#cmp-fab.cmp-flutua{position:fixed;right:12px;bottom:84px;z-index:2147482000;display:inline-flex;align-items:center;gap:6px;min-height:42px;padding:8px 14px;border-radius:21px;border:0;background:var(--uvis-tone,#365B73);color:#fff;font:700 14px/1 system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;box-shadow:0 4px 14px #0003;cursor:pointer}#cmp-fab.cmp-flutua .n{min-width:20px;padding:3px 6px;border-radius:10px;background:#d69e2e;color:#1a1a1a;font-size:12px}#cmp-fab .n[hidden]{display:none}'
   +'#cmp-painel{position:fixed;inset:0;z-index:2147483100;background:#0006;display:flex;justify-content:center;align-items:flex-end}#cmp-painel .cx{background:#fff;color:#1f2a33;width:min(760px,100%);max-height:92vh;display:flex;flex-direction:column;border-radius:16px 16px 0 0;font:15px/1.45 system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif}'
   +'#cmp-painel header,#cmp-painel nav{flex:0 0 auto}#cmp-painel header{display:flex;align-items:center;gap:8px;padding:12px 14px 6px}#cmp-painel header b{flex:1;font-size:16px}#cmp-painel .x{border:0;background:#eef2f5;border-radius:8px;min-width:40px;min-height:36px;font-size:18px;cursor:pointer}'
   +'#cmp-painel nav{display:flex;gap:6px;padding:4px 12px 10px;overflow-x:auto;border-bottom:1px solid #e3e8ec}#cmp-painel nav button{flex:0 0 auto;border:1px solid #cfd8df;background:#fff;border-radius:18px;padding:7px 12px;font:600 13px/1 inherit;cursor:pointer;color:#34495a}#cmp-painel nav button.on{background:var(--uvis-tone,#365B73);border-color:transparent;color:#fff}'
@@ -342,10 +342,26 @@
    if(x.dataset.m==='ver')abrePainel('pend');else if(x.dataset.m==='emite'){liberado=Date.now()+1500;b.click()}})}
 
 
+ /* ---------------- botão no cabeçalho, à esquerda de “Fotos” ---------------- */
+ var ICONE='<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 4h6v3H9z"/><path d="M9 5.5H6v15h12v-15h-3"/><path d="M9 13l2 2 4-4"/></svg><span>Campo</span><span class="n" hidden></span>';
+ function poeBotao(){var t=0,iv=setInterval(function(){t++;var fo=document.getElementById('uvs-fotos')||(t>20&&document.getElementById('uvs-botao'));
+   if(fo&&!document.getElementById('cmp-fab')){clearInterval(iv);var b=document.createElement('button');b.id='cmp-fab';b.type='button';b.className=fo.className;b.setAttribute('aria-label','Ferramentas de campo');b.title='Ferramentas de campo';b.innerHTML=ICONE;
+    b.addEventListener('click',function(e){e.preventDefault();e.stopPropagation();abrePainel()});
+    /* mesma aparência do botão vizinho: copia as regras escritas para ele, trocando o id */
+    var viz=fo.id,orig=[].filter.call(document.querySelectorAll('style'),function(x){return x.textContent.indexOf('#'+viz)>=0}),st=document.createElement('style');
+    st.textContent=orig.map(function(x){return x.textContent.split('#'+viz).join('#cmp-fab')}).join('\n')+'#cmp-fab{margin-right:6px}#cmp-fab .n{min-width:18px;padding:2px 5px;border-radius:9px;background:#d69e2e;color:#1a1a1a;font-size:11px;line-height:1.2}#cmp-fab .n[hidden]{display:none}';document.head.appendChild(st);
+    fo.insertAdjacentElement('beforebegin',b);pintaFab();
+    /* botões fixos no topo (drogaria, manipulação): alinha à esquerda do de fotos e abre espaço no título */
+    var posiciona=function(){if(getComputedStyle(fo).position!=='fixed'){b.style.position='';return}var r=fo.getBoundingClientRect();if(!r.width)return;b.style.position='fixed';b.style.top=r.top+'px';b.style.right=(window.innerWidth-r.left+6)+'px';
+     var q=b.getBoundingClientRect(),cy=q.top+q.height/2;[].forEach.call(document.querySelectorAll('h1,h2,.title,.app-title,header strong'),function(h){if(h.closest('#cmp-fab,#uvs-fotos,#uvs-botao'))return;var z=h.getBoundingClientRect();if(!z.width||z.top>cy||z.bottom<cy||z.right<=q.left)return;var pr=parseFloat(getComputedStyle(h).paddingRight)||0,alvo=pr+(z.right-q.left)+4;if(alvo>pr)h.style.paddingRight=alvo+'px'})};
+    posiciona();[300,900,2000].forEach(function(ms){setTimeout(posiciona,ms)});window.addEventListener('resize',posiciona);return}
+   /* sem cabeçalho com botões: botão flutuante */
+   if(t>40&&!document.getElementById('cmp-fab')){clearInterval(iv);var f=document.createElement('button');f.id='cmp-fab';f.type='button';f.className='cmp-flutua';f.setAttribute('aria-label','Ferramentas de campo');f.innerHTML='<span>Campo</span><span class="n" hidden></span>';f.addEventListener('click',function(){abrePainel()});document.body.appendChild(f);pintaFab()}},150)}
+
  /* ---------------- início ---------------- */
  function inicia(){if(!motor()){if((inicia.n=(inicia.n||0)+1)<40)return setTimeout(inicia,250);return}
   carrega();var st=document.createElement('style');st.textContent=CSS;document.head.appendChild(st);
-  var f=document.createElement('button');f.id='cmp-fab';f.type='button';f.setAttribute('aria-label','Ferramentas de campo');f.innerHTML='<span>Campo</span><span class="n" hidden></span>';f.addEventListener('click',function(){abrePainel()});document.body.appendChild(f);pintaFab();
+  poeBotao();
   window.addEventListener('focusin',function(e){var t0=e.target;if(!t0||!t0.closest)return;var t=e.target;if(t.closest('#cmp-painel,#cmp-modal'))return;if(t.tagName==='TEXTAREA'||(t.tagName==='INPUT'&&/^(text|search|)$/i.test(t.type||''))){ultimo=t;ultimoDesc=descritor(t)}},true);
   window.addEventListener('click',function(e){var b=e.target.closest&&e.target.closest('button');if(!b||b.closest('#cmp-painel,#cmp-modal'))return;
    if(b.id==='uvs-fotos'&&adFotos()){e.preventDefault();e.stopImmediatePropagation();return abrePainel('fotos')}

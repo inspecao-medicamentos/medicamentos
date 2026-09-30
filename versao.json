@@ -1,6 +1,6 @@
 {
-  "versao": "20260930-8",
+  "versao": "20260930-9",
   "banco": "13.1",
   "correcoes": 1,
-  "notas": "Fotos: legenda automática (ponto do roteiro, data e hora), complemento e tipo (evidência, documental, só consulta) antes do PDF. Verificações realizadas (balança, temperatura, termo-higrômetro, estoque, rastreabilidade) viram texto para o relatório. Reinspeção retirada."
+  "notas": "Botão Campo no cabeçalho, ao lado de Fotos. Orientações técnicas (ABNT, ISO, Inmetro/RBC, Farmacopeia Brasileira, Ministério da Saúde, ANTT, NR-13 e NR-32) em EAC, vacinação, gases medicinais, estéreis e transporte. Vacinação: calendários SUS e rede privada (SBIm) para consulta."
 }

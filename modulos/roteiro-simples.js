@@ -68,11 +68,17 @@
    + '<details class="pu-mais"' + (fotoAberta === q.id ? ' open' : '') + '><summary>Foto' + (f ? ' ✓' : '') + '</summary><div><div class="pu-foto-acoes"><button type="button" class="pu-btn" data-rs-foto="' + esc(q.id) + '">📷 ' + (f ? 'Trocar foto' : 'Tirar ou anexar foto') + '</button>' + (f ? '<button type="button" class="pu-btn" data-rs-sem-foto="' + esc(q.id) + '">Remover foto</button>' : '') + '</div>' + (f ? '<img class="rs-foto" alt="Foto vinculada à verificação" src="' + esc(f) + '">' : '') + '<p class="pu-q-ajuda">As fotos saem à parte, no botão Fotos do cabeçalho.</p></div></details>'
    + (r ? '<details class="pu-mais rs-previa"' + (previaAberta[q.id] ? ' open' : '') + ' data-rs-previa="' + esc(q.id) + '"><summary>👁 Como sai no relatório</summary><div><p>' + esc(frase(q)) + '</p>' + (r === 'nc' ? '<p class="pu-q-ajuda">Fundamento: ' + esc(fundamento(q.r)) + '.</p>' : '') + '</div></details>' : '')
    + '</div>'; }
+ /* item só de consulta (ex.: calendário de vacinação): texto e tabelas, sem respostas nem relatório */
+ function consultaHtml(c){ return '<div class="pu-bloco rs-consulta">' + (c.nota ? '<p class="pu-q-ajuda">' + esc(c.nota) + '</p>' : '') + (c.blocos || []).map(function(b){
+   return (b.h ? '<h4>' + esc(b.h) + '</h4>' : '') + (b.p ? '<p>' + esc(b.p) + '</p>' : '') + (b.rows ? '<div class="rs-tab"><table><thead><tr>' + b.head.map(function(x){ return '<th>' + esc(x) + '</th>'; }).join('') + '</tr></thead><tbody>'
+    + b.rows.map(function(r){ return '<tr>' + r.map(function(x){ return '<td>' + esc(x) + '</td>'; }).join('') + '</tr>'; }).join('') + '</tbody></table></div>' : ''); }).join('') + (c.fonte ? '<p class="rs-fonte">Fonte: ' + esc(c.fonte) + '</p>' : '') + '</div>'; }
  function desenhaItem(s, it, el){
   var ps = perguntasDe(it), h = it.descricao ? '<p class="pu-desc">' + esc(it.descricao) + '</p>' : (s.descricao ? '<p class="pu-desc">' + esc(s.descricao) + '</p>' : '');
+  if(it.orient && it.orient.length) h += '<details class="pu-mais rs-orient"><summary>📘 Orientação técnica</summary><div><ul>' + it.orient.map(function(o){ return '<li>' + esc(o.t) + (o.f ? ' <small class="rs-fonte">Fonte: ' + esc(o.f) + '</small>' : '') + '</li>'; }).join('') + '</ul></div></details>';
+  if(it.consulta) h += consultaHtml(it.consulta);
   if(it.campos && it.campos.length) h += '<div class="pu-bloco"><div class="pu-campos rs-campos">' + it.campos.map(campoHtml).join('') + '</div></div>';
   h += ps.map(perguntaHtml).join('');
-  if(!ps.length && !(it.campos || []).length) h += '<div class="pu-bloco pu-aviso"><p>' + esc(it.vazio || 'Nenhuma verificação se aplica a este item.') + '</p></div>';
+  if(!ps.length && !(it.campos || []).length && !it.consulta) h += '<div class="pu-bloco pu-aviso"><p>' + esc(it.vazio || 'Nenhuma verificação se aplica a este item.') + '</p></div>';
   if(ps.length) h += '<div class="pu-acoes-item">' + (ps.some(function(q){ return q.na; }) ? '<button type="button" class="pu-btn" data-rs-lote="na">Marcar pendentes como Não se aplica</button>' : '') + '<button type="button" class="pu-btn" data-rs-lote="c">Marcar pendentes como Cumpre</button></div>';
   el.innerHTML = h; }
  function redesenha(){ var n = UvisPadrao.estado(), c = document.getElementById('pu-conteudo');

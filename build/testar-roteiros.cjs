@@ -61,7 +61,8 @@ const srv = http.createServer((q, r) => { const u = decodeURIComponent(new URL(q
       if (!ok) falha(`${d.app}: item ${chave} não abriu`);
       if (await f.evaluate(() => { const n = UvisPadrao.estado(), L = UvisPadrao.lista(); const u = L[L.length - 1]; return n.secao === u.id && n.item === u.itens[u.itens.length - 1].id; })) break;
     }
-    const totalItens = d.secoes.reduce((a, s) => a + s.itens.length, 0);
+    /* itens do roteiro montado (a montagem acrescenta itens de consulta, ex.: calendário de vacinação) */
+    const totalItens = await f.evaluate(() => ROTEIRO.secoes.reduce((a, s) => a + s.itens.length, 0));
     if (visitados.size !== totalItens) falha(`${d.app}: visitou ${visitados.size} de ${totalItens} itens`);
     /* estado */
     const st = await f.evaluate(k => JSON.parse(localStorage.getItem(k)), d.store);

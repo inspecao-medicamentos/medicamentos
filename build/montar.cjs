@@ -92,6 +92,16 @@ parent.postMessage({__casca:'pronto'},'*');
 const LEGAL = JSON.parse(fs.readFileSync(path.join(RAIZ, 'modulos', 'legislacao.json'), 'utf8'));
 const DIR_ROT = path.join(RAIZ, 'modulos', 'roteiros');
 const PRONTOS = fs.readdirSync(DIR_ROT).filter(f => f.endsWith('.cjs')).map(f => require(path.join(DIR_ROT, f)));
+/* Orientações técnicas por item (modulos/orientacoes/orientacoes.cjs) e, na
+   vacinação, o item de consulta com os calendários de vacinação. */
+const ORIENT = require(path.join(RAIZ, 'modulos', 'orientacoes', 'orientacoes.cjs'));
+for (const d of PRONTOS) {
+  const o = ORIENT.rs[d.app] || {}, ids = new Set();
+  d.secoes.forEach(s => s.itens.forEach(i => { ids.add(i.id); if (o[i.id]) i.orient = o[i.id]; }));
+  for (const k of Object.keys(o)) if (!ids.has(k)) throw Error(`orientações: item ${k} não existe em ${d.app}`);
+  if (d.app === 'vacina') d.secoes.push({id: 'consulta', titulo: 'Calendários de vacinação', curto: 'Calendários', icone: 'note',
+    itens: [require(path.join(RAIZ, 'modulos', 'orientacoes', 'calendario-vacinacao.cjs'))]});
+}
 function roteiroSimples(d) {
   const nuc = CAT.nucleos.find(n => n.roteiros.some(r => r[2] === d.app));
   const refs = new Set();
@@ -254,6 +264,7 @@ troca("if(qs){ fonte = fonte.replace('</head>','<script>window.__QS='+JSON.strin
   blocoAltera('app--farmacia-manipulacao', s => {
     s = trocaEm(s, 'const APP_DATA={"cards":{', 'const APP_DATA={"cards":{"13":' + JSON.stringify(CARTAO13).replace(/<\//g, '<\\/') + ',', 'estéreis: cartão 13');
     s = trocaEm(s, '"conditionLabels":{', '"conditionLabels":{"estereis":"Manipula preparações estéreis",', 'estéreis: rótulo da condição');
+    s = trocaEm(s, '"orient":{', '"orient":{' + JSON.stringify(ORIENT.estereis).slice(1, -1) + ',', 'estéreis: orientações');
     s = trocaEm(s, 'chip("preps","oficinais","Oficinais")', 'chip("preps","oficinais","Oficinais")}${chip("preps","estereis","Estéreis")', 'estéreis: caracterização');
     s = trocaEm(s, "homeopatia:preps.includes('homeopaticas')", "estereis:preps.includes('estereis'),homeopatia:preps.includes('homeopaticas')", 'estéreis: condição');
     return trocaEm(s, "const L={homeopaticas:'homeopáticas',", "const L={homeopaticas:'homeopáticas',estereis:'estéreis',", 'estéreis: relatório');
@@ -312,9 +323,12 @@ troca('  function montar(app){',
   var CAMPO_APPS = ${JSON.stringify(CAMPO_APPS)};
   var CAMPO_JS = ${jsStr(le('campo.js'))};
   var CENTRAL_AUTO_JS = ${jsStr(le('central-auto.js'))};
+  var ORIENT_TRANSP = ${jsStr(JSON.stringify(ORIENT.transporte))};
+  var TRANSP_ORIENT_JS = ${jsStr(le('transporte-orient.js'))};
   function montar(app){ var v = VARIANTES[app]; var s = v ? montarVariante(v) : montarBase(app);
     if(app === 'distribuidoras-transportadoras'){ var k = s.lastIndexOf('</body>'); s = s.slice(0, k) + '<scr' + 'ipt>' + ${jsStr(ATACADISTA_TIT)} + '</scr' + 'ipt>' + s.slice(k); }
     if(app === 'central-consultas'){ var c = s.lastIndexOf('</body>'); s = s.slice(0, c) + '<scr' + 'ipt>' + CENTRAL_AUTO_JS + '</scr' + 'ipt>' + s.slice(c); }
+    if(app === 'distribuidoras-transportadoras' || app === 'transportadora'){ var o = s.lastIndexOf('</body>'); s = s.slice(0, o) + '<scr' + 'ipt>window.__ORIENT_TRANSP=' + ORIENT_TRANSP + ';' + TRANSP_ORIENT_JS + '</scr' + 'ipt>' + s.slice(o); }
     if(CAMPO_APPS.indexOf(app) >= 0){ var j = s.lastIndexOf('</body>'); s = s.slice(0, j) + '<scr' + 'ipt>' + CAMPO_JS + '</scr' + 'ipt>' + s.slice(j); }
     return s; }
   function montarVariante(v){
