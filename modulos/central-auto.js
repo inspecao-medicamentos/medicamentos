@@ -37,7 +37,11 @@
  function modoAtual(){var b=$('[data-mode].on');return b?b.dataset.mode:''}
  function vaiPara(modo,texto,pesquisa){var b=$('[data-mode="'+modo+'"]');if(!b)return;trocando=true;
   if(modoAtual()!==modo)b.click();var q=$('#q');q.value=texto;q.dispatchEvent(new Event('input',{bubbles:true}));trocando=false;
-  pinta(modo);if(pesquisa)setTimeout(function(){$('#search').click()},30)}
+  pinta(modo);if(!pesquisa)return;
+  /* a Central conclui a troca de modo depois do clique (e pode limpar a caixa): pesquisa só com o modo trocado e o texto no lugar */
+  var n=0;setTimeout(function tenta(){var cx=$('#q');if(modoAtual()===modo&&cx.value.trim()){trocando=true;$('#search').click();trocando=false;return}
+   if(modoAtual()===modo&&!cx.value.trim()){trocando=true;cx.value=texto;cx.dispatchEvent(new Event('input',{bubbles:true}));trocando=false}
+   if(++n<40)setTimeout(tenta,50)},150)}
  function pinta(modo){if(!btn)return;btn.classList.toggle('on',auto);document.documentElement.classList.toggle('central-auto-on',auto);btn.setAttribute('aria-pressed',auto?'true':'false');
   var q=$('#q');if(auto&&q)q.setAttribute('inputmode','text');
   if(!dica)return;if(!auto){dica.innerHTML='';return}

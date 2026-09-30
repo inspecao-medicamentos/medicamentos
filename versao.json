@@ -1,6 +1,6 @@
 {
-  "versao": "20260930-10",
+  "versao": "20260930-11",
   "banco": "13.1",
   "correcoes": 1,
-  "notas": "Correções dos testes de preenchimento: drogaria passa a mostrar a equipe inspetora (2.4); Atacadista/Transportadora — itens 5 e 6 do Anexo I usam a caracterização e o histórico da etapa 1 quando o texto não foi escrito; manipulação — “Outra irregularidade/falha” marca Irregular ao ser preenchida."
+  "notas": "Central de Consultas: no modo Automático, a pesquisa espera a troca de modo terminar (antes podia pesquisar no modo anterior)."
 }
