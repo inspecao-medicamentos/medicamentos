@@ -1,6 +1,6 @@
-/* Ditado por voz nos campos de texto de todos os roteiros (build/montar.cjs coloca
-   no fim de cada roteiro, junto com campo.js): textos longos e campos de uma linha,
-   exceto os de número, data, CNPJ/CPF, telefone, e-mail e similares.
+/* Ditado por voz em todas as caixas de texto do app (build/montar.cjs coloca no fim
+   de cada roteiro, da Central, do estoque e da tela inicial): textos longos e campos
+   de uma linha, inclusive número, CNPJ e busca.
    - Ao entrar num campo, aparece o botão 🎤 no canto; um toque começa a ouvir,
      outro toque para. Sair do campo também para.
    - O texto entra onde está o cursor, com espaço e maiúscula ajustados.
@@ -28,10 +28,9 @@
  /* telas que se redesenham a cada digitação (Atacadista): reencontra o mesmo campo pelos atributos */
  function chaveSel(el){var a=[].slice.call(el.attributes).filter(function(x){return /^(data-|name$|id$)/.test(x.name)&&x.name!=='data-alvo'&&x.name!=='data-med-dit-pr'});return a.length?el.tagName.toLowerCase()+a.map(function(x){return '['+x.name+'="'+String(x.value).replace(/"/g,'\\"')+'"]'}).join(''):''}
  function reancora(){if(!alvo||alvo.isConnected)return !!alvo;var k=alvo.__medChave,n=null;try{n=k&&document.querySelector(k)}catch(e){}if(!n)return false;alvo=n;alvo.__medChave=k;folga(alvo,true);try{alvo.focus({preventScroll:true});var L=alvo.value.length;alvo.setSelectionRange(L,L)}catch(e){}setTimeout(posiciona,0);return true}
- var NAO=/cnpj|cpf|\bcep\b|telefone|celular|fone|e-?mail|\bdata\b|validade|vencimento|\bn[º°o.]\s|n[º°]$|n[uú]mero|registro|processo|\blote|cnes|autoriza|\bafe\b|\bae\b|\bano\b|hora|quantidade|qtd|temperatura|senha|buscar|pesquis/i;
- function rotulo(el){var l=el.closest('label'),t=l?l.textContent:'';if(!t&&el.id){var x=document.querySelector('label[for="'+el.id+'"]');if(x)t=x.textContent}return [t,el.name,el.id,el.placeholder,el.getAttribute('aria-label'),el.getAttribute('data-path'),el.getAttribute('data-field')].join(' ')}
+ /* qualquer caixa de texto: texto longo e campos de uma linha (inclusive número, CNPJ, busca) */
  function elegivel(el){if(!el||el.readOnly||el.disabled||el.closest('.mfm,#cmp-modal'))return false;if(el.tagName==='TEXTAREA')return true;
-  if(el.tagName!=='INPUT'||!/^(text|)$/i.test(el.getAttribute('type')||''))return false;if(/numeric|decimal|tel|email/.test(el.inputMode||''))return false;return !NAO.test(rotulo(el))}
+  return el.tagName==='INPUT'&&/^(text|search|tel|email|url|number|)$/i.test(el.getAttribute('type')||'')}
  function posiciona(){if(!bt||!alvo)return;if(!alvo.isConnected&&!reancora()){esconde();return}var r=alvo.getBoundingClientRect();
   if(!r.width||!r.height){esconde();return}
   var curto=r.height<56;bt.classList.toggle('curto',curto);
@@ -49,8 +48,11 @@
 
  function pontua(t){return t.replace(/\s*\bponto e v[íi]rgula\b\s*/gi,'; ').replace(/\s*\bv[íi]rgula\b\s*/gi,', ').replace(/\s*\bponto final\b\s*/gi,'. ').replace(/\s*\bdois pontos\b\s*/gi,': ')
   .replace(/\s*\bnov[ao] (linha|par[áa]grafo)\b\s*/gi,'\n').replace(/([.:;!?]\s+|\n)([a-zà-ú])/g,function(m,a,b){return a+b.toUpperCase()}).replace(/ +$/,'')}
- function insere(txt){reancora();var el=alvo;if(!el||!txt)return;var s=el.selectionStart==null?el.value.length:el.selectionStart,e=el.selectionEnd==null?s:el.selectionEnd,antes=el.value.slice(0,s);
-  txt=pontua(txt.trim());if(!txt)return;
+ function insere(txt){reancora();var el=alvo;if(!el||!txt)return;var s,e;try{s=el.selectionStart;e=el.selectionEnd}catch(x){}if(s==null)s=el.value.length;if(e==null)e=s;var antes=el.value.slice(0,s);
+  txt=pontua(txt.trim());if(el.tagName==='INPUT')txt=txt.replace(/\s*\n\s*/g,' ');if(el.type==='number')txt=txt.replace(/[^\d,.-]/g,'').replace(',','.');if(!txt)return;
+  /* campos sem seleção de texto (número, e-mail): acrescenta ao fim */
+  var semSel=false;try{if(el.selectionStart==null)semSel=true}catch(x){semSel=true}
+  if(semSel){el.value=el.type==='number'?txt:(el.value?el.value.replace(/\s+$/,'')+' ':'')+txt;el.dispatchEvent(new Event('input',{bubbles:true}));setTimeout(reancora,0);return}
   if(!antes||/[.!?]\s*$|\n\s*$/.test(antes))txt=txt.charAt(0).toUpperCase()+txt.slice(1);
   if(antes&&!/[\s\n]$/.test(antes)&&!/^[,.;:]/.test(txt))txt=' '+txt;
   el.setRangeText(txt,s,e,'end');el.dispatchEvent(new Event('input',{bubbles:true}));setTimeout(reancora,0)}

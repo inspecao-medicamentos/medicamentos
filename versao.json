@@ -1,6 +1,6 @@
 {
-  "versao": "20261001-20",
+  "versao": "20261001-21",
   "banco": "13.1",
   "correcoes": 1,
-  "notas": "Ditado por voz também nos campos de uma linha (nome, endereço, responsáveis), exceto números, datas, CNPJ e similares. Em navegador sem reconhecimento de voz, o botão 🎤 explica como usar o microfone do teclado."
+  "notas": "Ditado por voz (botão 🎤) em todas as caixas de texto: roteiros, Central de Consultas, estoque e tela inicial, inclusive CNPJ, números e busca."
 }

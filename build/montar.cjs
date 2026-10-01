@@ -353,12 +353,16 @@ troca("k.indexOf('uvis-previa-')===0", "(k.indexOf('uvis-previa-')===0||k.indexO
   /* cópia automática da inspeção em andamento (modulos/copia-auto.js) */
   const k2 = h.lastIndexOf('</body>');
   h = h.slice(0, k2) + '<script>' + le('copia-auto.js').replace(/<\//g, '<\\/') + '</script>\n' + h.slice(k2);
+  /* ditado por voz nas caixas de texto da tela inicial (modulos/ditado.js) */
+  const k3 = h.lastIndexOf('</body>');
+  h = h.slice(0, k3) + '<script>' + le('ditado.js').replace(/<\//g, '<\\/') + '</script>\n' + h.slice(k3);
 }
 troca('  function montar(app){',
   `  var ATACADISTA_JS = ${jsStr(le('atacadista-ajustes.js'))};
   var CAMPO_APPS = ${JSON.stringify(CAMPO_APPS)};
   var CAMPO_JS = ${jsStr(['cnpj-guarda.js', 'campo.js', 'foto-marca.js', 'ditado.js'].map(le).join('\n'))};
   var CENTRAL_AUTO_JS = ${jsStr(le('central-auto.js'))};
+  var DITADO_JS = ${jsStr(le('ditado.js'))};
   var MANIP_JS = ${jsStr(le('manipulacao-ajustes.js'))};
   var ORIENT_TRANSP = ${jsStr(JSON.stringify(ORIENT.transporte))};
   var TRANSP_ORIENT_JS = ${jsStr(le('transporte-orient.js'))};
@@ -368,6 +372,7 @@ troca('  function montar(app){',
     if(app === 'central-consultas'){ var c = s.lastIndexOf('</body>'); s = s.slice(0, c) + '<scr' + 'ipt>' + CENTRAL_AUTO_JS + '</scr' + 'ipt>' + s.slice(c); }
     if(app === 'distribuidoras-transportadoras'){ var o = s.lastIndexOf('</body>'); s = s.slice(0, o) + '<scr' + 'ipt>window.__ORIENT_TRANSP=' + ORIENT_TRANSP + ';' + TRANSP_ORIENT_JS + '</scr' + 'ipt>' + s.slice(o); }
     if(CAMPO_APPS.indexOf(app) >= 0){ var j = s.lastIndexOf('</body>'); s = s.slice(0, j) + '<scr' + 'ipt>' + CAMPO_JS + '</scr' + 'ipt>' + s.slice(j); }
+    else { var dj = s.lastIndexOf('</body>'); if(dj >= 0) s = s.slice(0, dj) + '<scr' + 'ipt>' + DITADO_JS + '</scr' + 'ipt>' + s.slice(dj); }
     return s; }
   function montarBase(app){`, 'variantes: montar');
 troca("if(window.RoteiroEvidence)for(var k=1;k<=12;k++)await RoteiroEvidence.clear('manipulacao-card-'+k);", "if(window.RoteiroEvidence)for(var k=1;k<=13;k++)await RoteiroEvidence.clear('manipulacao-card-'+k);", 'manipulação: fotos do bloco 13');
