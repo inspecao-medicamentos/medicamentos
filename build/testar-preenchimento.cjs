@@ -106,7 +106,7 @@ const CASOS = [['Drogaria', 'drogaria', 'drogaria'], ['Manipulação', 'farmacia
       await f.evaluate(() => document.querySelectorAll('.checks input[type=checkbox]').forEach(c => { if (!c.checked) c.click(); })); await p.waitForTimeout(600); }
     const preenchidos = [];
     const visita = async abre => { await abre(); await p.waitForTimeout(450);
-      await f.evaluate(() => { const b = [...document.querySelectorAll('button')].find(x => x.textContent.trim() === 'Não cumpre' && x.checkVisibility() && x.getAttribute('aria-pressed') !== 'true'); if (b) b.click(); document.querySelectorAll('details').forEach(d => { if (!d.closest('#cmp-painel') && !d.classList.contains('uvs-previa')) d.open = true; }); });
+      await f.evaluate(() => { const b = [...document.querySelectorAll('button')].find(x => (x.textContent.trim() === 'Não cumpre' || /\|nc$/.test(x.dataset.rsR || '')) && x.checkVisibility() && x.getAttribute('aria-pressed') !== 'true'); if (b) b.click(); document.querySelectorAll('details').forEach(d => { if (!d.closest('#cmp-painel') && !d.classList.contains('uvs-previa')) d.open = true; }); });
       await p.waitForTimeout(350);
       for (let k = 0; k < 3; k++) { const l = await f.evaluate(PREENCHE); preenchidos.push(...l); if (!l.length) break; await p.waitForTimeout(300); } };
     for (const t of await M.telas(f)) { if (typeof t === 'function') await visita(t); else for (const u of await t.lazy()) await visita(u); }

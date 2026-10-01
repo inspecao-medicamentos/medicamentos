@@ -61,3 +61,13 @@
 .rs-consulta h4{margin:14px 0 6px;font-size:.95rem}.rs-consulta p{margin:6px 0}
 .rs-tab{overflow-x:auto;-webkit-overflow-scrolling:touch}.rs-tab table{border-collapse:collapse;width:100%;font-size:.84rem}.rs-tab td:first-child{white-space:normal;min-width:72px}
 .rs-tab th,.rs-tab td{border:1px solid #d5dde3;padding:6px 8px;text-align:left;vertical-align:top}.rs-tab th{background:#eef3f6}
+/* relatório em preto e branco (D.estilo = 'pb') */
+.rs-pb .rs-r-tit,.rs-pb .rs-r-sub,.rs-pb .rs-r-h1,.rs-pb .rs-r-h2,.rs-pb .rs-r-small{color:#000;background:none;border:0;font-style:normal}
+.rs-pb .rs-r-h1,.rs-pb .rs-r-h2{padding-left:0}
+.rs-pb .rs-r-tab th{background:none}
+.rs-pb .rs-r-tab th,.rs-pb .rs-r-tab td{border-color:#000}
+/* checklist sob a resposta (q.checks) */
+.rs-sub{margin-top:8px;border:1px dashed #c6d2da;border-radius:10px;padding:8px 10px}
+.rs-sub legend{font-size:.8rem;font-weight:700;color:#4f6270;padding:0 4px}
+.rs-relatorio.rs-pb .rs-r-tit,.rs-relatorio.rs-pb .rs-r-sub,.rs-relatorio.rs-pb .rs-r-h1,.rs-relatorio.rs-pb .rs-r-h2,.rs-relatorio.rs-pb p,.rs-relatorio.rs-pb td,.rs-relatorio.rs-pb th{color:#000!important;background:none!important;border-bottom-color:transparent}
+.rs-relatorio.rs-pb .rs-r-tab th,.rs-relatorio.rs-pb .rs-r-tab td{border:1px solid #000!important}

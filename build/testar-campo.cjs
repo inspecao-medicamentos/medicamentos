@@ -48,7 +48,7 @@ const CASOS = [
     ok(nBotoes > 0, 'sem botão Marcar como pendente');
     await f.locator('.cmp-pbtn').nth(0).click(); await p.waitForTimeout(300);
     ok(await f.evaluate(() => MedCampo.pendencias().length) === 1, 'pendência não registrada');
-    await f.locator('button:text-is("Não cumpre")').first().click(); await p.waitForTimeout(2500);
+    await f.locator('button:text-is("Não cumpre"), button[data-rs-r$="|nc"]').first().click(); await p.waitForTimeout(2500);
     ok(await f.evaluate(() => MedCampo.pendencias().length) === 0, 'pendência não saiu ao responder');
     /* conferência: o Não cumpre recém-marcado, sem evidência, aparece (drogaria não tem o campo por pergunta) */
     if (app !== 'drogaria') ok(await f.evaluate(() => MedCampo.consistencia().some(x => x.tipo === 'Não cumpre sem evidência')), 'conferência sem o Não cumpre sem evidência');

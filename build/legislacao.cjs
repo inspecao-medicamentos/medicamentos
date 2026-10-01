@@ -21,7 +21,7 @@ const NOMES = {
   'rdc-978-2025': 'RDC Anvisa nº 978/2025', 'rdc-44-2009': 'RDC Anvisa nº 44/2009', 'rdc-197-2017': 'RDC Anvisa nº 197/2017',
   'rdc-222-2018': 'RDC Anvisa nº 222/2018', 'rdc-430-2020': 'RDC Anvisa nº 430/2020', 'rdc-67-2007': 'RDC Anvisa nº 67/2007',
   'rdc-887-2024': 'RDC Anvisa nº 887/2024', 'rdc-870-2024': 'RDC Anvisa nº 870/2024', 'lei-5991-1973': 'Lei Federal nº 5.991/1973',
-  'lei-municipal-13725-2004': 'Lei Municipal nº 13.725/2004'
+  'lei-municipal-13725-2004': 'Lei Municipal nº 13.725/2004', 'rdc-63-2011': 'RDC Anvisa nº 63/2011'
 };
 const ROMANO = s => /^[ivxlcdm]+$/i.test(s) ? s.toUpperCase() : s;
 const ORD = n => /^\d$/.test(n) ? n + 'º' : n;
@@ -122,6 +122,19 @@ for (const id of [...refs].sort()) {
   const nm = norma(chave), n = nm && (nm.porId.get(id) || alineaSolta(nm, id));
   if (!n) { faltam.push(id); continue; }
   saida[id] = {...base, texto: textoCompleto(nm, n), url: nm.url};
+}
+/* Inciso, parágrafo ou alínea citados sozinhos: o texto vem precedido do caput do
+   artigo (e do inciso, no caso de alínea), para a citação ter contexto — ex.:
+   “Art. 10. Os requisitos obrigatórios … são:” antes de “III - não realizar …”. */
+for (const id of Object.keys(saida)) {
+  const m = /^(.*?::artigo::[^:]+)(::.+)$/.exec(id); if (!m) continue;
+  const t = saida[id].texto; if (/^\s*Art\.?\s/i.test(t)) continue;
+  const chave = id.split('::')[0], ctx = [];
+  const caput = chave === 'lei-municipal-13725-2004' ? (municipal[m[1]] || {}).texto : (() => { const nm = norma(chave), n = nm && nm.porId.get(m[1]); return n && n.texto; })();
+  if (caput) { const l = String(caput).split('\n').map(x => x.trim()); ctx.push(/^Art\.?\s*\d+[º°]?\.?$/i.test(l[0]) && l[1] ? l[0] + ' ' + l[1] : l[0]); }
+  const inc = /^(.*::inciso::[^:]+)::alinea::/.exec(id);
+  if (inc) { const nm = norma(chave), n = nm && nm.porId.get(inc[1]); if (n) ctx.push(String(n.texto).split('\n')[0].trim()); }
+  if (ctx.length) saida[id].texto = ctx.join('\n') + '\n' + t;
 }
 if (faltam.length) { console.error('Dispositivos ausentes no banco:\n  ' + faltam.join('\n  ')); process.exit(1); }
 fs.writeFileSync(path.join(RAIZ, 'modulos', 'legislacao.json'), JSON.stringify(saida, null, 1));

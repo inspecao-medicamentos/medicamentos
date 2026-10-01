@@ -120,6 +120,8 @@ function roteiroSimples(d) {
     + `<style>${le('roteiro-simples.css')}</style></head><body>`
     + `<script>${BLOCOS.get('rec--jszip.js')}</script>`
     + `<script>${fs.readFileSync(path.join(ROT, 'relatorio-fotos.js'), 'utf8')}</script>`
+    /* d.ocr: leitor de documentos (Certidão do CRF etc.), o mesmo motor da drogaria */
+    + (d.ocr ? ['rec--drogaria-ocr-tools.js', 'rec--ocr-extractors.js', 'rec--ocr-padrao.js'].map(b => `<script>${BLOCOS.get(b).replace(/<\/script/gi, '<\\/script')}</script>`).join('') : '')
     + `<script>window.ROTEIRO=${dados};</script>`
     + `<script>${le('roteiro-simples.js')}</script></body></html>`;
 }
@@ -607,6 +609,23 @@ blocoAltera('app--central-consultas', s => {
 /* 7r. Microfone (ditado) e localização (carimbo das fotos) dentro do roteiro, que
    abre num iframe: a permissão precisa ser delegada a ele. */
 troca('<iframe id="quadro" title="Roteiro"', '<iframe id="quadro" title="Roteiro" allow="microphone; geolocation; camera"', 'iframe: microfone e localização');
+
+/* 7s. Anotação da equipe (digitada ou ditada) sai como frase própria logo após a
+   constatação, sem parênteses (pedido de 01/10/2026). O documento apresentado
+   continua identificado entre parênteses, como antes. */
+const CAP = "(t=>t?' '+t.charAt(0).toUpperCase()+t.slice(1).replace(/\\.?$/,'.'):'')";
+blocoAltera('app--farmacia-manipulacao', s => {
+  s = trocaEm(s, "frases.push(esc(par?q.pos.replace(/\\.$/,'')+' ('+par+').':q.pos))}",
+    "frases.push(esc((dt?q.pos.replace(/\\.$/,'')+' ('+dt+').':q.pos)+" + CAP + "(evx)))}", 'manipulação: anotação do Cumpre sem parênteses');
+  return trocaEm(s, "frases.push(esc('Não se aplica ('+[evx,v2DocTxt(q.id)].filter(Boolean).join('; ')+'): '+q.pos.charAt(0).toLowerCase()+q.pos.slice(1).replace(/\\.?$/,'.')))}",
+    "frases.push(esc('Não se aplica: '+q.pos.charAt(0).toLowerCase()+q.pos.slice(1).replace(/\\.?$/,'.')+(v2DocTxt(q.id)?' Documento: '+v2DocTxt(q.id)+'.':'')+" + CAP + "(evx)))}", 'manipulação: anotação do Não se aplica sem parênteses');
+});
+blocoAltera('app--distribuidoras-transportadoras', s => {
+  s = trocaEm(s, "if(ev&&ev.length<=180)f=f.replace(/\\.$/,'')+' ('+ev.replace(/\\.$/,'')+').';else if(ev)f+=' '+ddFim('Constatação: '+ev);",
+    "if(ev)f=f.replace(/\\.?$/,'.')+" + CAP + "(ev.replace(/\\.$/,''));", 'atacadista: anotação do Cumpre sem parênteses');
+  return trocaEm(s, "const nf='Não se aplica ('+ev+'): '+ddLc(ddAfirma(q)).replace(/\\.?$/,'.');",
+    "const nf='Não se aplica: '+ddLc(ddAfirma(q)).replace(/\\.?$/,'.')+" + CAP + "(ev);", 'atacadista: anotação do Não se aplica sem parênteses');
+});
 
 /* 8. Versão. */
 trocaRx(/const APP_VERSAO = '[^']+';/, `const APP_VERSAO = '${VERSAO}';`, 'APP_VERSAO');

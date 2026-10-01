@@ -50,17 +50,18 @@ const PREENCHE = () => {
 
 /* responde as perguntas visíveis ainda não respondidas, em rodízio C / NC / NA */
 const RESPONDE = () => {
-  const R = ['Cumpre', 'Não cumpre', 'Não se aplica'], feitos = (window.__resp = window.__resp || new Set());
+  /* roteiros com Cumpre / Não cumpre e roteiros com Sim / Não (EAC) */
+  const R = ['Cumpre', 'Não cumpre', 'Não se aplica', 'Sim', 'Não'], feitos = (window.__resp = window.__resp || new Set());
   const chave = g => g.map(b => [...b.attributes].filter(a => !/^(aria-|class|style)/.test(a.name)).map(a => a.name + '=' + a.value).join('&')).join('|') + '#' + ((g[0].parentElement.parentElement || {}).textContent || '').replace(/\s+/g, ' ').trim().slice(0, 80);
   let n = 0;
   for (let guarda = 0; guarda < 500; guarda++) {
-    const bs = [...document.querySelectorAll('button')].filter(b => R.includes(b.textContent.trim()) && b.checkVisibility() && !b.closest('#cmp-painel,#cmp-modal'));
+    const bs = [...document.querySelectorAll('button')].filter(b => R.includes(b.textContent.trim()) && (!/^(Sim|Não)$/.test(b.textContent.trim()) || b.hasAttribute('data-rs-r')) && b.checkVisibility() && !b.closest('#cmp-painel,#cmp-modal'));
     const grupos = new Map(); bs.forEach(b => { const p = b.parentElement; if (!grupos.has(p)) grupos.set(p, []); grupos.get(p).push(b); });
     const g = [...grupos.values()].find(x => !feitos.has(chave(x)));
     if (!g) break;
     feitos.add(chave(g));
-    const quer = R[(window.__rodizio = (window.__rodizio || 0) + 1) % 3];
-    const b = g.find(x => x.textContent.trim() === quer) || g.find(x => x.textContent.trim() === 'Não cumpre') || g[0];
+    const k = (window.__rodizio = (window.__rodizio || 0) + 1) % 3, sn = g.some(x => x.textContent.trim() === 'Sim'), quer = (sn ? ['Sim', 'Não', 'Não se aplica'] : ['Cumpre', 'Não cumpre', 'Não se aplica'])[k];
+    const b = g.find(x => x.textContent.trim() === quer) || g.find(x => /^Não( cumpre)?$/.test(x.textContent.trim())) || g[0];
     b.click(); n++;
   }
   return n;

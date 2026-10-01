@@ -1,6 +1,6 @@
 {
-  "versao": "20261001-23",
+  "versao": "20261001-24",
   "banco": "13.1",
   "correcoes": 1,
-  "notas": "Ditado: números falados por extenso viram algarismos nos campos de quantidade, número, horário e data (“cinco” → 5; “oito e meia” → 08:30; “primeiro de outubro de 2026” → 01/10/2026). Ícone do microfone redesenhado no padrão dos ícones do app."
+  "notas": "EAC revisado: respostas Sim / Não / Não se aplica; busca dos dados na Anvisa pelo CNPJ e leitura da certidão do CRF; pergunta de licença inicial (Não se aplica automático) e licença da farmácia/drogaria; DML e sanitário com detalhe; imunização (RDC 63/2011, art. 43) e ASO (art. 44); frase própria para o que não se aplica; relatório em preto e branco. Citações de inciso e parágrafo trazem o caput do artigo. Manipulação e Atacadista: anotação sai como frase, sem parênteses."
 }
