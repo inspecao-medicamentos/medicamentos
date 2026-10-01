@@ -1,6 +1,6 @@
 {
-  "versao": "20260930-17",
+  "versao": "20261001-18",
   "banco": "13.1",
   "correcoes": 1,
-  "notas": "EAC: lista de testes rápidos e reagentes com busca pelo registro ou processo na Anvisa. Vacinação: lista de vacinas com busca (situação e vencimento do registro). CNPJ validado em todos os roteiros (letras e dígito verificador), com aviso na emissão. OCR: páginas de imagem além do limite passam a ser informadas."
+  "notas": "Relatório: varredura dos 6 roteiros para que todo dado digitado chegue à prévia e ao Word. Atacadista: evidências de Cumpre e Não se aplica, dados da etapa 1 (licença, AFE/AE, processo, contatos, CRT/AVCB), documento de expedição e qualificação térmica. Manipulação: laboratório, campos e opções dos itens, fabricantes e certificados, POPs, monitoramento conferido, áreas e observações. Drogaria: endereço completo, CNAE, atividades da licença e observações. Anotação em pergunta sem situação marcada passa a aparecer no relatório. Correção de rolagem lateral nos títulos."
 }

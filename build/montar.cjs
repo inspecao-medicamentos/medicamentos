@@ -284,9 +284,9 @@ blocoAltera('rec--drogaria-report-final.js', s => trocaEm(s,
    mesmo com a caracterização e o histórico preenchidos). */
 blocoAltera('app--distribuidoras-transportadoras', s => {
   s = trocaEm(s, "it(5,'Informações gerais');ddParas(R.general).forEach(t=>p(t));if(!ddTem(R.general))p('Não informado.');",
-    "it(5,'Informações gerais');{const g=ddTem(R.general)?R.general:ddRascunhoGeral();ddParas(g).forEach(t=>p(t));if(!ddTem(g))p('Não informado.')}", 'anexo I: item 5');
+    "it(5,'Informações gerais');{const rg=ddRascunhoGeral(),g=ddTem(R.general)?R.general:rg;ddParas(g).forEach(t=>p(t));const fg=ddTem(R.general)?ddFaltantes(R.general,rg):'';if(fg)p('Dados registrados na etapa 1: '+fg);if(!ddTem(g))p('Não informado.')}", 'anexo I: item 5');
   s = trocaEm(s, "it(6,'Não conformidades anteriores');ddParas(R.previous).forEach(t=>p(t));if(!ddTem(R.previous))p(primeira?'Não se aplica: primeira inspeção.':'Não informado.');",
-    "it(6,'Não conformidades anteriores');{const q=ddTem(R.previous)?R.previous:ddRascunhoAnterior();ddParas(q).forEach(t=>p(t));if(!ddTem(q))p(primeira?'Não se aplica: primeira inspeção.':'Não informado.')}", 'anexo I: item 6');
+    "it(6,'Não conformidades anteriores');{const ra=ddRascunhoAnterior(),q=ddTem(R.previous)?R.previous:ra;ddParas(q).forEach(t=>p(t));const fq=ddTem(R.previous)?ddFaltantes(R.previous,ra):'';if(fq)p('Histórico registrado na etapa 1: '+fq);if(!ddTem(q))p(primeira?'Não se aplica: primeira inspeção.':'Não informado.')}", 'anexo I: item 6');
   s = trocaEm(s, "if(!ddTem(R.general))out.push('Item 5: informações gerais não preenchidas.');", "if(!ddTem(R.general)&&!ddTem(ddRascunhoGeral()))out.push('Item 5: informações gerais não preenchidas.');", 'anexo I: pendência 5');
   /* Tipo de operação e trilha de transportadora na Etapa 1 › Estabelecimento */
   s = trocaEm(s, "business:[['meta.company','Razão social'],",
@@ -467,6 +467,118 @@ for (const bloco of ['rec--drogaria-ocr-tools.js', 'app--farmacia-manipulacao', 
       "const cut = (total > pages.length ? ' · lidas ' + pages.length + ' de ' + total + ' páginas' : '') + (semOcr && semOcr.length ? ' · sem OCR (limite de ' + maxOcrPages + ' páginas de imagem por documento): página' + (semOcr.length > 1 ? 's ' : ' ') + semOcr.join(', ') + ' — confira essas páginas no documento' : '');", `ocr ${bloco}: aviso`);
   });
 }
+
+/* 7l. Evidência escrita que não chegava ao relatório (varredura de 01/10/2026,
+   inspeção completa com respostas em rodízio):
+   - Manipulação: a evidência só saía com “Não cumpre”; com “Cumpre” a frase saía
+     sem ela, e “Não se aplica” era sempre omitido. Agora a evidência entra entre
+     parênteses na frase de conformidade, e o “Não se aplica” com anotação sai com
+     a justificativa (sem anotação continua omitido).
+   - Atacadista: “Não se aplica” com anotação perdia a justificativa; agora sai. */
+blocoAltera('app--farmacia-manipulacao', s => {
+  s = trocaEm(s, "if(a.status==='C'){const dt=v2DocTxt(q.id);frases.push(esc(dt?q.pos.replace(/\\.$/,'')+' ('+dt+').':q.pos))}",
+    "const evx=String(a.evidence||'').trim().replace(/\\s*\\n\\s*/g,'; ').replace(/\\.$/,'');"
+    + "if(a.status==='C'){const dt=v2DocTxt(q.id),par=[dt,evx].filter(Boolean).join('; ');frases.push(esc(par?q.pos.replace(/\\.$/,'')+' ('+par+').':q.pos))}"
+    + "else if(a.status==='NA'&&evx){frases.push(esc('Não se aplica ('+evx+'): '+q.pos.charAt(0).toLowerCase()+q.pos.slice(1).replace(/\\.?$/,'.')))}", 'manipulação: evidência em Cumpre e Não se aplica');
+  return s;
+});
+/* Com “Descrição para o relatório” escrita pela equipe, o texto dela continua no
+   lugar das frases de Cumpre (descrição consolidada do POP 011), mas as evidências
+   que não estiverem no texto e as justificativas de Não se aplica vêm depois dele. */
+blocoAltera('app--distribuidoras-transportadoras', s => {
+  s = trocaEm(s, "else if(a.status==='NC'){const m=ctx.nc.map[q.id];",
+    "else if(a.status==='NA'){const ev=String(a.evidence||'').trim().replace(/\\s*\\n\\s*/g,'; ').replace(/\\.$/,'');if(ev){const nf='Não se aplica ('+ev+'): '+ddLc(ddAfirma(q)).replace(/\\.?$/,'.');frases.push(nf);naF.push(nf)}}"
+    + "else if(a.status==='NC'){const m=ctx.nc.map[q.id];", 'atacadista: justificativa do Não se aplica');
+  s = trocaEm(s, "const sec=ddSec(sid),manual=String(state.narratives[sid]||'').trim(),frases=[],ncs=[];", "const sec=ddSec(sid),manual=String(state.narratives[sid]||'').trim(),frases=[],ncs=[],evsC=[],naF=[];", 'atacadista: listas de evidências');
+  s = trocaEm(s, "if(a.status==='C'){let f=ddAfirma(q),ev=String(a.evidence||'').trim().replace(/\\s*\\n\\s*/g,'; ');", "if(a.status==='C'){let f=ddAfirma(q),ev=String(a.evidence||'').trim().replace(/\\s*\\n\\s*/g,'; ');if(ev)evsC.push(ev.replace(/\\.$/,''));{const ck=(state.checklists||{})[q.id],cl=Array.isArray(ck)?ck:ddLista(ck);if(cl.length){const it='itens verificados: '+ddJoin(cl.map(ddLc));evsC.push(it);ev=[ev.replace(/\\.$/,''),it].filter(Boolean).join('; ')}}", 'atacadista: evidência de Cumpre guardada');
+  return trocaEm(s, "const corpo=manual?ddParas(manual):frases.length?[frases.join(' ')]:[];",
+    "const evsFora=evsC.filter(e=>!manual.includes(e)),corpo=manual?ddParas(manual).concat(evsFora.length?['Evidências registradas nas verificações: '+ddJoin(evsFora)+'.']:[],naF.length?[naF.join(' ')]:[]):frases.length?[frases.join(' ')]:[];", 'atacadista: descrição + evidências');
+});
+
+/* 7m. Atacadista — campos da etapa 1 e do roteiro que não chegavam ao Anexo I
+   (varredura de 01/10/2026): validade da licença; processo, classe, situação na
+   fonte oficial e atividades da AFE/AE; processo SEI; pessoas contatadas; CRT e
+   AVCB completos (ramo, RTs, horários, órgão emissor, mesmo sem “situação”);
+   finalidade e pior caso da qualificação térmica; dados do documento de
+   expedição conferido. Itens 5 e 6 escritos à mão: o que a etapa 1 registrou e
+   não está no texto vem logo abaixo (ddFaltantes). */
+blocoAltera('app--distribuidoras-transportadoras', s => {
+  s = trocaEm(s, "function ddItemNodes(item,ctx){",
+    "function ddFaltantes(manual,rasc){const nz=t=>String(t||'').toLowerCase().normalize('NFD').replace(/[\\u0300-\\u036f]/g,'').replace(/\\s+/g,' ').trim(),M=nz(manual);return String(rasc||'').split(/\\n+|(?<=\\.)\\s+(?=[A-ZÀ-Ú])/).map(x=>x.trim()).filter(x=>x&&!M.includes(nz(x).slice(0,40))).join(' ')}"
+    + "function ddDocExped(d){if(!d)return '';const L=[['DANFE / nota fiscal nº ',d.danfe],['emitida em ',ddData(d.issueDate)],['expedida em ',ddData(d.dispatchDate)],['emitente: ',d.issuer],['remetente: ',d.sender],['destinatário: ',d.recipient],['transportador: ',d.transporter],['motorista: ',d.driver],['ordem de entrega: ',d.order],['veículo: ',d.vehicle],['instrumento de monitoramento: ',d.instrument]].filter(x=>ddTem(x[1])).map(x=>x[0]+String(x[1]).trim());const IT={q245:'data da expedição ou do recebimento',q246:'transportador',q247:'motorista',q248:'destinatário',q249:'medicamento e apresentação',q250:'quantidade, lote e validade',q251:'condições de transporte e veículo',q252:'ordem de entrega',q253:'nota fiscal ou DANFE',q254:'lotes na nota fiscal'},cf=Object.keys(d.items||{}).filter(k=>d.items[k]&&IT[k]).map(k=>IT[k]);if(cf.length)L.push('dados conferidos: '+ddJoin(cf));return L.length?'Documento de expedição conferido — '+L.join('; ')+'.':''}"
+    + "function ddItemNodes(item,ctx){", 'atacadista: auxiliares');
+  s = trocaEm(s, "const fotos=ctx.fotosQ[q.id]||[],ref=", "if(a.document&&typeof a.document==='object'){const dx=ddDocExped(a.document);if(dx){frases.push(dx);naF.push(dx);alguma=true;todasNA=false}}const fotos=ctx.fotosQ[q.id]||[],ref=", 'atacadista: documento de expedição');
+  s = trocaEm(s, "['   Data: ',{b:true}],[semLic?'—':(ddData(lic.date)||'—'),{}],", "['   Data: ',{b:true}],[semLic?'—':(ddData(lic.date)||'—'),{}],...(!semLic&&ddTem(lic.validity)?[['   Validade: ',{b:true}],[ddData(lic.validity)||lic.validity,{}]]:[]),", 'atacadista: validade da licença');
+  const det = v => "{const x="+v+"||{},dd=[ddTem(x.process)&&'processo '+x.process,ddTem(x.class)&&'classe '+x.class,ddTem(x.statusOfficial)&&'situação na fonte oficial: '+x.statusOfficial,ddTem(x.activities)&&'atividades autorizadas: '+String(x.activities).replace(/\\s*\\n\\s*/g,'; ')].filter(Boolean);if(dd.length)nodes.push({k:'p',ind:360,t:ddFim(dd.join('; ').replace(/^./,c=>c.toUpperCase()))})}";
+  s = trocaEm(s, "[R.afeRe?' (RE nº '+R.afeRe+')':'',{}],['.',{}]]});", "[R.afeRe?' (RE nº '+R.afeRe+')':'',{}],['.',{}]]});" + det('af'), 'atacadista: detalhes da AFE');
+  s = trocaEm(s, "[R.aeRe?' (RE nº '+R.aeRe+')':'',{}],['.',{}]]});", "[R.aeRe?' (RE nº '+R.aeRe+')':'',{}],['.',{}]]});" + det('ae'), 'atacadista: detalhes da AE');
+  s = trocaEm(s, "const primeira=m.first==='Sim'||R.primeira==='Sim';", "if(ddTem(m.process))kv('Processo SEI / solicitação',m.process);const primeira=m.first==='Sim'||R.primeira==='Sim';", 'atacadista: processo SEI');
+  s = trocaEm(s, "rows:[['Nome','Cargo','Contato']].concat(cont.length?cont.map(x=>[x.name,x.role||'',x.contact||'']):[['','','']])});",
+    "rows:[['Nome','Cargo','Contato']].concat(cont.length?cont.map(x=>[x.name,x.role||'',x.contact||'']):[['','','']])});if(ddTem(m.contactInspection))p('Pessoas contatadas nesta inspeção: '+ddFim(m.contactInspection));", 'atacadista: pessoas contatadas');
+  s = trocaEm(s, "if(D.crt&&D.crt.status)docs.push('Certidão de regularidade técnica: '+ddLc(D.crt.status)+(D.crt.number?' (nº '+D.crt.number+(D.crt.validity?', validade '+D.crt.validity:'')+')':''));if(D.avcb&&D.avcb.status)docs.push('AVCB/CLCB: '+ddLc(D.avcb.status)+(D.avcb.number?' (nº '+D.avcb.number+(D.avcb.validity?', validade '+D.avcb.validity:'')+')':''));",
+    "{const c=D.crt||{},a=D.avcb||{},dc=[ddTem(c.number)&&'nº '+c.number,ddTem(c.validity)&&'validade '+(ddData(c.validity)||c.validity),ddTem(c.activity)&&'ramo de atividade: '+c.activity,ddTem(c.technical)&&'responsáveis técnicos: '+String(c.technical).replace(/\\s*\\n\\s*/g,'; '),ddTem(m.crtSchedule)&&'horários: '+m.crtSchedule].filter(Boolean),da=[ddTem(a.number)&&'nº '+a.number,ddTem(a.validity)&&'validade '+(ddData(a.validity)||a.validity),ddTem(a.issuer)&&'emitido por '+a.issuer].filter(Boolean);"
+    + "if(ddTem(c.status)||dc.length)docs.push('Certidão de regularidade técnica'+(ddTem(c.status)?': '+ddLc(c.status):'')+(dc.length?' ('+dc.join('; ')+')':''));if(ddTem(a.status)||da.length)docs.push('AVCB/CLCB'+(ddTem(a.status)?': '+ddLc(a.status):'')+(da.length?' ('+da.join('; ')+')':''))}", 'atacadista: CRT e AVCB completos');
+  s = trocaEm(s, "tq.map(x=>[x.kind||'',x.identification||'',x.document||'',ddData(x.date),x.range||'',[x.result,x.observations].filter(ddTem).join(' — ')])",
+    "tq.map(x=>[[x.kind,x.purpose].filter(ddTem).join(' — '),x.identification||'',x.document||'',ddData(x.date),x.range||'',[x.result,ddTem(x.risk)?'pior caso: '+x.risk:'',x.observations].filter(ddTem).join(' — ')])", 'atacadista: finalidade e pior caso');
+  return s;
+});
+
+/* 7n. Manipulação — dados registrados que não chegavam ao relatório (varredura
+   de 01/10/2026): campos da qualificação da exaustão (8.1) e outros quadros de
+   campos; opções marcadas em venda remota (meios, produtos, exigências) e
+   “Outros”; laboratório contratado (nome, CNPJ, REBLAS, contrato); fabricante de
+   matéria-prima vegetal e de embalagem e certificado da embalagem; observação das
+   planilhas sem status marcado; POPs com número/data sem status; dados do
+   documento também em Não cumpre e Não se aplica; filiais; “Outra não
+   conformidade” escrita sem o botão Irregular. */
+blocoAltera('app--farmacia-manipulacao', s => {
+  s = trocaEm(s, "if(comp.t==='lab'){}",
+    "if(comp.t==='lab'&&e===Object.values(APP_DATA.cards).flatMap(c=>c.extraItems||[]).find(x=>x.c&&x.c.t==='lab')){const l=v.fields.lab||{},ps=[l.nome&&'laboratório '+l.nome,l.cnpj&&'CNPJ '+l.cnpj,l.reblas&&'habilitação REBLAS nº '+l.reblas,l.contrato&&'contrato válido até '+manData(l.contrato)].filter(Boolean);if(ps.length)corpo+='<p>Laboratório contratado para o monitoramento: '+esc(ps.join('; '))+'.</p>'}"
+    + "if(comp.t==='fields'){const fv=v.fields[iid]||{},ps=comp.f.map(([l])=>{const x=String(fv[v2Slug(l)]||'').trim();return x?l+': '+(/^\\d{4}-\\d{2}-\\d{2}$/.test(x)?manData(x):x):''}).filter(Boolean);if(ps.length)corpo+='<p>'+esc(ps.join('; '))+'.</p>'}"
+    + "if(comp.t==='chips'){const k=v2Slug(comp.title),ch=(v.chips[iid]||{})[k]||{},sel=comp.opts.filter(o=>ch[o]),ou=String((v.fields[iid]||{})[k+'-outros']||'').trim();if(sel.length||ou)corpo+='<p>'+esc(comp.title+': '+v2Join(sel.map(v2Lc).concat(ou?[ou]:[]))+'.')+'</p>'}", 'manipulação: fields, chips e laboratório');
+  s = trocaEm(s, "corpo+='<p>Matéria-prima vegetal '+esc(d.prod||'')+(d.lote?' (lote '+esc(d.lote)+')':'')", "corpo+='<p>Matéria-prima vegetal '+esc(d.prod||'')+(d.lote?' (lote '+esc(d.lote)+')':'')+(d.fab?', fabricante '+esc(d.fab):'')", 'manipulação: fabricante MP vegetal');
+  s = trocaEm(s, "corpo+='<p>Embalagem '+esc(d.prod||'')+(d.lote?' (lote '+esc(d.lote)+')':'')", "corpo+='<p>Embalagem '+esc(d.prod||'')+(d.lote?' (lote '+esc(d.lote)+')':'')+(d.fab?', fabricante '+esc(d.fab):'')+(!d.cq&&d.cert?', certificado '+esc(d.cert):'')", 'manipulação: fabricante e certificado da embalagem');
+  s = trocaEm(s, "if(fc.sistema)ptxt+=' Sistema informatizado: '+fc.sistema+'.';", "if(fc.sistema)ptxt+=' Sistema informatizado: '+fc.sistema+'.';if(fc.filiais)ptxt+=' Filiais: '+fc.filiais+'.';if((c.areas||[]).length)ptxt+=' Áreas existentes: '+v2Join(c.areas.map(a=>{const x=AREAS_LIST.find(y=>y[0]===a);return v2Lc(x?x[1]:a)}))+'.';", 'manipulação: filiais e áreas');
+  s = trocaEm(s, "+(falta?' Apresentadas '+rows.length+' de '+comp.n+' análises exigidas'+v2Mk(falta)+'.':'')+'</p>';",
+    "+(falta?' Apresentadas '+rows.length+' de '+comp.n+' análises exigidas'+v2Mk(falta)+'.':'')+'</p>';{const MCK=['Periodicidade atendida','Rodízio de manipuladores, fármacos e dosagens','Laudos arquivados','Metodologia e especificação farmacopeica'],mk=MCK.filter((_,i)=>(d.chk||{})[i]),mn=MCK.filter((_,i)=>!(d.chk||{})[i]);if(mk.length)corpo+='<p>Conferido: '+esc(v2Join(mk.map(v2Lc)))+'.'+(mn.length?' Não conferido: '+esc(v2Join(mn.map(v2Lc)))+'.':'')+'</p>'}", 'manipulação: conferências do monitoramento');
+  s = trocaEm(s, "if(d&&d.status)pops.push([row.name,d.nr||'',manData(d.date),d.status])", "if(d&&(d.status||d.nr||d.date))pops.push([row.name,d.nr||'',manData(d.date),d.status||'situação não marcada'])", 'manipulação: POP sem status');
+  s = trocaEm(s, "if(!com.length&&!par.length&&!nao.length)continue;", "if(!com.length&&!par.length&&!nao.length){if(v.obs['plan-'+g])partes.push(esc(t+': '+String(v.obs['plan-'+g]).trim().replace(/\\.?$/,'.')));continue}", 'manipulação: observação de planilha');
+  s = trocaEm(s, "else if(a.status==='NC'){if(q.informativo)frases.push(esc(q.neg));else{const k=addIrr(v2ItemTitulo(iid)+': '+q.neg+(a.evidence&&a.evidence.trim()?",
+    "else if(a.status==='NC'){const dtn=v2DocTxt(q.id);if(q.informativo)frases.push(esc(q.neg));else{const k=addIrr(v2ItemTitulo(iid)+': '+q.neg+(dtn?' Documento: '+dtn+'.':'')+(a.evidence&&a.evidence.trim()?", 'manipulação: documento em Não cumpre');
+  s = trocaEm(s, "else if(a.status==='NA'&&evx){frases.push(esc('Não se aplica ('+evx+'): '",
+    "else if(a.status==='NA'&&(evx||v2DocTxt(q.id))){frases.push(esc('Não se aplica ('+[evx,v2DocTxt(q.id)].filter(Boolean).join('; ')+'): '", 'manipulação: documento em Não se aplica');
+  const n = s.split("d.xI==='I'&&d.outra").length - 1;
+  if (n !== 2) throw Error('manipulação: outra irregularidade — esperava 2, achei ' + n);
+  return s.split("d.xI==='I'&&d.outra").join("d.outra&&String(d.outra).trim()");
+});
+
+/* 7o. Drogaria — identificação (varredura de 01/10/2026): “Atividades constantes
+   da licença” (meta.atividade_licenciada, uma por linha) e CNAE não saíam; com o
+   endereço completo preenchido, bairro, município, UF e CEP digitados à parte
+   eram ignorados — agora entram os que não estiverem no endereço. */
+blocoAltera('rec--drogaria-report-final.js', s => {
+  s = trocaEm(s, "address=text(m.endereco_completo)||join([m.endereco,m.endereco_numero,m.complemento,m.bairro,m.municipio,m.estado,m.cep]);",
+    "address=text(m.endereco_completo)?join([text(m.endereco_completo)].concat([m.bairro,m.municipio,m.estado,m.cep].filter(x=>text(x)&&!String(m.endereco_completo).toLowerCase().includes(String(x).trim().toLowerCase())))):join([m.endereco,m.endereco_numero,m.complemento,m.bairro,m.municipio,m.estado,m.cep]);", 'drogaria: endereço + componentes');
+  s = trocaEm(s, "kv(B,'Atividades licenciadas',(s.fields?.atividades_licenciadas||[]).join('; '));",
+    "kv(B,'Atividades licenciadas',[...new Set((s.fields?.atividades_licenciadas||[]).concat(String(m.atividade_licenciada||'').split(/\\n+/).map(x=>x.trim()).filter(Boolean)))].join('; '));if(text(m.cnae))kv(B,'CNAE',m.cnae);", 'drogaria: atividades da licença e CNAE');
+  /* Word: as seções refeitas a partir das respostas (SNGPC, estoque, resíduos…) usam
+     só a frase da resposta e perdiam a “Observação factual”. Conferência final: toda
+     observação registrada que não estiver no texto entra antes do item 11. */
+  s = trocaEm(s, "x9(B,s);B.push(...(C['10']||[]));",
+    "x9(B,s);B.push(...(C['10']||[]));{const J=JSON.stringify(B),obs=(base.records||[]).filter(r=>text(r.observacao)&&!J.includes(JSON.stringify(String(r.observacao).trim()).slice(1,-1).slice(0,60)));if(obs.length){p(B,'Observações registradas nas verificações:');obs.forEach(r=>B.push({t:'num',n:'•',x:[r.grupo,r.contexto].filter(x=>text(x)).filter((x,i,a)=>a.indexOf(x)===i).join(' — ')+(r.grupo||r.contexto?': ':'')+String(r.observacao).trim()}))}}", 'drogaria: observações no Word');
+  return s;
+});
+
+/* 7p. Evidência digitada em pergunta sem situação marcada (nem Cumpre, nem Não
+   cumpre, nem Não se aplica): Atacadista e Manipulação descartavam o texto. Agora
+   sai como “Sem situação marcada — pergunta: anotação”, para a equipe ver na
+   prévia e decidir antes de emitir. */
+blocoAltera('app--distribuidoras-transportadoras', s => trocaEm(s, "else if(a.status==='NA'){const ev=String(a.evidence",
+  "else if(!a.status){const ev=String(a.evidence||'').trim().replace(/\\s*\\n\\s*/g,'; ').replace(/\\.$/,''),ck=(state.checklists||{})[q.id],cl=Array.isArray(ck)?ck:ddLista(ck),tx=[ev,cl.length?'itens verificados: '+ddJoin(cl.map(ddLc)):''].filter(Boolean).join('; ');if(tx){const nf='Sem situação marcada — '+String(q.text||'').replace(/\\s*\\?\\s*$/,'')+': '+tx+'.';frases.push(nf);naF.push(nf)}}"
+  + "else if(a.status==='NA'){const ev=String(a.evidence", 'atacadista: anotação sem situação'));
+blocoAltera('app--farmacia-manipulacao', s => trocaEm(s, "else if(a.status==='NC'){const dtn=v2DocTxt(q.id);",
+  "else if(!a.status&&(evx||v2DocTxt(q.id))){frases.push(esc('Sem situação marcada — '+String(q.text||q.pos).replace(/\\s*\\?\\s*$/,'')+': '+[evx,v2DocTxt(q.id)].filter(Boolean).join('; ')+'.'))}"
+  + "else if(a.status==='NC'){const dtn=v2DocTxt(q.id);", 'manipulação: anotação sem situação'));
 
 /* 8. Versão. */
 trocaRx(/const APP_VERSAO = '[^']+';/, `const APP_VERSAO = '${VERSAO}';`, 'APP_VERSAO');

@@ -7,7 +7,7 @@
   'use strict';
   window.addEventListener('change', function(e){
     var t = e.target;
-    if(!t || t.tagName !== 'INPUT' || !/^Outra (irregularidade|falha) — descrever$/.test(t.placeholder || '') || !t.value.trim()) return;
+    if(!t || t.tagName !== 'INPUT' || !/^Outra (irregularidade|falha|não conformidade) — descrever$/.test(t.placeholder || '') || !t.value.trim()) return;
     var linha = t.closest('.v2-row'), b = linha && linha.querySelector('button[data-v2t$="|I"]');
     if(b && b.getAttribute('aria-pressed') !== 'true') setTimeout(function(){
       /* o módulo pode redesenhar a linha ao salvar o texto: busca o botão de novo */
