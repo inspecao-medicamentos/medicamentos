@@ -1,6 +1,6 @@
 {
-  "versao": "20261001-22",
+  "versao": "20261001-23",
   "banco": "13.1",
   "correcoes": 1,
-  "notas": "Ditado: o botão 🎤 desliga no segundo toque mesmo que o aparelho não responda; no iPhone/iPad não entra mais em laço de reinício (que travava a tela); desliga sozinho se o campo se recolher, se o app for para segundo plano ou após 3 minutos."
+  "notas": "Ditado: números falados por extenso viram algarismos nos campos de quantidade, número, horário e data (“cinco” → 5; “oito e meia” → 08:30; “primeiro de outubro de 2026” → 01/10/2026). Ícone do microfone redesenhado no padrão dos ícones do app."
 }

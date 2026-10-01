@@ -24,7 +24,7 @@ jobs:
       matrix:
         include:
           - nome: Telas, roteiros e ferramentas de campo
-            cmd: node build/testar.cjs && node build/testar-roteiros.cjs && node build/testar-campo.cjs
+            cmd: node build/testar.cjs && node build/testar-roteiros.cjs && node build/testar-campo.cjs && node build/testar-ditado.cjs
           - nome: Preenchimento até a prévia e o Word
             cmd: node build/testar-preenchimento.cjs
           - nome: Relatório com respostas em rodízio
