@@ -215,6 +215,21 @@
   if(window.__medCnpjInvalidos)window.__medCnpjInvalidos().forEach(function(x){out.push({tipo:'CNPJ inválido',txt:x})});
   return out}
 
+ /* conferência do relatório (só na emissão e na aba Pendências, para não inflar o contador
+    durante a inspeção): anotação em pergunta sem situação marcada, Não cumpre sem
+    evidência e contradições entre a situação e os dados digitados (Atacadista). */
+ function consistencia(){var out=[],m=motor(),tem=function(v){return v!=null&&String(v).trim()!==''},cur=function(t){t=limpa(t).replace(/\s*\?$/,'');return t.length>90?t.slice(0,87)+'…':t};
+  var olha=function(rot,st,ev,nc,info){if(tem(ev)&&!st)out.push({tipo:'Anotação sem situação marcada',txt:cur(rot)});else if(st===nc&&!tem(ev)&&!info)out.push({tipo:'Não cumpre sem evidência',txt:cur(rot)})};
+  try{
+   if(m==='rs'){var S=stRs(),r=S.r||{},sit=S.sit||{};perguntasRs().forEach(function(x){olha(x.q.t,r[x.q.id],sit[x.q.id],'nc')})}
+   else if(m==='manip'){var rr=state.responses||{};Object.keys(APP_DATA.cards).forEach(function(n){APP_DATA.cards[n].sections.forEach(function(se){se.requirements.forEach(function(q){var a=rr[q.id]||{};olha(q.text||q.pos||q.id,a.status,a.evidence,'NC',q.informativo)})})})}
+   else if(m==='dist'){var an=state.answers||{};DATA.sections.forEach(function(se){se.questions.forEach(function(q){if(q.escopo)return;var a=an[q.id]||{};olha(q.text||q.id,a.status,a.evidence,'NC')})});
+    var R=state.report||{},D=state.distDocs||{},L=D.lic||{};
+    if(R.licSituacao==='Não possui licença'&&(tem(L.number)||tem(L.validity)))out.push({tipo:'Contradição',txt:'Licença marcada como “Não possui”, mas há número ou validade digitados — esses dados não saem no relatório.'});
+    [['afe','AFE'],['ae','AE']].forEach(function(k){var d=D[k[0]]||{};if(/^Não (possui|se aplica)$/.test(d.status||'')&&tem(d.number))out.push({tipo:'Contradição',txt:k[1]+' marcada como “'+d.status+'”, mas há número digitado ('+d.number+').'})})}
+  }catch(e){}
+  return out}
+
  /* ---------------- interface ---------------- */
  var CSS='#cmp-fab.cmp-flutua{position:fixed;right:12px;bottom:84px;z-index:2147482000;display:inline-flex;align-items:center;gap:6px;min-height:42px;padding:8px 14px;border-radius:21px;border:0;background:var(--uvis-tone,#365B73);color:#fff;font:700 14px/1 system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;box-shadow:0 4px 14px #0003;cursor:pointer}#cmp-fab.cmp-flutua .n{min-width:20px;padding:3px 6px;border-radius:10px;background:#d69e2e;color:#1a1a1a;font-size:12px}#cmp-fab .n[hidden]{display:none}'
   +'#cmp-painel{position:fixed;inset:0;z-index:2147483100;background:#0006;display:flex;justify-content:center;align-items:flex-end}#cmp-painel .cx{background:#fff;color:#1f2a33;width:min(760px,100%);max-height:92vh;display:flex;flex-direction:column;border-radius:16px 16px 0 0;font:15px/1.45 system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif}'
@@ -238,6 +253,7 @@
   p.innerHTML='<div class="cx" role="dialog" aria-label="Ferramentas de campo"><header><b>Ferramentas de campo</b><button type="button" class="x" data-c="fecha" aria-label="Fechar">✕</button></header><nav>'
    +ABAS.map(function(a){return '<button type="button" data-aba="'+a[0]+'" class="'+(a[0]===aba?'on':'')+'">'+a[1]+(a[0]==='pend'&&np?' ('+np+')':'')+'</button>'}).join('')+'</nav><div class="corpo">'+corpo()+'</div></div>';
   if(aba==='resumo')contaFotos().then(function(n){var e=p.querySelector('[data-fotos]');if(e)e.textContent=n==null?'—':n});
+  if(aba==='resumo')pintaCopias(p);
   if(aba==='achados')[].forEach.call(p.querySelectorAll('img[data-foto]'),function(im){leFoto(im.dataset.foto).then(function(u){if(u)im.src=u})});
   if(aba==='fotos')registraFotos(false).then(function(l){var e=p.querySelector('[data-lista-fotos]');if(!e)return;
    if(!l.length){e.innerHTML='<p class="nota">Nenhuma foto registrada nesta inspeção.</p>';return}
@@ -255,9 +271,10 @@
     +'<h4>Respostas</h4><div class="grade">'+k(n.resp,'respondidas')+(n.m==='drogaria'?'':k(n.c,'conformes'))+k(n.nc,'não conformes'+(n.m==='drogaria'?' (irregularidades)':''),n.nc)+k(n.na,'não se aplica')+sec+'</div>'
     +'<h4>Controle</h4><div class="grade">'+k(Object.keys(C.pend).length,'perguntas pendentes',Object.keys(C.pend).length)+k(C.lemb.filter(function(l){return !l.feito}).length,'lembretes abertos',C.lemb.some(function(l){return !l.feito}))+k(vinc+'/'+ach.length,'achados vinculados',vinc<ach.length)+'<div class="k"><b data-fotos>…</b><span>fotos</span></div>'+k(C.verif.length,'verificações registradas')+'</div>'
     +(pend.length?'<h4>A resolver antes de encerrar ('+pend.length+')</h4>'+pend.slice(0,8).map(function(x){return '<div class="lin"><small>'+esc(x.tipo)+'</small>'+esc(x.txt)+'</div>'}).join('')+(pend.length>8?'<p class="nota">… e mais '+(pend.length-8)+' na aba Pendências.</p>':''):'<p class="nota">Nada pendente.</p>')
-    +'<p class="nota">'+(n.m==='drogaria'?'Na drogaria há perguntas descritivas (Sim/Não); por isso o número de não conformes é o de irregularidades do relatório. ':'')+'Controle de completude da inspeção; não é pontuação sanitária.</p>'}
+    +'<p class="nota">'+(n.m==='drogaria'?'Na drogaria há perguntas descritivas (Sim/Não); por isso o número de não conformes é o de irregularidades do relatório. ':'')+'Controle de completude da inspeção; não é pontuação sanitária.</p>'
+    +'<h4>Cópias automáticas</h4><div data-copias><p class="nota">…</p></div>'}
   if(aba==='pend'){var ks=Object.keys(C.pend);
-   return '<h4>Perguntas pendentes de verificação ('+ks.length+')</h4>'+(ks.length?ks.map(function(key){var p=C.pend[key];return '<div class="lin">'+(p.item?'<small>'+esc(p.item)+'</small>':'')+esc(p.rotulo)+'<div class="acoes"><button type="button" class="b" data-c="tira-pend" data-k="'+esc(key)+'">Retirar</button></div></div>'}).join(''):'<p class="nota">Nenhuma. Em cada pergunta há o botão “⏳ Marcar como pendente”; a marcação sai sozinha quando a pergunta é respondida.</p>')
+   return '<h4>Perguntas pendentes de verificação ('+ks.length+')</h4>'+(ks.length?ks.map(function(key){var p=C.pend[key];return '<div class="lin">'+(p.item?'<small>'+esc(p.item)+'</small>':'')+esc(p.rotulo)+'<div class="acoes"><button type="button" class="b" data-c="tira-pend" data-k="'+esc(key)+'">Retirar</button></div></div>'}).join(''):'<p class="nota">Nenhuma. Em cada pergunta há o botão “⏳ Marcar como pendente”; a marcação sai sozinha quando a pergunta é respondida.</p>')+(function(){var cs=consistencia();return cs.length?'<h4>Conferência do relatório ('+cs.length+')</h4><p class="nota">Não impede a emissão; confira se é isso mesmo.</p>'+cs.map(function(x){return '<div class="lin"><small>'+esc(x.tipo)+'</small>'+esc(x.txt)+'</div>'}).join(''):''})()
     +'<h4>Lembretes (não vão ao relatório)</h4><label class="f"><input type="text" data-novo-lemb placeholder="Ex.: voltar à geladeira; pedir certificado da balança; fotografar o DML"></label><div class="acoes"><button type="button" class="b pri" data-c="add-lemb">Adicionar lembrete</button></div>'
     +C.lemb.map(function(l,i){return '<div class="lin"><label><input type="checkbox" data-lemb="'+i+'"'+(l.feito?' checked':'')+'> '+(l.feito?'<s>'+esc(l.txt)+'</s>':esc(l.txt))+'</label><div class="acoes"><button type="button" class="b del" data-c="del-lemb" data-i="'+i+'">Excluir</button></div></div>'}).join('')}
   if(aba==='achados'){var it=itemAoAbrir;
@@ -297,6 +314,8 @@
   if(c==='tira-pend'){delete C.pend[b.dataset.k];grava();varre();return pinta()}
   if(c==='add-lemb'){var inp=p.querySelector('[data-novo-lemb]'),t=limpa(inp.value);if(!t)return;C.lemb.push({txt:t,ts:agora()});marcaInicio();grava();return pinta()}
   if(c==='del-lemb'){C.lemb.splice(i,1);grava();return pinta()}
+  if(c==='restaura'){var M=copias();if(!M)return;if(!confirm('Substituir a inspeção aberta por esta cópia? A inspeção atual é guardada antes como uma nova cópia, para poder voltar.'))return;
+   M.restaura(b.dataset.k).catch(function(er){aviso('Não foi possível restaurar: '+(er&&er.message||er))});return}
   if(c==='add-achado'){var lo=limpa(p.querySelector('[data-a="local"]').value),tx=limpa(p.querySelector('[data-a="txt"]').value),fi=p.querySelector('[data-a="foto"]').files[0];
    if(!tx&&!fi)return aviso('Descreva o achado ou tire uma foto.');var a={id:novoId(),local:lo,txt:tx,ts:agora(),item:''};
    var fim=function(){C.achados.unshift(a);C.rasc=null;marcaInicio();grava();pinta();aviso('Achado registrado.')};
@@ -332,13 +351,21 @@
   if(t.dataset.v==='tipo'||t.dataset.v==='concl'){(C.vrasc=C.vrasc||{})[t.dataset.v]=t.value;grava();return pinta()}
   if(t.dataset.foto2){var fm=C.fotos[t.dataset.foto2]=C.fotos[t.dataset.foto2]||{};fm[t.dataset.campo]=t.value;grava();return}}
 
+ /* cópias automáticas (modulos/copia-auto.js, na página principal) */
+ function copias(){try{return window.parent&&window.parent!==window&&window.parent.MedCopias}catch(e){return null}}
+ function pintaCopias(p){var e=p.querySelector('[data-copias]'),M=copias(),app=(function(){try{return window.parent.__cascaAtual.app}catch(x){return ''}})();if(!e)return;
+  if(!M||!app){e.innerHTML='<p class="nota">Indisponível neste modo de abertura.</p>';return}
+  M.copia(app).catch(function(){}).then(function(){return M.lista(app)}).then(function(l){
+   e.innerHTML=(l.length?l.map(function(c){return '<div class="lin"><small>'+esc(dataHora(new Date(c.criado).toISOString()))+' · '+esc(c.motivo)+'</small>'+esc(c.nome||'Inspeção sem identificação')+'<div class="acoes"><button type="button" class="b" data-c="restaura" data-k="'+esc(c.id)+'">Restaurar</button></div></div>'}).join(''):'<p class="nota">Nenhuma cópia ainda.</p>')
+    +'<p class="nota">O app guarda sozinho uma cópia do que foi digitado a cada 2 minutos (as 8 mais recentes) e antes de Apagar tudo, Nova inspeção e Salvar. Fotos não entram na cópia. Para guardar fora do aparelho, use Exportar nas Salvas.</p>'}).catch(function(){e.innerHTML='<p class="nota">Não foi possível ler as cópias.</p>'})}
+
  /* ---------------- aviso ao emitir o relatório ---------------- */
  var EMITE=/^(Baixar (o )?(Word|relatório|prévia|Anexo)|Baixar relatório para Word|Imprimir( \/ PDF)?|Gerar (Word|relatório))/i,liberado=0;
  function emissao(e){var b=e.target.closest&&e.target.closest('button,a');if(!b||b.closest('#cmp-painel,#cmp-modal'))return;
   if(!(b.matches('[data-rs-word]')||EMITE.test(limpa(b.textContent))))return;
-  if(Date.now()<liberado)return;var pd=pendencias();if(!pd.length)return;
+  if(Date.now()<liberado)return;var pd=pendencias().concat(consistencia());if(!pd.length)return;
   e.preventDefault();e.stopImmediatePropagation();
-  var m=document.createElement('div');m.id='cmp-modal';m.innerHTML='<div class="cx" role="alertdialog"><b>Há '+pd.length+' pendência(s) nesta inspeção</b><ul>'+pd.slice(0,12).map(function(x){return '<li><small>'+esc(x.tipo)+':</small> '+esc(x.txt)+'</li>'}).join('')+'</ul>'+(pd.length>12?'<p>… e mais '+(pd.length-12)+'.</p>':'')
+  var m=document.createElement('div');m.id='cmp-modal';m.innerHTML='<div class="cx" role="alertdialog"><b>Há '+pd.length+' ponto(s) a conferir antes de emitir</b><ul>'+pd.slice(0,12).map(function(x){return '<li><small>'+esc(x.tipo)+':</small> '+esc(x.txt)+'</li>'}).join('')+'</ul>'+(pd.length>12?'<p>… e mais '+(pd.length-12)+'.</p>':'')
    +'<div class="acoes"><button type="button" class="pri" data-m="ver">Ver pendências</button><button type="button" data-m="emite">Emitir mesmo assim</button><button type="button" data-m="volta">Voltar</button></div></div>';
   document.body.appendChild(m);m.addEventListener('click',function(ev){var x=ev.target.closest('[data-m]');if(!x&&ev.target!==m)return;m.remove();if(!x)return;
    if(x.dataset.m==='ver')abrePainel('pend');else if(x.dataset.m==='emite'){liberado=Date.now()+1500;b.click()}})}
@@ -374,6 +401,6 @@
   /* fotos já existentes quando o roteiro abre ficam sem hora (não se sabe quando foram tiradas) */
   setTimeout(function(){registraFotos(false)},3000);
   varre()}
- window.MedCampo={pendencias:pendencias,contagem:contagem,irregularidades:irregularidades,abre:abrePainel,estado:function(){return C}};
+ window.MedCampo={pendencias:pendencias,consistencia:consistencia,contagem:contagem,irregularidades:irregularidades,abre:abrePainel,estado:function(){return C}};
  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',inicia);else inicia();
 })();

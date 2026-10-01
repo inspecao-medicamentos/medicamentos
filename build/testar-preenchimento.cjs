@@ -113,18 +113,25 @@ const CASOS = [['Drogaria', 'drogaria', 'drogaria'], ['Manipulação', 'farmacia
     await p.waitForTimeout(1500);
     const previa = await M.relatorio(f, p);
     let word = '';
+    /* aviso de conferência ao emitir (modulos/campo.js): o teste confirma “Emitir mesmo assim” */
+    await f.evaluate(() => { window.__avisoEmissao = ''; new MutationObserver(() => { const m = document.getElementById('cmp-modal'); const b = m && m.querySelector('[data-m="emite"]'); if (b) { window.__avisoEmissao = m.querySelector('b').textContent; b.click(); } }).observe(document.body, {childList: true, subtree: true}); });
+    let semWord = false;
     try { const dl = await M.word(f, p); const arq = path.join(OUT, `preench-${app}.docx`); await dl.saveAs(arq);
       word = execSync(`python3 -c "import docx,sys;d=docx.Document(sys.argv[1]);print('\\n'.join([p.text for p in d.paragraphs]+[c.text for t in d.tables for r in t.rows for c in r.cells]))" "${arq}"`, {maxBuffer: 64 << 20}).toString(); }
-    catch (e) { word = ''; console.log(`  ${app}: Word não baixado (${String(e.message).split('\n')[0]})`); }
+    catch (e) { word = ''; semWord = true; console.log(`  ${app}: Word não baixado (${String(e.message).split('\n')[0]})`); }
     const unicos = preenchidos.filter(x => !x.repetido);
     const lower = s => s.toLowerCase();
     const res = unicos.map(x => ({...x, previa: lower(previa).includes(lower(x.tok)), word: lower(word).includes(lower(x.tok))}));
     const fora = res.filter(x => !x.previa && !x.word), soPrevia = res.filter(x => x.previa && !x.word && word), soWord = res.filter(x => !x.previa && x.word);
     fs.writeFileSync(path.join(OUT, `preenchimento-${app}.json`), JSON.stringify({app, total: unicos.length, fora, soPrevia, soWord, erros}, null, 1));
     console.log(`${app}: ${unicos.length} campos únicos preenchidos · na prévia ${res.filter(x => x.previa).length} · no Word ${res.filter(x => x.word).length} · fora dos dois ${fora.length} · só na prévia ${soPrevia.length} · só no Word ${soWord.length} · erros JS ${erros.length}`);
-    resumo.push({app, fora: fora.map(x => x.rotulo), soPrevia: soPrevia.map(x => x.rotulo), erros});
+    resumo.push({app, fora: fora.map(x => x.rotulo), soPrevia: soPrevia.map(x => x.rotulo), soWord: soWord.map(x => x.rotulo), semWord, erros});
     await ctx.close();
   }
   await b.close(); srv.close();
   fs.writeFileSync(path.join(OUT, 'preenchimento-resumo.json'), JSON.stringify(resumo, null, 1));
+  /* falha (código 1) se algum dado digitado não chegou à prévia ou ao Word, ou se houve erro JS */
+  const ruins = resumo.filter(r => r.semWord || r.erros.length || r.fora.length || r.soPrevia.length || r.soWord.length);
+  console.log(ruins.length ? 'FALHA em: ' + ruins.map(r => r.app).join(', ') : 'TUDO OK');
+  process.exitCode = ruins.length ? 1 : 0;
 })();

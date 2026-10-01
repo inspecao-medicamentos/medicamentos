@@ -1,0 +1,52 @@
+# Testes do app a cada envio para a main (e em pull requests).
+# Abrem o index.html publicado num Chromium e conferem: telas e cliques de todos os
+# roteiros, ferramentas de campo, preenchimento completo até a prévia e o Word.
+# Falha = algum dado digitado não chegou ao relatório, erro de JavaScript ou tela quebrada.
+name: Testes
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: testes-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  testes:
+    name: ${{ matrix.nome }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - nome: Telas, roteiros e ferramentas de campo
+            cmd: node build/testar.cjs && node build/testar-roteiros.cjs && node build/testar-campo.cjs
+          - nome: Preenchimento até a prévia e o Word
+            cmd: node build/testar-preenchimento.cjs
+          - nome: Relatório com respostas em rodízio
+            cmd: node build/testar-relatorio.cjs
+          - nome: Relatório com caixas e listas marcadas
+            cmd: ESCOLHAS=1 node build/testar-relatorio.cjs
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Playwright e Chromium
+        run: |
+          npm install -g playwright@1.56.1
+          pip install python-docx
+          playwright install --with-deps chromium
+      - name: Testar
+        run: ${{ matrix.cmd }}
+      - name: Capturas (em caso de falha)
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: capturas-${{ strategy.job-index }}
+          path: build/capturas/
+          retention-days: 14

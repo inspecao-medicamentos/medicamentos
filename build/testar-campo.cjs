@@ -38,6 +38,10 @@ const CASOS = [
     let f = await abre();
     const clica = async (sel, txt) => { await f.evaluate(([s, t]) => { const x = [...document.querySelectorAll(s)].find(e => !t || e.textContent.includes(t)); if (x) x.click(); }, [sel, txt || '']); await p.waitForTimeout(700); };
     const ok = (cond, msg) => { if (!cond) falha(`${app}: ${msg}`); };
+    /* editor de foto (modulos/foto-marca.js): desenha uma seta e conclui */
+    const marcaFoto = async (onde) => { await p.waitForTimeout(600); if (!(await f.evaluate(() => !!document.querySelector('.mfm')))) return falha(`${app}: editor de foto não abriu (${onde})`);
+      const r = await f.locator('.mfm canvas').boundingBox(); await p.mouse.move(r.x + r.width * .2, r.y + r.height * .2); await p.mouse.down(); await p.mouse.move(r.x + r.width * .6, r.y + r.height * .6, {steps: 5}); await p.mouse.up();
+      await f.click('.mfm [data-f="ok"]'); await p.waitForTimeout(3200); ok(!(await f.evaluate(() => !!document.querySelector('.mfm'))), 'editor de foto não fechou'); };
     await abreItem(f, clica); await p.waitForTimeout(800);
     /* pendência: marca, confere, responde, some */
     const nBotoes = await f.evaluate(() => document.querySelectorAll('.cmp-pbtn').length);
@@ -46,12 +50,14 @@ const CASOS = [
     ok(await f.evaluate(() => MedCampo.pendencias().length) === 1, 'pendência não registrada');
     await f.locator('button:text-is("Não cumpre")').first().click(); await p.waitForTimeout(2500);
     ok(await f.evaluate(() => MedCampo.pendencias().length) === 0, 'pendência não saiu ao responder');
+    /* conferência: o Não cumpre recém-marcado, sem evidência, aparece (drogaria não tem o campo por pergunta) */
+    if (app !== 'drogaria') ok(await f.evaluate(() => MedCampo.consistencia().some(x => x.tipo === 'Não cumpre sem evidência')), 'conferência sem o Não cumpre sem evidência');
     const cont = await f.evaluate(() => MedCampo.contagem());
     ok(cont.nc === 1, `resumo com ${cont.nc} não conformidade(s)`);
     /* achado com foto, vinculado ao item aberto */
     await f.click('#cmp-fab'); await f.click('#cmp-painel [data-aba="achados"]');
     await f.fill('#cmp-painel [data-a="local"]', 'sanitário do mezanino'); await f.fill('#cmp-painel [data-a="txt"]', 'ralo danificado');
-    await f.setInputFiles('#cmp-painel [data-a="foto"]', {name: 'f.png', mimeType: 'image/png', buffer: PNG});
+    await f.setInputFiles('#cmp-painel [data-a="foto"]', {name: 'f.png', mimeType: 'image/png', buffer: PNG}); await marcaFoto('achado');
     await f.click('#cmp-painel [data-c="add-achado"]'); await p.waitForTimeout(800);
     const ach = await f.evaluate(() => MedCampo.estado().achados[0]);
     ok(ach && ach.foto, 'achado sem foto');
@@ -81,7 +87,7 @@ const CASOS = [
     await f.fill('#cmp-painel [data-novo-lemb]', 'pedir certificado da balança'); await f.click('#cmp-painel [data-c="add-lemb"]');
     await f.click('#cmp-painel [data-c="fecha"]');
     const emite = await f.evaluate(() => { const b = [...document.querySelectorAll('button')].find(x => x.matches('[data-rs-word]') || /^(Baixar (Word|relatório|prévia)|Baixar relatório para Word|Imprimir)/.test(x.textContent.trim())); if (!b) return false; b.click(); return true; });
-    if (emite) { await p.waitForTimeout(400); ok(await f.evaluate(() => /pendência/.test((document.getElementById('cmp-modal') || {}).textContent || '')), 'sem aviso de pendência ao emitir'); await f.evaluate(() => { const m = document.getElementById('cmp-modal'); if (m) m.remove(); }); }
+    if (emite) { await p.waitForTimeout(400); ok(await f.evaluate(() => /conferir antes de emitir/.test((document.getElementById('cmp-modal') || {}).textContent || '')), 'sem aviso de pendência ao emitir'); await f.evaluate(() => { const m = document.getElementById('cmp-modal'); if (m) m.remove(); }); }
     else console.log(`  ${app}: botão de emitir não visível nesta tela (aviso testado em outro roteiro)`);
     /* foto tirada no roteiro: data, hora e item registrados; revisão e PDF */
     /* botão de foto do próprio roteiro (abre o seletor de arquivo) */
@@ -90,10 +96,10 @@ const CASOS = [
       if (!b) return false; b.setAttribute('data-teste-foto', '1'); return true; });
     if (temBotao) {
       const [fc] = await Promise.all([p.waitForEvent('filechooser', {timeout: 5000}).catch(() => null), f.click('[data-teste-foto]')]);
-      if (fc) await fc.setFiles({name: 'r.png', mimeType: 'image/png', buffer: PNG});
+      if (fc) { await fc.setFiles({name: 'r.png', mimeType: 'image/png', buffer: PNG}); await marcaFoto('foto do roteiro'); }
       else if (await f.evaluate(() => !!(document.getElementById('med-tools-dialog') || {}).open)) {
         /* manipulação: janela própria com Fotografar / Selecionar foto */
-        await f.setInputFiles('#med-tools-dialog [data-file-input]', {name: 'r.png', mimeType: 'image/png', buffer: PNG}); await p.waitForTimeout(1500);
+        await f.setInputFiles('#med-tools-dialog [data-file-input]', {name: 'r.png', mimeType: 'image/png', buffer: PNG}); await marcaFoto('janela de fotos'); await p.waitForTimeout(1500);
         await f.evaluate(() => { const b = document.querySelector('#med-tools-dialog [data-close]'); if (b) b.click(); });
       } else console.log(`  ${app}: o botão de foto não abriu seletor de arquivo`);
       await p.waitForTimeout(1500);

@@ -350,11 +350,14 @@ troca("k.indexOf('uvis-previa-')===0", "(k.indexOf('uvis-previa-')===0||k.indexO
   const SALVAS_CAMPO = "(function(){var n=0;function f(){var S=window.UvisSalvas;if(!S){if(++n<80)setTimeout(f,150);return}Object.keys(S.CFG).forEach(function(a){var c=S.CFG[a],k='med-campo-'+a;if(c.ls.indexOf(k)<0)c.ls.push(k);if(!c.fotos.length)c.fotos.push(a+'-campo-')})}f()})();";
   const k = h.lastIndexOf('</body>');
   h = h.slice(0, k) + '<script>' + SALVAS_CAMPO + '</script>\n' + h.slice(k);
+  /* cópia automática da inspeção em andamento (modulos/copia-auto.js) */
+  const k2 = h.lastIndexOf('</body>');
+  h = h.slice(0, k2) + '<script>' + le('copia-auto.js').replace(/<\//g, '<\\/') + '</script>\n' + h.slice(k2);
 }
 troca('  function montar(app){',
   `  var ATACADISTA_JS = ${jsStr(le('atacadista-ajustes.js'))};
   var CAMPO_APPS = ${JSON.stringify(CAMPO_APPS)};
-  var CAMPO_JS = ${jsStr(le('cnpj-guarda.js') + '\n' + le('campo.js'))};
+  var CAMPO_JS = ${jsStr(['cnpj-guarda.js', 'campo.js', 'foto-marca.js', 'ditado.js'].map(le).join('\n'))};
   var CENTRAL_AUTO_JS = ${jsStr(le('central-auto.js'))};
   var MANIP_JS = ${jsStr(le('manipulacao-ajustes.js'))};
   var ORIENT_TRANSP = ${jsStr(JSON.stringify(ORIENT.transporte))};
@@ -579,6 +582,26 @@ blocoAltera('app--distribuidoras-transportadoras', s => trocaEm(s, "else if(a.st
 blocoAltera('app--farmacia-manipulacao', s => trocaEm(s, "else if(a.status==='NC'){const dtn=v2DocTxt(q.id);",
   "else if(!a.status&&(evx||v2DocTxt(q.id))){frases.push(esc('Sem situação marcada — '+String(q.text||q.pos).replace(/\\s*\\?\\s*$/,'')+': '+[evx,v2DocTxt(q.id)].filter(Boolean).join('; ')+'.'))}"
   + "else if(a.status==='NC'){const dtn=v2DocTxt(q.id);", 'manipulação: anotação sem situação'));
+
+/* 7q. Central — consulta por CNPJ: os grupos eram ordenados pela quantidade, e numa
+   indústria os centenas de registros de produto empurravam a AFE/AE para o fim.
+   Agora AFE/AE vem sempre primeiro e aberta; dentro dela, ativas antes das
+   canceladas, classe de medicamento e insumo antes das demais, AFE antes de AE.
+   Os outros grupos seguem pela quantidade, com os registros ativos antes dos
+   inativos ou cancelados. */
+blocoAltera('app--central-consultas', s => {
+  s = trocaEm(s, "const bases=[...porBase.entries()].sort((a,b)=>b[1].length-a[1].length);",
+    "const prio=b=>b==='afe_ae'?0:1,ordAfe=x=>[/^(sim|s|ativ)/i.test(String(x.ativo||x.situacao||''))?0:1,/medicament/i.test(x.classe||'')?0:/insumo/i.test(x.classe||'')?1:2,String(x.tipo||'').toUpperCase()==='AFE'?0:1];"
+    + "if(porBase.has('afe_ae'))porBase.get('afe_ae').sort((a,b)=>{const p=ordAfe(a),q=ordAfe(b);for(let k=0;k<p.length;k++)if(p[k]!==q[k])return p[k]-q[k];return 0});"
+    + "if(!kind){const inat=x=>/^(inativ|cancel|vencid|caduc|n$|não)/i.test(String(x.situacao||x.ativo||'').trim())?1:0;for(const [k,l] of porBase)if(k!=='afe_ae')l.sort((a,b)=>inat(a)-inat(b))}"
+    + "const bases=[...porBase.entries()].sort((a,b)=>prio(a[0])-prio(b[0])||b[1].length-a[1].length);", 'central: AFE/AE primeiro');
+  return trocaEm(s, "const aberto=(bases.length===1||lista.length<=6||i===0)?' open':'';",
+    "const aberto=(bases.length===1||lista.length<=6||i===0||b==='afe_ae')?' open':'';", 'central: AFE/AE aberta');
+});
+
+/* 7r. Microfone (ditado) e localização (carimbo das fotos) dentro do roteiro, que
+   abre num iframe: a permissão precisa ser delegada a ele. */
+troca('<iframe id="quadro" title="Roteiro"', '<iframe id="quadro" title="Roteiro" allow="microphone; geolocation; camera"', 'iframe: microfone e localização');
 
 /* 8. Versão. */
 trocaRx(/const APP_VERSAO = '[^']+';/, `const APP_VERSAO = '${VERSAO}';`, 'APP_VERSAO');
