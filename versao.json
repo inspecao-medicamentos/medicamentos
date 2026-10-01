@@ -1,6 +1,6 @@
 {
-  "versao": "20261001-21",
+  "versao": "20261001-22",
   "banco": "13.1",
   "correcoes": 1,
-  "notas": "Ditado por voz (botão 🎤) em todas as caixas de texto: roteiros, Central de Consultas, estoque e tela inicial, inclusive CNPJ, números e busca."
+  "notas": "Ditado: o botão 🎤 desliga no segundo toque mesmo que o aparelho não responda; no iPhone/iPad não entra mais em laço de reinício (que travava a tela); desliga sozinho se o campo se recolher, se o app for para segundo plano ou após 3 minutos."
 }

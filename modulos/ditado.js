@@ -40,7 +40,10 @@
  function mostra(el){if(alvo&&alvo!==el)folga(alvo,false);alvo=el;el.__medChave=chaveSel(el);folga(el,true);if(!bt){bt=document.createElement('button');bt.type='button';bt.className='med-dit';bt.textContent='🎤';
    bt.setAttribute('aria-label','Ditar por voz');bt.setAttribute('aria-pressed','false');bt.title='Ditar por voz';
    bt.addEventListener('pointerdown',function(e){e.preventDefault();tocando=Date.now()});bt.addEventListener('mousedown',function(e){e.preventDefault();tocando=Date.now()});
-   bt.addEventListener('click',function(){tocando=Date.now();if(alvo&&(!alvo.isConnected||document.activeElement!==alvo)){if(!alvo.isConnected)reancora();else try{alvo.focus({preventScroll:true})}catch(e){}}ouvindo?para():comeca()})}
+   var ultimoToque=0;function alterna(){var t=Date.now();if(t-ultimoToque<600)return;ultimoToque=t;tocando=t;
+    if(ouvindo){para();return}
+    if(alvo&&(!alvo.isConnected||document.activeElement!==alvo)){if(!alvo.isConnected)reancora();else try{alvo.focus({preventScroll:true})}catch(e){}}comeca()}
+   bt.addEventListener('pointerup',function(e){e.preventDefault();alterna()});bt.addEventListener('click',alterna)}
   if(!bt.isConnected)document.body.appendChild(bt);posiciona()}
  function esconde(){para();if(bt)bt.remove();folga(alvo,false);alvo=null}
  function aviso(t){if(!bolha){bolha=document.createElement('div');bolha.className='med-dit-b';bolha.setAttribute('role','status')}
@@ -57,16 +60,38 @@
   if(antes&&!/[\s\n]$/.test(antes)&&!/^[,.;:]/.test(txt))txt=' '+txt;
   el.setRangeText(txt,s,e,'end');el.dispatchEvent(new Event('input',{bubbles:true}));setTimeout(reancora,0)}
 
+ /* Liga e desliga. Cada sessão tem dono (rec): eventos de uma sessão antiga são ignorados.
+    No iPhone/iPad o reconhecimento encerra sozinho após cada frase (ou sem ouvir nada);
+    por isso o reinício automático só acontece se a sessão durou ao menos 1,5 s, até 25
+    vezes e por no máximo 3 minutos — sem isso, entrava em laço e travava a tela. */
+ var IOS=/iP(hone|ad|od)/.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1),inicio=0,reinicios=0,sessao=0,vigia=0;
+ function abre(){var SR=SR_(),r=new SR();r.lang='pt-BR';r.continuous=!IOS;r.interimResults=true;sessao=Date.now();
+  r.onresult=function(ev){if(r!==rec)return;var parcial='';for(var i=ev.resultIndex;i<ev.results.length;i++){var x=ev.results[i];if(x.isFinal)insere(x[0].transcript);else parcial+=x[0].transcript}if(ouvindo)aviso(parcial?'… '+parcial:'Ouvindo…')};
+  r.onerror=function(ev){if(r!==rec)return;ultimoErro=ev.error;if(ev.error==='not-allowed'||ev.error==='service-not-allowed'){aviso('Microfone bloqueado. Libere o microfone para este site nas configurações do aparelho.');para(true)}
+   else if(ev.error==='network'){aviso('O ditado precisa de internet neste aparelho.');para(true)}
+   else if(ev.error==='audio-capture'){aviso('Microfone indisponível (em uso por outro app?).');para(true)}};
+  r.onend=function(){if(r!==rec)return;
+   var durou=Date.now()-sessao;
+   if(ouvindo&&alvo&&durou>=1500&&reinicios<25&&Date.now()-inicio<180000){reinicios++;try{rec=abre();rec.start();return}catch(e){}}
+   if(ouvindo&&durou<1500&&ultimoErro==='no-speech')aviso('Não ouvi nada. Toque no 🎤 e fale.');
+   encerra()};
+  return r}
  function comeca(){if(!alvo)return;ultimoErro='';
   if(!SR_()){aviso('Este navegador não oferece ditado dentro da página. Use o microfone do próprio teclado (ícone 🎤 no teclado do celular ou tablet).');setTimeout(function(){aviso('')},6000);return}
   if(navigator.onLine===false){aviso('O ditado precisa de internet neste aparelho.');setTimeout(function(){aviso('')},3500);return}
-  var SR=SR_();rec=new SR();rec.lang='pt-BR';rec.continuous=true;rec.interimResults=true;
-  rec.onresult=function(ev){var parcial='';for(var i=ev.resultIndex;i<ev.results.length;i++){var r=ev.results[i];if(r.isFinal)insere(r[0].transcript);else parcial+=r[0].transcript}aviso(parcial?'… '+parcial:'Ouvindo…')};
-  rec.onerror=function(ev){ultimoErro=ev.error;if(ev.error==='not-allowed'||ev.error==='service-not-allowed'){aviso('Microfone bloqueado. Libere o microfone para este site nas configurações do navegador.');ouvindo=false}
-   else if(ev.error==='network'){aviso('O ditado precisa de internet neste aparelho.');ouvindo=false}};
-  rec.onend=function(){if(ouvindo&&alvo){try{rec.start();return}catch(e){}}ouvindo=false;marca();if(!/not-allowed|network/.test(ultimoErro))aviso('');else setTimeout(function(){aviso('')},4000);if(alvo)alvo.dispatchEvent(new Event('change',{bubbles:true}))};
-  try{rec.start();ouvindo=true;marca();aviso('Ouvindo…')}catch(e){ouvindo=false;marca()}}
- function para(){ouvindo=false;marca();if(rec){try{rec.stop()}catch(e){}}}
+  inicio=Date.now();reinicios=0;
+  try{rec=abre();rec.start();ouvindo=true;marca();aviso('Ouvindo… toque no 🎤 para parar');}catch(e){rec=null;ouvindo=false;marca();return}
+  clearInterval(vigia);vigia=setInterval(function(){if(!ouvindo){clearInterval(vigia);return}
+   if(document.hidden||Date.now()-inicio>180000){para();return}
+   if(!alvo||(!alvo.isConnected&&!reancora())){esconde();return}
+   var r=alvo.getBoundingClientRect();if(!r.width||!r.height){esconde();return}posiciona()},700)}
+ /* encerra a sessão: o botão volta ao normal na hora, mesmo que o aparelho demore a liberar o microfone */
+ function encerra(){var r=rec;rec=null;ouvindo=false;clearInterval(vigia);marca();
+  if(!/not-allowed|network|audio-capture/.test(ultimoErro)&&!/Não ouvi/.test(bolha&&bolha.textContent||''))aviso('');else setTimeout(function(){aviso('')},4000);
+  if(alvo)try{alvo.dispatchEvent(new Event('change',{bubbles:true}))}catch(e){}
+  return r}
+ function para(mantemAviso){if(!rec&&!ouvindo){marca();return}var r=rec;ouvindo=false;marca();if(!mantemAviso)aviso('');
+  if(r){try{r.stop()}catch(e){}setTimeout(function(){if(rec===r){try{r.abort()}catch(e){}encerra()}},1200)}else encerra()}
  function marca(){if(bt)bt.setAttribute('aria-pressed',String(ouvindo))}
 
  document.addEventListener('focusin',function(e){if(elegivel(e.target)){if(alvo!==e.target)para();mostra(e.target)}});
