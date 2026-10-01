@@ -1,6 +1,6 @@
 {
-  "versao": "20261001-19",
+  "versao": "20261001-20",
   "banco": "13.1",
   "correcoes": 1,
-  "notas": "Fotos de evidência: marcação com seta e círculo e faixa com data, hora e localização gravada na imagem. Ditado por voz nos campos de texto (botão 🎤). Conferência antes de emitir: anotação sem situação marcada, Não cumpre sem evidência e contradições (licença/AFE/AE). Cópia automática da inspeção a cada 2 minutos, com restauração no painel Campo. Central: na consulta por CNPJ, AFE/AE aparecem primeiro e os registros ativos antes dos inativos."
+  "notas": "Ditado por voz também nos campos de uma linha (nome, endereço, responsáveis), exceto números, datas, CNPJ e similares. Em navegador sem reconhecimento de voz, o botão 🎤 explica como usar o microfone do teclado."
 }
