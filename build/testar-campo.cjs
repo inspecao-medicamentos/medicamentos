@@ -148,6 +148,8 @@ const CASOS = [
     await p.goto(`http://localhost:${srv.address().port}/medicamentos/`); await p.waitForTimeout(700);
     await p.locator('#abrir-consultas').click(); await p.waitForTimeout(3500);
     const f = p.frames().find(x => x !== p.mainFrame());
+    /* primeira abertura: a Central pergunta por quanto tempo guardar as bases; o teste escolhe uma opção */
+    await p.waitForTimeout(900); await f.evaluate(() => { const d = document.getElementById('cacheDialog'); const o = d && d.querySelector('.opt'); if (o) o.click(); else if (d && d.open) d.close(); });
     const modo = () => f.evaluate(() => document.querySelector('[data-mode].on').dataset.mode);
     const esperado = {'57.507.378/0003-65': 'cnpj', '7896006200260': 'ean', '102351314': 'registro', '25351720415201709': 'processo', '5079496': 'afe'};
     for (const [t, m] of Object.entries(esperado)) {
