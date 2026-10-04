@@ -627,6 +627,67 @@ blocoAltera('app--distribuidoras-transportadoras', s => {
     "const nf='Não se aplica: '+ddLc(ddAfirma(q)).replace(/\\.?$/,'.')+" + CAP + "(ev);", 'atacadista: anotação do Não se aplica sem parênteses');
 });
 
+/* 7t. Drogaria — perguntas que faltavam para autuar (modulos/drogaria-lacunas.js),
+   entram no catálogo ao carregar, logo depois do ajuste padrão do catálogo. */
+blocoAltera('app--drogaria', s => {
+  s = trocaEm(s, 'async function loadBank(){', le('drogaria-lacunas.js').replace(/<\/script/gi, '<\\/script') + '\nasync function loadBank(){', 'drogaria: lacunas — definição');
+  return trocaEm(s, "normalizeDrogariaCatalog();if(catalog.schema", "normalizeDrogariaCatalog();try{__medLacunasDrogaria(catalog)}catch(e){console.error(e)}if(catalog.schema", 'drogaria: lacunas — chamada');
+});
+
+/* 7u. Drogaria — lacunas nas telas próprias (serviços, documentos de qualidade
+   e venda remota não mostram perguntas do catálogo). A do art. 61, § 5º fica
+   sempre visível: o serviço vedado pode existir mesmo quando se responde que o
+   estabelecimento não realiza serviços farmacêuticos. */
+const R44 = (a, p) => 'rdc-44-2009::artigo::' + a + (p ? '::paragrafo::' + p : '');
+const qD = (k, rot, ref, lbl, ajuda) => "+question(n,'" + k + "','" + rot + "',['" + ref + "','" + lbl + "'],false)" +
+  (ajuda ? "+'<p class=\"muted\">" + ajuda + "</p>'" : '');
+blocoAltera('rec--drogaria-servicos-documentos.js', s => {
+  s = trocaEm(s, "question(n,'realiza','O estabelecimento realiza serviços farmacêuticos?',null,true)",
+    "question(n,'realiza','O estabelecimento realiza serviços farmacêuticos?',null,true)" +
+    qD('nao_abrangido', 'A farmácia presta apenas serviços abrangidos pela RDC 44/2009, sem usar dependência como consultório ou para fim diverso do licenciado?', R44(61, 5), 'RDC 44/2009, art. 61, §§ 3º e 5º',
+      'Serviços da RDC 44/2009 (art. 61, §§ 1º e 2º): atenção farmacêutica, inclusive domiciliar; aferição de parâmetros fisiológicos e bioquímicos; administração de medicamentos; perfuração do lóbulo auricular. Procedimentos estéticos, consultas de outras profissões e outros serviços são vedados (§ 5º).'),
+    'drogaria: art. 61 § 5º');
+  s = trocaEm(s, "question(n,'rede_publica','Mantém lista atualizada de estabelecimentos públicos de saúde próximos.',['rdc-44-2009::artigo::62','RDC 44/2009, art. 62'],false)",
+    "question(n,'rede_publica','Mantém lista atualizada de estabelecimentos públicos de saúde próximos.',['rdc-44-2009::artigo::62','RDC 44/2009, art. 62'],false)" +
+    qD('param_conduta', 'Na aferição de parâmetros, havendo discrepância, o usuário é orientado a procurar assistência médica, sem indicação ou alteração de medicamentos pela farmácia?', R44(69, 3), 'RDC 44/2009, art. 69, §§ 3º e 4º') +
+    qD('sigilo', 'Os dados dos usuários e dos serviços prestados recebem tratamento sigiloso, sem uso para propaganda ou indução de consumo?', R44(82), 'RDC 44/2009, art. 82; art. 59, parágrafo único') +
+    qD('farmacovig', 'O farmacêutico notifica às autoridades sanitárias (Notivisa) os eventos adversos e as queixas técnicas?', R44(67), 'RDC 44/2009, art. 67'),
+    'drogaria: serviços — conduta, sigilo, farmacovigilância');
+  s = trocaEm(s, "question(n,'treinamentos','O estabelecimento mantém registros de treinamentos de pessoal conforme RDC 44/2009?',['rdc-44-2009::artigo::28','RDC 44/2009, art. 28'],false)",
+    "question(n,'treinamentos','O estabelecimento mantém registros de treinamentos de pessoal conforme RDC 44/2009?',['rdc-44-2009::artigo::28','RDC 44/2009, art. 28'],false)" +
+    qD('treino_epi', 'Há registro de treinamento inicial e continuado de todo o pessoal (inclusive limpeza) sobre autocuidado, uso e descarte de EPI e conduta em acidentes?', R44(25), 'RDC 44/2009, arts. 25 a 27') +
+    qD('guarda_5anos', 'A documentação é mantida no estabelecimento por, no mínimo, 5 anos, à disposição da vigilância sanitária?', R44(89), 'RDC 44/2009, art. 89'),
+    'drogaria: documentos — EPI, guarda');
+  return trocaEm(s, "['portaria-svs-ms-344-1998::artigo::34-b::paragrafo::1','Portaria 344/98, art. 34-B, § 1º; RDC 44/2009, art. 53'],false):'')",
+    "['portaria-svs-ms-344-1998::artigo::34-b::paragrafo::1','Portaria 344/98, art. 34-B, § 1º; RDC 44/2009, art. 53'],false)" +
+    qD('site_afe', 'O endereço do sítio eletrônico consta da AFE expedida pela Anvisa, e o site não faz propaganda de medicamentos sob prescrição nem usa listas de preços com apelo publicitário?', R44(55), 'RDC 44/2009, arts. 54 e 55') + ":'')",
+    'drogaria: venda remota — site na AFE');
+});
+blocoAltera('rec--drogaria-report-final.js', s => {
+  const L = (k, ph, rf) => "['" + k + "','" + ph + "'," + JSON.stringify(rf).replace(/"/g, "'") + "]";
+  s = trocaEm(s, "const sv=sec(s,'servicos_farmaceuticos'),SA=sv.answers||{};if(yes(SA.realiza)){const SR=[",
+    "const sv=sec(s,'servicos_farmaceuticos'),SA=sv.answers||{};if(no(SA.nao_abrangido))addIssue(out,'final_serv_nao_abrangido',5,'Serviços farmacêuticos','A farmácia presta serviço não abrangido pela RDC 44/2009, ou usa dependência como consultório ou para fim diverso do licenciado.'," +
+    JSON.stringify([R44(61, 5), R44(61, 3)]).replace(/"/g, "'") + ");if(yes(SA.realiza)){const SR=[" +
+    L('param_conduta', 'Na aferição de parâmetros, a farmácia indica ou altera medicamentos com base nos valores encontrados, ou não orienta o usuário a procurar assistência médica.', [R44(69, 3), R44(69, 4)]) + ',' +
+    L('sigilo', 'Os dados dos usuários ou dos serviços prestados não recebem tratamento sigiloso, ou são usados para propaganda ou indução de consumo.', [R44(82), R44(59, 'unico')]) + ',' +
+    L('farmacovig', 'Não há notificação às autoridades sanitárias dos eventos adversos e das queixas técnicas.', [R44(67)]) + ',',
+    'drogaria relatório: serviços novos');
+  s = trocaEm(s, "const ql=sec(s,'documentos_qualidade');",
+    "const ql=sec(s,'documentos_qualidade');if(no(ql.answers?.treino_epi))addIssue(out,'final_q_treino_epi',6,'8.1 Documentos de qualidade','Não há registro de treinamento do pessoal sobre autocuidado, uso e descarte de EPI e conduta em acidentes.'," +
+    JSON.stringify([R44(25), R44(26), R44(27)]).replace(/"/g, "'") + ");if(no(ql.answers?.guarda_5anos))addIssue(out,'final_q_guarda',6,'8.1 Documentos de qualidade','A documentação não é mantida no estabelecimento pelo prazo mínimo de 5 anos.'," +
+    JSON.stringify([R44(89)]).replace(/"/g, "'") + ");", 'drogaria relatório: EPI, guarda');
+  s = trocaEm(s, "const rm=sec(s,'documentos_remota');",
+    "const rm=sec(s,'documentos_remota');if(no(rm.answers?.site_afe))addIssue(out,'final_remota_site_afe',6,'8.3 Solicitação remota','O endereço do sítio eletrônico não consta da Autorização de Funcionamento, ou o site faz propaganda de medicamentos sob prescrição ou usa listas de preços com apelo publicitário.'," +
+    JSON.stringify([R44(55), R44(54)]).replace(/"/g, "'") + ");", 'drogaria relatório: site na AFE');
+  return trocaEm(s, "['rede_publica','Mantém lista atualizada de estabelecimentos públicos de saúde próximos.','Não mantém lista atualizada de estabelecimentos públicos de saúde próximos.'],",
+    "['rede_publica','Mantém lista atualizada de estabelecimentos públicos de saúde próximos.','Não mantém lista atualizada de estabelecimentos públicos de saúde próximos.']," +
+    "['nao_abrangido','Presta apenas serviços abrangidos pela RDC 44/2009.','Presta serviço não abrangido pela RDC 44/2009 ou usa dependência para fim diverso do licenciado.']," +
+    "['param_conduta','Na aferição de parâmetros, havendo discrepância, orienta o usuário a procurar assistência médica.','Na aferição de parâmetros, indica ou altera medicamentos, ou não orienta a procura de assistência médica.']," +
+    "['sigilo','Os dados dos usuários recebem tratamento sigiloso.','Os dados dos usuários não recebem tratamento sigiloso.']," +
+    "['farmacovig','Notifica eventos adversos e queixas técnicas às autoridades sanitárias.','Não notifica eventos adversos e queixas técnicas às autoridades sanitárias.'],",
+    'drogaria relatório: narrativa dos serviços');
+});
+
 /* 8. Versão. */
 trocaRx(/const APP_VERSAO = '[^']+';/, `const APP_VERSAO = '${VERSAO}';`, 'APP_VERSAO');
 trocaRx(/<span id="casca-versao">v[^ <]+/, `<span id="casca-versao">v${VERSAO}`, 'versão rodapé');

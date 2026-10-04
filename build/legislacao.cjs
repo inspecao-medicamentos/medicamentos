@@ -21,7 +21,8 @@ const NOMES = {
   'rdc-978-2025': 'RDC Anvisa nº 978/2025', 'rdc-44-2009': 'RDC Anvisa nº 44/2009', 'rdc-197-2017': 'RDC Anvisa nº 197/2017',
   'rdc-222-2018': 'RDC Anvisa nº 222/2018', 'rdc-430-2020': 'RDC Anvisa nº 430/2020', 'rdc-67-2007': 'RDC Anvisa nº 67/2007',
   'rdc-887-2024': 'RDC Anvisa nº 887/2024', 'rdc-870-2024': 'RDC Anvisa nº 870/2024', 'lei-5991-1973': 'Lei Federal nº 5.991/1973',
-  'lei-municipal-13725-2004': 'Lei Municipal nº 13.725/2004', 'rdc-63-2011': 'RDC Anvisa nº 63/2011'
+  'lei-municipal-13725-2004': 'Lei Municipal nº 13.725/2004', 'rdc-63-2011': 'RDC Anvisa nº 63/2011',
+  'lei-municipal-sp-13478-2002': 'Lei Municipal nº 13.478/2002'
 };
 const ROMANO = s => /^[ivxlcdm]+$/i.test(s) ? s.toUpperCase() : s;
 const ORD = n => /^\d$/.test(n) ? n + 'º' : n;
@@ -119,7 +120,9 @@ for (const id of [...refs].sort()) {
     saida[id] = {...base, texto: m.texto, url: m.url};
     continue;
   }
-  const nm = norma(chave), n = nm && (nm.porId.get(id) || alineaSolta(nm, id));
+  /* dispositivo com nova redação: o banco guarda as versões como “::ocorrencia-N”; vale a mais recente */
+  const nm = norma(chave), ult = nm && [...Array(9).keys()].reverse().map(i => nm.porId.get(id + '::ocorrencia-' + (i + 2))).find(x => x && !/\.{8,}/.test(x.texto || '') && /[a-zà-ú]{4,}/i.test(x.texto || ''));
+  const n = nm && (ult || nm.porId.get(id) || alineaSolta(nm, id));
   if (!n) { faltam.push(id); continue; }
   saida[id] = {...base, texto: textoCompleto(nm, n), url: nm.url};
 }

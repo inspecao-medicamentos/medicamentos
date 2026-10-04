@@ -1,6 +1,6 @@
 {
-  "versao": "20261001-24",
+  "versao": "20261001-25",
   "banco": "13.1",
   "correcoes": 1,
-  "notas": "EAC revisado: respostas Sim / Não / Não se aplica; busca dos dados na Anvisa pelo CNPJ e leitura da certidão do CRF; pergunta de licença inicial (Não se aplica automático) e licença da farmácia/drogaria; DML e sanitário com detalhe; imunização (RDC 63/2011, art. 43) e ASO (art. 44); frase própria para o que não se aplica; relatório em preto e branco. Citações de inciso e parágrafo trazem o caput do artigo. Manipulação e Atacadista: anotação sai como frase, sem parênteses."
+  "notas": "Drogaria: novas perguntas para autuar — serviço não abrangido pela RDC 44/2009 (art. 61, § 5º), conduta na aferição de parâmetros, sigilo, notificação de eventos adversos, treinamento sobre EPI, guarda de documentos por 5 anos, site na AFE, receita, medicamentos fora do alcance do usuário, MIP por princípio ativo e embalagem violada. EAC: licença do EAC (CEVS próprio) reescrita, RT e supervisor numa só pergunta, novo item 3.3 Limpeza e resíduos (coletores, armazenamento, manejo, abrigo, SP Regula), PGRSS com checklist do conteúdo e relações de procedimentos, inventário e equipe separadas."
 }

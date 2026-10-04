@@ -29,6 +29,18 @@
   "texto": "Art. 90 Todos os estabelecimentos de interesse da saúde e os estabelecimentos comerciais, de produção, embalagem e manipulação de produtos e substâncias de interesse da saúde, antes de iniciarem suas atividades, devem encaminhar à autoridade sanitária declaração de que suas atividades, instalações, equipamentos e recursos humanos obedecem à legislação sanitária vigente, para fins de obtenção do Cadastro Municipal de Vigilância em Saúde.\n§ 1º\nOs estabelecimentos devem comunicar à autoridade sanitária competente as modificações nas instalações e equipamentos, bem como a inclusão de atividades e quaisquer outras alterações que repercutam na identidade, qualidade e segurança dos produtos ou serviços oferecidos à população.",
   "url": "https://legislacao.prefeitura.sp.gov.br/lei-13725-de-09-de-janeiro-de-2004"
  },
+ "lei-municipal-sp-13478-2002::artigo::144": {
+  "norma": "Lei Municipal nº 13.478/2002",
+  "disp": "art. 144",
+  "texto": "Art. 144 – Os estabelecimentos geradores de resíduos sólidos de serviços de saúde, definidos no artigo 97 desta lei, deverão se cadastrar e manter cadastros atualizados junto à Autoridade Municipal de Limpeza Urbana – AMLURB, conforme dispuser a regulamentação específica.(Redação dada pela Lei nº 13.522/2003 )",
+  "url": "https://legislacao.prefeitura.sp.gov.br/lei-13478-de-30-de-dezembro-de-2002"
+ },
+ "lei-municipal-sp-13478-2002::artigo::145": {
+  "norma": "Lei Municipal nº 13.478/2002",
+  "disp": "art. 145",
+  "texto": "Art. 145 - Os resíduos sólidos de serviços de saúde deverão ser obrigatoriamente segregados na origem e tratados em sistemas cadastrados, controlados e fiscalizados pela Autoridade Municipal de Limpeza Urbana - AMLURB antes de sua disposição final.\nParágrafo único - O controle e fiscalização mencionados no \"caput\" deste artigo não eximirá o gerador da responsabilidade pelo cumprimento das leis e normas específicas que regulam a atividade.",
+  "url": "https://legislacao.prefeitura.sp.gov.br/lei-13478-de-30-de-dezembro-de-2002"
+ },
  "rdc-197-2017::artigo::10": {
   "norma": "RDC Anvisa nº 197/2017",
   "disp": "art. 10",
@@ -316,6 +328,96 @@
   "disp": "art. 9º, parágrafo único",
   "texto": "Art. 9º Os profissionais envolvidos nos processos de vacinação devem ser periodicamente capacitados pelo serviço nos seguintes temas relacionados à vacina:\nParágrafo único. As capacitações devem ser registradas contendo data, horário, carga horária, conteúdo ministrado, nome e a formação ou capacitação profissional do instrutor e dos profissionais envolvidos nos processos de vacinação.",
   "url": "https://anvisalegis.datalegis.net/action/ActionDatalegis.php?acao=abrirTextoAto&cod_menu=8542&cod_modulo=310&link=S&numeroAto=00000197&orgao=RDC%2FDC%2FANVISA%2FMS&seqAto=000&tipo=RDC&valorAno=2017"
+ },
+ "rdc-222-2018::artigo::11": {
+  "norma": "RDC Anvisa nº 222/2018",
+  "disp": "art. 11",
+  "texto": "Art. 11 Os RSS devem ser segregados no momento de sua geração, conforme classificação por Grupos constante no Anexo I desta Resolução, em função do risco presente.",
+  "url": "https://anvisalegis.datalegis.net/action/ActionDatalegis.php?acao=abrirTextoAto&cod_menu=8542&cod_modulo=310&link=S&numeroAto=00000222&orgao=RDC%2FDC%2FANVISA%2FMS&seqAto=000&tipo=RDC&valorAno=2018"
+ },
+ "rdc-222-2018::artigo::13": {
+  "norma": "RDC Anvisa nº 222/2018",
+  "disp": "art. 13",
+  "texto": "Art. 13 Os RSS no estado sólido, quando não houver orientação específica, devem ser acondicionados em saco constituído de material resistente a ruptura, vazamento e impermeável.\n§ 1º Devem ser respeitados os limites de peso de cada saco, assim como o limite de 2/3 (dois terços) de sua capacidade, garantindo-se sua integridade e fechamento.\n§ 2º É proibido o esvaziamento ou reaproveitamento dos sacos.",
+  "url": "https://anvisalegis.datalegis.net/action/ActionDatalegis.php?acao=abrirTextoAto&cod_menu=8542&cod_modulo=310&link=S&numeroAto=00000222&orgao=RDC%2FDC%2FANVISA%2FMS&seqAto=000&tipo=RDC&valorAno=2018"
+ },
+ "rdc-222-2018::artigo::13::paragrafo::1": {
+  "norma": "RDC Anvisa nº 222/2018",
+  "disp": "art. 13, § 1º",
+  "texto": "Art. 13 Os RSS no estado sólido, quando não houver orientação específica, devem ser acondicionados em saco constituído de material resistente a ruptura, vazamento e impermeável.\n§ 1º Devem ser respeitados os limites de peso de cada saco, assim como o limite de 2/3 (dois terços) de sua capacidade, garantindo-se sua integridade e fechamento.",
+  "url": "https://anvisalegis.datalegis.net/action/ActionDatalegis.php?acao=abrirTextoAto&cod_menu=8542&cod_modulo=310&link=S&numeroAto=00000222&orgao=RDC%2FDC%2FANVISA%2FMS&seqAto=000&tipo=RDC&valorAno=2018"
+ },
+ "rdc-222-2018::artigo::13::paragrafo::2": {
+  "norma": "RDC Anvisa nº 222/2018",
+  "disp": "art. 13, § 2º",
+  "texto": "Art. 13 Os RSS no estado sólido, quando não houver orientação específica, devem ser acondicionados em saco constituído de material resistente a ruptura, vazamento e impermeável.\n§ 2º É proibido o esvaziamento ou reaproveitamento dos sacos.",
+  "url": "https://anvisalegis.datalegis.net/action/ActionDatalegis.php?acao=abrirTextoAto&cod_menu=8542&cod_modulo=310&link=S&numeroAto=00000222&orgao=RDC%2FDC%2FANVISA%2FMS&seqAto=000&tipo=RDC&valorAno=2018"
+ },
+ "rdc-222-2018::artigo::14": {
+  "norma": "RDC Anvisa nº 222/2018",
+  "disp": "art. 14",
+  "texto": "Art. 14 Os sacos para acondicionamento de RSS do grupo A devem ser substituídos ao atingirem o limite de 2/3 (dois terços) de sua capacidade ou então a cada 48 (quarenta e oito) horas, independentemente do volume, visando o conforto ambiental e a segurança dos usuários e profissionais.\nParágrafo único. Os sacos contendo RSS do grupo A de fácil putrefação devem ser substituídos no máximo a cada 24 (vinte e quatro) horas, independentemente do volume.",
+  "url": "https://anvisalegis.datalegis.net/action/ActionDatalegis.php?acao=abrirTextoAto&cod_menu=8542&cod_modulo=310&link=S&numeroAto=00000222&orgao=RDC%2FDC%2FANVISA%2FMS&seqAto=000&tipo=RDC&valorAno=2018"
+ },
+ "rdc-222-2018::artigo::17": {
+  "norma": "RDC Anvisa nº 222/2018",
+  "disp": "art. 17",
+  "texto": "Art. 17 O coletor do saco para acondicionamento dos RSS deve ser de material liso, lavável, resistente à punctura, ruptura, vazamento e tombamento, com tampa provida de sistema de abertura sem contato manual, com cantos arredondados.\n§ 1º O coletor não necessitará de tampa para fechamento sempre que ocorrer a substituição imediata do saco para acondicionamento após a realização de cada procedimento.\n§ 2º Após sua substituição, o saco para acondicionamento usado deve ser fechado e transferido para o carro de coleta.",
+  "url": "https://anvisalegis.datalegis.net/action/ActionDatalegis.php?acao=abrirTextoAto&cod_menu=8542&cod_modulo=310&link=S&numeroAto=00000222&orgao=RDC%2FDC%2FANVISA%2FMS&seqAto=000&tipo=RDC&valorAno=2018"
+ },
+ "rdc-222-2018::artigo::17::paragrafo::1": {
+  "norma": "RDC Anvisa nº 222/2018",
+  "disp": "art. 17, § 1º",
+  "texto": "Art. 17 O coletor do saco para acondicionamento dos RSS deve ser de material liso, lavável, resistente à punctura, ruptura, vazamento e tombamento, com tampa provida de sistema de abertura sem contato manual, com cantos arredondados.\n§ 1º O coletor não necessitará de tampa para fechamento sempre que ocorrer a substituição imediata do saco para acondicionamento após a realização de cada procedimento.",
+  "url": "https://anvisalegis.datalegis.net/action/ActionDatalegis.php?acao=abrirTextoAto&cod_menu=8542&cod_modulo=310&link=S&numeroAto=00000222&orgao=RDC%2FDC%2FANVISA%2FMS&seqAto=000&tipo=RDC&valorAno=2018"
+ },
+ "rdc-222-2018::artigo::34": {
+  "norma": "RDC Anvisa nº 222/2018",
+  "disp": "art. 34",
+  "texto": "Art. 34 O abrigo externo deve ter, no mínimo, um ambiente para armazenar os coletores dos RSS do Grupo A, podendo também conter os RSS do grupo E, e outro ambiente exclusivo para armazenar os coletores de RSS do grupo D.",
+  "url": "https://anvisalegis.datalegis.net/action/ActionDatalegis.php?acao=abrirTextoAto&cod_menu=8542&cod_modulo=310&link=S&numeroAto=00000222&orgao=RDC%2FDC%2FANVISA%2FMS&seqAto=000&tipo=RDC&valorAno=2018"
+ },
+ "rdc-222-2018::artigo::35": {
+  "norma": "RDC Anvisa nº 222/2018",
+  "disp": "art. 35",
+  "texto": "Art. 35 O abrigo externo deve:\nI - permitir fácil acesso às operações do transporte interno;\nII - permitir fácil acesso aos veículos de coleta externa;\nIII - ser dimensionado com capacidade de armazenagem mínima equivalente à ausência de uma coleta regular, obedecendo à frequência de coleta de cada grupo de RSS;\nIV - ser construído com piso, paredes e teto de material resistente, lavável e de fácil higienização, com aberturas para ventilação e com tela de proteção contra acesso de vetores;\nV - ser identificado conforme os Grupos de RSS armazenados;\nVI - ser de acesso restrito às pessoas envolvidas no manejo de RSS;\nVII - possuir porta com abertura para fora, provida de proteção inferior contra roedores e vetores, com dimensões compatíveis com as dos coletores utilizados;\nVIII - ter ponto de iluminação;\nIX - possuir canaletas para o escoamento dos efluentes de lavagem, direcionadas para a rede de esgoto, com ralo sifonado com tampa;\nX - possuir área coberta para pesagem dos RSS, quando couber;\nXI - possuir área coberta, com ponto de saída de água, para higienização e limpeza dos coletores utilizados.",
+  "url": "https://anvisalegis.datalegis.net/action/ActionDatalegis.php?acao=abrirTextoAto&cod_menu=8542&cod_modulo=310&link=S&numeroAto=00000222&orgao=RDC%2FDC%2FANVISA%2FMS&seqAto=000&tipo=RDC&valorAno=2018"
+ },
+ "rdc-222-2018::artigo::37": {
+  "norma": "RDC Anvisa nº 222/2018",
+  "disp": "art. 37",
+  "texto": "Art. 37 É proibido o armazenamento dos coletores em uso fora de abrigos.\nParágrafo Único. O armazenamento interno de RSS químico ou rejeito radioativo pode ser feito no local de trabalho onde foram gerados.",
+  "url": "https://anvisalegis.datalegis.net/action/ActionDatalegis.php?acao=abrirTextoAto&cod_menu=8542&cod_modulo=310&link=S&numeroAto=00000222&orgao=RDC%2FDC%2FANVISA%2FMS&seqAto=000&tipo=RDC&valorAno=2018"
+ },
+ "rdc-222-2018::artigo::5": {
+  "norma": "RDC Anvisa nº 222/2018",
+  "disp": "art. 5º",
+  "texto": "Art. 5º Todo serviço gerador deve dispor de um Plano de Gerenciamento de RSS (PGRSS), observando as regulamentações federais, estaduais, municipais ou do Distrito Federal.\n§ 1º Para obtenção da licença sanitária, caso o serviço gere exclusivamente resíduos do Grupo D, o PGRSS pode ser substituído por uma notificação desta condição ao órgão de vigilância sanitária competente, seguindo as orientações locais.\n§ 2º Caso o serviço gerador possua instalação radiativa, adicionalmente, deve atender às regulamentações específicas da CNEN.\n§ 3º Os novos geradores de resíduos terão prazo de 180 (cento e oitenta) dias, a partir do início do funcionamento, para apresentar o PGRSS.",
+  "url": "https://anvisalegis.datalegis.net/action/ActionDatalegis.php?acao=abrirTextoAto&cod_menu=8542&cod_modulo=310&link=S&numeroAto=00000222&orgao=RDC%2FDC%2FANVISA%2FMS&seqAto=000&tipo=RDC&valorAno=2018"
+ },
+ "rdc-222-2018::artigo::6": {
+  "norma": "RDC Anvisa nº 222/2018",
+  "disp": "art. 6º",
+  "texto": "Art. 6º No PGRSS, o gerador de RSS deve:\nI - estimar a quantidade dos RSS gerados por grupos, conforme a classificação do Anexo I desta resolução;\nII - descrever os procedimentos relacionados ao gerenciamento dos RSS quanto à geração, à segregação, ao acondicionamento, à identificação, à coleta, ao armazenamento, ao transporte, ao tratamento e à disposição final ambientalmente adequada;\nIII - estar em conformidade com as ações de proteção à saúde pública, do trabalhador e do meio ambiente;\nIV - estar em conformidade com a regulamentação sanitária e ambiental, bem como com as normas de coleta e transporte dos serviços locais de limpeza urbana;\nV - quando aplicável, contemplar os procedimentos locais definidos pelo processo de logística reversa para os diversos RSS;\nVI - estar em conformidade com as rotinas e processos de higienização e limpeza vigentes no serviço gerador de RSS;\nVII - descrever as ações a serem adotadas em situações de emergência e acidentes decorrentes do gerenciamento dos RSS;\nVIII - descrever as medidas preventivas e corretivas de controle integrado de vetores e pragas urbanas, incluindo a tecnologia utilizada e a periodicidade de sua implantação;\nIX - descrever os programas de capacitação desenvolvidos e implantados pelo serviço gerador abrangendo todas as unidades geradoras de RSS e o setor de limpeza e conservação;\nX - apresentar documento comprobatório da capacitação e treinamento dos funcionários envolvidos na prestação de serviço de limpeza e conservação que atuem no serviço, próprios ou terceiros de todas as unidades geradoras;\nXI - apresentar cópia do contrato de prestação de serviços e da licença ambiental das empresas prestadoras de serviços para a destinação dos RSS; e\nXII - apresentar documento comprobatório de operação de venda ou de doação dos RSS destinados à recuperação, à reciclagem, à compostagem e à logística reversa.\nParágrafo único. Os documentos referidos nos incisos X e XII devem ser mantidos arquivados, em meio físico ou eletrônico, por no mínimo cinco anos, para fins de inspeção sanitária, a critério da autoridade sanitária competente.",
+  "url": "https://anvisalegis.datalegis.net/action/ActionDatalegis.php?acao=abrirTextoAto&cod_menu=8542&cod_modulo=310&link=S&numeroAto=00000222&orgao=RDC%2FDC%2FANVISA%2FMS&seqAto=000&tipo=RDC&valorAno=2018"
+ },
+ "rdc-222-2018::artigo::6::inciso::iv": {
+  "norma": "RDC Anvisa nº 222/2018",
+  "disp": "art. 6º, IV",
+  "texto": "Art. 6º No PGRSS, o gerador de RSS deve:\nIV - estar em conformidade com a regulamentação sanitária e ambiental, bem como com as normas de coleta e transporte dos serviços locais de limpeza urbana;",
+  "url": "https://anvisalegis.datalegis.net/action/ActionDatalegis.php?acao=abrirTextoAto&cod_menu=8542&cod_modulo=310&link=S&numeroAto=00000222&orgao=RDC%2FDC%2FANVISA%2FMS&seqAto=000&tipo=RDC&valorAno=2018"
+ },
+ "rdc-222-2018::artigo::86": {
+  "norma": "RDC Anvisa nº 222/2018",
+  "disp": "art. 86",
+  "texto": "Art. 86 Os materiais perfurocortantes devem ser descartados em recipientes identificados, rígidos, providos com tampa, resistentes à punctura, ruptura e vazamento.",
+  "url": "https://anvisalegis.datalegis.net/action/ActionDatalegis.php?acao=abrirTextoAto&cod_menu=8542&cod_modulo=310&link=S&numeroAto=00000222&orgao=RDC%2FDC%2FANVISA%2FMS&seqAto=000&tipo=RDC&valorAno=2018"
+ },
+ "rdc-222-2018::artigo::87": {
+  "norma": "RDC Anvisa nº 222/2018",
+  "disp": "art. 87",
+  "texto": "Art. 87 Os recipientes de acondicionamento dos RSS do Grupo E devem ser substituídos de acordo com a demanda ou quando o nível de preenchimento atingir 3/4 (três quartos) da capacidade ou de acordo com as instruções do fabricante, sendo proibidos seu esvaziamento manual e seu reaproveitamento.\nParágrafo único. Admite-se o emprego de tecnologia que promova o esvaziamento automatizado de recipientes plásticos específicos com posterior descontaminação, possibilitando sua reutilização.",
+  "url": "https://anvisalegis.datalegis.net/action/ActionDatalegis.php?acao=abrirTextoAto&cod_menu=8542&cod_modulo=310&link=S&numeroAto=00000222&orgao=RDC%2FDC%2FANVISA%2FMS&seqAto=000&tipo=RDC&valorAno=2018"
  },
  "rdc-63-2011::artigo::43": {
   "norma": "RDC Anvisa nº 63/2011",
@@ -1157,6 +1259,18 @@
   "texto": "Art. 113. A limpeza do ambiente onde é realizado o EAC deve ter sua execução registrada, diariamente, no início e no término do horário de funcionamento.\n§ 1º Todos os ambientes relacionados à execução de EAC devem estar limpos antes de todos os atendimentos.\n§ 2º Após a prestação de cada atividade deve ser verificada a necessidade de realizar novo procedimento de limpeza.",
   "url": "https://anvisalegis.datalegis.net/action/ActionDatalegis.php?acao=abrirTextoAto&cod_menu=8542&cod_modulo=310&link=S&numeroAto=00000978&orgao=RDC%2FDC%2FANVISA%2FMS&seqAto=000&tipo=RDC&valorAno=2025"
  },
+ "rdc-978-2025::artigo::113::paragrafo::1": {
+  "norma": "RDC Anvisa nº 978/2025",
+  "disp": "art. 113, § 1º",
+  "texto": "Art. 113. A limpeza do ambiente onde é realizado o EAC deve ter sua execução registrada, diariamente, no início e no término do horário de funcionamento.\n§ 1º Todos os ambientes relacionados à execução de EAC devem estar limpos antes de todos os atendimentos.",
+  "url": "https://anvisalegis.datalegis.net/action/ActionDatalegis.php?acao=abrirTextoAto&cod_menu=8542&cod_modulo=310&link=S&numeroAto=00000978&orgao=RDC%2FDC%2FANVISA%2FMS&seqAto=000&tipo=RDC&valorAno=2025"
+ },
+ "rdc-978-2025::artigo::113::paragrafo::2": {
+  "norma": "RDC Anvisa nº 978/2025",
+  "disp": "art. 113, § 2º",
+  "texto": "Art. 113. A limpeza do ambiente onde é realizado o EAC deve ter sua execução registrada, diariamente, no início e no término do horário de funcionamento.\n§ 2º Após a prestação de cada atividade deve ser verificada a necessidade de realizar novo procedimento de limpeza.",
+  "url": "https://anvisalegis.datalegis.net/action/ActionDatalegis.php?acao=abrirTextoAto&cod_menu=8542&cod_modulo=310&link=S&numeroAto=00000978&orgao=RDC%2FDC%2FANVISA%2FMS&seqAto=000&tipo=RDC&valorAno=2025"
+ },
  "rdc-978-2025::artigo::114": {
   "norma": "RDC Anvisa nº 978/2025",
   "disp": "art. 114",
@@ -1209,6 +1323,12 @@
   "norma": "RDC Anvisa nº 978/2025",
   "disp": "art. 122",
   "texto": "Art. 122. O Serviço que executa as atividades relacionadas ao EAC deve possuir um profissional legalmente habilitado como supervisor do pessoal técnico, presencialmente, durante seu período de funcionamento.\n§ 1º O supervisor do pessoal técnico poderá ser o Responsável Técnico.\n§ 2º O Serviço que executa as atividades relacionadas ao EAC pode possuir um ou mais supervisores do pessoal técnico.\n§ 3º Em caso de impedimento do supervisor do pessoal técnico, o Serviço que executa as atividades relacionadas ao EAC deve contar com um profissional legalmente habilitado para substituí-lo.",
+  "url": "https://anvisalegis.datalegis.net/action/ActionDatalegis.php?acao=abrirTextoAto&cod_menu=8542&cod_modulo=310&link=S&numeroAto=00000978&orgao=RDC%2FDC%2FANVISA%2FMS&seqAto=000&tipo=RDC&valorAno=2025"
+ },
+ "rdc-978-2025::artigo::122::paragrafo::1": {
+  "norma": "RDC Anvisa nº 978/2025",
+  "disp": "art. 122, § 1º",
+  "texto": "Art. 122. O Serviço que executa as atividades relacionadas ao EAC deve possuir um profissional legalmente habilitado como supervisor do pessoal técnico, presencialmente, durante seu período de funcionamento.\n§ 1º O supervisor do pessoal técnico poderá ser o Responsável Técnico.",
   "url": "https://anvisalegis.datalegis.net/action/ActionDatalegis.php?acao=abrirTextoAto&cod_menu=8542&cod_modulo=310&link=S&numeroAto=00000978&orgao=RDC%2FDC%2FANVISA%2FMS&seqAto=000&tipo=RDC&valorAno=2025"
  },
  "rdc-978-2025::artigo::122::paragrafo::3": {
