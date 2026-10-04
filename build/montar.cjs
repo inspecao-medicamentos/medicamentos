@@ -688,6 +688,35 @@ blocoAltera('rec--drogaria-report-final.js', s => {
     'drogaria relatório: narrativa dos serviços');
 });
 
+/* 7v. Drogaria — Lei Municipal 13.725/2004, art. 90 (Cadastro Municipal de
+   Vigilância em Saúde antes de iniciar a atividade) e § 1º (comunicar inclusão
+   de atividades e alterações) nas infrações de licença. Texto do site oficial
+   da Prefeitura (legislacao.prefeitura.sp.gov.br), consultado em 04/10/2026; o
+   banco embutido da drogaria só trazia os arts. 46 e 50. */
+const LM = p => 'lei-municipal-13725-2004::artigo::90' + (p ? '::paragrafo::' + p : '');
+blocoAltera('app--drogaria', s => catalogoDrogaria(s, visa => {
+  const cat = visa['roteiros/drogaria.json'], lm = visa['legislacao_v12/normas/lei-municipal-13725-2004.json'];
+  const base = cat.referencias['lei-municipal-13725-2004::artigo::46'];
+  const nos = [
+    [LM(), 'artigo', '90', 'Art. 90', 'Todos os estabelecimentos de interesse da saúde e os estabelecimentos comerciais, de produção, embalagem e manipulação de produtos e substâncias de interesse da saúde, antes de iniciarem suas atividades, devem encaminhar à autoridade sanitária declaração de que suas atividades, instalações, equipamentos e recursos humanos obedecem à legislação sanitária vigente, para fins de obtenção do Cadastro Municipal de Vigilância em Saúde.'],
+    [LM(1), 'paragrafo', '1', '§ 1º do art. 90', 'Os estabelecimentos devem comunicar à autoridade sanitária competente as modificações nas instalações e equipamentos, bem como a inclusão de atividades e quaisquer outras alterações que repercutam na identidade, qualidade e segurança dos produtos ou serviços oferecidos à população.']];
+  for (const [id, tipo, numero, rotulo, texto] of nos) {
+    if (!lm.nos.some(n => n.id === id)) lm.nos.push({id, norma: lm.norma, anexo: null, tipo, numero, rotulo, texto, ordem: 0, estrutural: false, status_vigencia: 'vigente'});
+    cat.referencias[id] ??= {...base, id, dispositivo: tipo === 'artigo' ? 'Art. 90' : 'Art. 90, § 1º'};
+  }
+  const q = cat.perguntas.find(x => x.id === 'doc_lfs');
+  if (q && !q.refs.includes(LM())) { q.refs.push(LM()); q.norma.push('Lei Municipal 13.725/2004'); q.dispositivo.push('Art. 90'); }
+}));
+blocoAltera('rec--drogaria-report-final.js', s => {
+  const troca = (de, rotulo) => { s = trocaEm(s, de, de.replace(/\]\);$/, ",'" + LM() + "','" + LM(1) + "']);"), rotulo); };
+  troca("'Os dados e atividades observados não correspondem à licença sanitária.',[\"rdc-44-2009::artigo::90\"]);".replace(/\]\);$/, ']);'), 'drogaria: lic_match + Lei 13.725');
+  troca("['rdc-44-2009::artigo::61::paragrafo::3','rdc-197-2017::artigo::4']);", 'drogaria: vacinação sem licença + Lei 13.725');
+  troca("['rdc-44-2009::artigo::61::paragrafo::3','rdc-978-2025::artigo::63']);", 'drogaria: EAC sem licença + Lei 13.725');
+  troca("'A solicitação remota para dispensação não consta da licença sanitária do estabelecimento.',['rdc-44-2009::artigo::52','rdc-44-2009::artigo::61::paragrafo::3']);", 'drogaria: remota sem licença + Lei 13.725');
+  return trocaEm(s, "['licenca','Os serviços farmacêuticos prestados não estão indicados na licença sanitária.',['rdc-44-2009::artigo::61::paragrafo::3']]",
+    "['licenca','Os serviços farmacêuticos prestados não estão indicados na licença sanitária.',['rdc-44-2009::artigo::61::paragrafo::3','" + LM(1) + "']]", 'drogaria: serviços sem licença + Lei 13.725');
+});
+
 /* 8. Versão. */
 trocaRx(/const APP_VERSAO = '[^']+';/, `const APP_VERSAO = '${VERSAO}';`, 'APP_VERSAO');
 trocaRx(/<span id="casca-versao">v[^ <]+/, `<span id="casca-versao">v${VERSAO}`, 'versão rodapé');
