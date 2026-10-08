@@ -364,6 +364,14 @@
   if(t.matches('[data-rs-inf]')){ st.inf[t.dataset.rsInf] = t.checked; if(!t.checked) delete st.inf[t.dataset.rsInf]; salva(); UvisPadrao.atualiza(); return; }
   if(t.matches('[data-rs-concl]')){ var r = document.querySelector('.rs-relatorio'); if(r) abaRelatorio(document.getElementById('pu-aba')); } });
 
+ /* ---------- apagar dados da inspeção (tela inicial do roteiro) ----------
+    Apaga a inspeção em andamento; as inspeções guardadas em Salvas ficam. */
+ document.addEventListener('click', function(e){ var b = e.target.closest && e.target.closest('[data-rs-apagar]'); if(!b) return; e.preventDefault();
+  if(!confirm('Apagar todos os dados desta inspeção?\n\nRespostas, anotações e fotos serão apagadas deste aparelho. As inspeções guardadas em Salvas não são afetadas. Não há como desfazer.')) return;
+  var fim = function(){ st = novo(); try { localStorage.removeItem(STORE); } catch(err){} UvisPadrao.vai({aba: 'roteiro', secao: null, item: null}); aviso('Dados da inspeção apagados.'); };
+  var S = null; try { S = parent !== window && parent.UvisSalvas; } catch(err){}
+  if(S && S.novaInspecao && D.app) Promise.resolve(S.novaInspecao(D.app)).catch(function(){}).then(fim); else fim(); });
+
  /* ---------- montagem ---------- */
  function inicia(){
   var raiz = document.createElement('div'); raiz.id = 'pu-raiz'; document.body.insertBefore(raiz, document.body.firstChild);
@@ -374,6 +382,8 @@
    item: function(s, it, el){ var S = D.secoes.filter(function(x){ return x.id === s.id; })[0], I = S.itens.filter(function(x){ return x.id === it.id; })[0]; desenhaItem(S, I, el); },
    aba: function(id, el){ if(id === 'infracoes') abaInfracoes(el); else if(id === 'relatorio') abaRelatorio(el); },
    contagem: function(id){ return id === 'roteiro' ? nNC() : id === 'infracoes' ? D.infracoes.filter(function(i){ return st.inf[i.id]; }).length : 0; },
+   depois: function(nav){ if(nav.aba !== 'roteiro' || nav.secao) return; var g = document.querySelector('.pu-secoes-grade'); if(!g || g.querySelector('[data-rs-apagar]')) return;
+    var z = document.createElement('div'); z.className = 'rs-apagar'; z.innerHTML = '<div class="rs-apagar-txt"><strong>Apagar dados da inspeção</strong><span>Remove todas as respostas, anotações, fotos e dados desta inspeção salvos neste aparelho. Não há como desfazer; para guardar, use antes o botão Salvas.</span></div><button type="button" class="rs-apagar-btn" data-rs-apagar><span aria-hidden="true">🗑</span> Apagar dados</button>'; g.appendChild(z); },
    limpar: function(s, it){ var S = D.secoes.filter(function(x){ return x.id === s.id; })[0];
     (it ? S.itens.filter(function(x){ return x.id === it.id; }) : S.itens).forEach(function(I){ (I.campos || []).forEach(function(c){ delete st.meta[c.id]; }); (I.perguntas || []).forEach(function(q){ delete st.r[q.id]; delete st.sit[q.id]; delete st.fotos[q.id]; }); });
     salva(); }

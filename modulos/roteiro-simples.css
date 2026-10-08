@@ -71,3 +71,11 @@
 .rs-sub legend{font-size:.8rem;font-weight:700;color:#4f6270;padding:0 4px}
 .rs-relatorio.rs-pb .rs-r-tit,.rs-relatorio.rs-pb .rs-r-sub,.rs-relatorio.rs-pb .rs-r-h1,.rs-relatorio.rs-pb .rs-r-h2,.rs-relatorio.rs-pb p,.rs-relatorio.rs-pb td,.rs-relatorio.rs-pb th{color:#000!important;background:none!important;border-bottom-color:transparent}
 .rs-relatorio.rs-pb .rs-r-tab th,.rs-relatorio.rs-pb .rs-r-tab td{border:1px solid #000!important}
+
+/* Apagar dados da inspeção (tela inicial do roteiro) — mesmo visual da Drogaria */
+.rs-apagar{grid-column:1/-1;margin-top:14px;padding:14px;border:1px dashed #d9a39e;border-radius:14px;background:#fffaf9;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px;text-align:left}
+.rs-apagar-txt{flex:1 1 240px;display:flex;flex-direction:column;gap:4px;min-width:0}
+.rs-apagar-txt strong{color:#8b2f2a;font-size:.92rem}
+.rs-apagar-txt span{color:#6b5a58;font-size:.76rem;line-height:1.35}
+.pu-secoes-grade .rs-apagar .rs-apagar-btn{flex:0 0 auto;display:inline-flex;align-items:center;justify-content:center;gap:6px;width:auto!important;min-width:0!important;min-height:42px!important;height:auto!important;padding:9px 14px!important;border:1.5px solid #b9544d!important;border-radius:10px!important;background:#fff!important;color:#8b2f2a!important;box-shadow:none!important;font:inherit;font-size:.82rem!important;font-weight:800!important;text-align:center!important;cursor:pointer;white-space:nowrap}
+.pu-secoes-grade .rs-apagar .rs-apagar-btn:hover,.pu-secoes-grade .rs-apagar .rs-apagar-btn:focus-visible{background:#b9544d!important;color:#fff!important}
