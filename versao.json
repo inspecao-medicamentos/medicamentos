@@ -1,6 +1,6 @@
 {
-  "versao": "20261001-27",
+  "versao": "20261001-28",
   "banco": "13.1",
   "correcoes": 1,
-  "notas": "EAC, Vacinação e Atacadista de gases medicinais: botão “Apagar dados da inspeção” na tela inicial do roteiro, como já havia na Drogaria, Manipulação e Atacadista de medicamentos (as inspeções guardadas em Salvas não são apagadas)."
+  "notas": "Fotos: o carimbo de data, hora e local e a marcação passam a valer também para fotos tiradas por campos criados na hora (ajuste comum com o app Roteiros)."
 }

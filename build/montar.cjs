@@ -40,6 +40,16 @@ const {html: origem, lz, blocks: BLOCOS} = unpack(path.join(ROT, 'index.html'));
 let h = origem;
 const esc = s => String(s).replace(/[&<>"]/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;'}[c]));
 
+/* O roteiros traz as ferramentas de campo na casca (scripts/repack-campo.cjs, bloco
+   CAMPO_INICIO…CAMPO_FIM, injeção ao abrir e permissão do iframe). Aqui elas entram
+   pelas seções 7 e 7r, com os módulos de modulos/: tira a versão do roteiros para
+   não carregar duas vezes. */
+{
+  const i0 = h.indexOf('<!--CAMPO_INICIO-->');
+  if (i0 >= 0) h = h.slice(0, i0) + h.slice(h.indexOf('<!--CAMPO_FIM-->') + '<!--CAMPO_FIM-->'.length);
+  h = h.replace(' if(window.__uvisCampoInjeta) fonte = window.__uvisCampoInjeta(app, fonte);', '')
+    .replace('<iframe id="quadro" title="Roteiro" allow="microphone; geolocation; camera">', '<iframe id="quadro" title="Roteiro">');
+}
 function troca(de, para, rotulo) {
   const n = h.split(de).length - 1;
   if (n !== 1) throw Error(`${rotulo}: esperava 1 ocorrência, achei ${n}`);

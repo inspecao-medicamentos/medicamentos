@@ -128,5 +128,13 @@
  window.addEventListener('input',function(e){var t=e.target;if(t&&t.type==='file'&&!t.__medFotoOk&&elegivel(t))e.stopImmediatePropagation()},true);
  window.addEventListener('change',function(e){var t=e.target;if(!t||t.type!=='file'||t.__medFotoOk||!elegivel(t))return;
   e.stopImmediatePropagation();if(ocupado)return;processa(t)},true);
+ /* campo de foto criado na hora e nunca posto na página (Odontologia, Alimentação,
+    Produtos: createElement + click): o change não passaria pelo document. Ao abrir
+    a câmera ou a galeria, o campo entra oculto no body e sai depois da escolha. */
+ var clique=HTMLInputElement.prototype.click;
+ HTMLInputElement.prototype.click=function(){var t=this;
+  if(t.type==='file'&&!t.isConnected&&document.body&&elegivel(t)){t.hidden=true;t.setAttribute('data-med-solto','');document.body.appendChild(t);
+   t.addEventListener('change',function(){setTimeout(function(){if(!ocupado&&t.isConnected)t.remove()},60000)})}
+  return clique.apply(t,arguments)};
  window.MedFotoMarca={elegivel:elegivel,exif:exif};
 })();
