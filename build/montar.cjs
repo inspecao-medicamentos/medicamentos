@@ -34,7 +34,7 @@ const PALETA = {
 };
 
 const APPS_FORA = ['estetica', 'odontologia', 'servicos-assistenciais', 'alimentos-integrado',
-  'servicos-alimentacao-roteiro', 'produtos-correlatos', 'analise-produtos', 'estoque-produtos'];
+  'servicos-alimentacao-roteiro', 'produtos-correlatos', 'analise-produtos', 'estoque-produtos', 'academia-piscina'];
 
 const {html: origem, lz, blocks: BLOCOS} = unpack(path.join(ROT, 'index.html'));
 let h = origem;

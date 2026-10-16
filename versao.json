@@ -1,6 +1,6 @@
 {
-  "versao": "20261001-28",
+  "versao": "20261001-29",
   "banco": "13.1",
   "correcoes": 1,
-  "notas": "Fotos: o carimbo de data, hora e local e a marcação passam a valer também para fotos tiradas por campos criados na hora (ajuste comum com o app Roteiros)."
+  "notas": "Ferramentas de campo: o botão “Marcar como pendente” de cada pergunta fica maior (área de toque de 40 px), igual ao app Roteiros."
 }
