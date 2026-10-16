@@ -1,6 +1,6 @@
 {
-  "versao": "20261001-29",
+  "versao": "20261001-30",
   "banco": "13.1",
   "correcoes": 1,
-  "notas": "Ferramentas de campo: o botão “Marcar como pendente” de cada pergunta fica maior (área de toque de 40 px), igual ao app Roteiros."
+  "notas": "Ajuste interno de montagem: o site continua sem os roteiros de Serviços do app Roteiros (academias e vacinação em Serviços); motor dos roteiros simples sincronizado com o Roteiros, sem mudança de comportamento."
 }
