@@ -373,9 +373,9 @@ troca("k.indexOf('uvis-previa-')===0", "(k.indexOf('uvis-previa-')===0||k.indexO
 troca('  function montar(app){',
   `  var ATACADISTA_JS = ${jsStr(le('atacadista-ajustes.js'))};
   var CAMPO_APPS = ${JSON.stringify(CAMPO_APPS)};
-  var CAMPO_JS = ${jsStr(['cnpj-guarda.js', 'campo.js', 'foto-marca.js', 'ditado.js'].map(le).join('\n'))};
+  var CAMPO_JS = ${jsStr(['cnpj-guarda.js', 'campo.js', 'foto-marca.js', 'ditado.js', 'relatorio-pb.js'].map(le).join('\n'))};
   var CENTRAL_AUTO_JS = ${jsStr(le('central-auto.js'))};
-  var DITADO_JS = ${jsStr(le('ditado.js'))};
+  var DITADO_JS = ${jsStr(['ditado.js', 'relatorio-pb.js'].map(le).join('\n'))};
   var MANIP_JS = ${jsStr(le('manipulacao-ajustes.js'))};
   var ORIENT_TRANSP = ${jsStr(JSON.stringify(ORIENT.transporte))};
   var TRANSP_ORIENT_JS = ${jsStr(le('transporte-orient.js'))};

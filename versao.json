@@ -1,6 +1,6 @@
 {
-  "versao": "20261001-30",
+  "versao": "20261001-31",
   "banco": "13.1",
   "correcoes": 1,
-  "notas": "Ajuste interno de montagem: o site continua sem os roteiros de Serviços do app Roteiros (academias e vacinação em Serviços); motor dos roteiros simples sincronizado com o Roteiros, sem mudança de comportamento."
+  "notas": "Relatórios em formatação simples: preto e branco, sem faixas nem células coloridas, títulos em negrito — vale para o Word de todos os roteiros e para Imprimir/PDF."
 }
